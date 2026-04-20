@@ -25,7 +25,8 @@
     "total": "Total",
     "subtotal": "Subtotal",
     "tax": "Tax",
-    "discount": "Discount"
+    "discount": "Discount",
+    "none": "None"
   },
   "auth": {
     "login": "Login",
@@ -74,6 +75,9 @@
   },
   "products": {
     "sku": "SKU",
+    "barcode": "Barcode",
+    "generateBarcode": "Generate barcode",
+    "barcodeNotUnique": "This barcode is already in use",
     "name": "Product Name",
     "category": "Category",
     "unitPrice": "Unit Price",

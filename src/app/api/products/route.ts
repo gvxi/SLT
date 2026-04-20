@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/supabase/middleware";
 
 const createProductSchema = z.object({
   sku: z.string().min(1),
+  barcode: z.string().optional().nullable(),
   name_en: z.string().min(1),
   name_ar: z.string().optional(),
   category: z.string().optional(),

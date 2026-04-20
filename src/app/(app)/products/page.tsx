@@ -20,6 +20,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import ProductMobileList from "@/components/products/ProductMobileList";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import GridViewIcon from "@mui/icons-material/GridView";
 import DensitySmallIcon from "@mui/icons-material/DensitySmall";
@@ -162,6 +163,8 @@ export default function ProductsPage() {
                 <Skeleton key={i} height={40} variant="rectangular" sx={{ borderRadius: 1 }} />
               ))}
             </Box>
+          ) : isMobile ? (
+            <ProductMobileList products={filtered} onEdit={handleEdit} onDelete={setDeleteTarget} />
           ) : effectiveView === "grid" ? (
             <ProductGrid products={filtered} onEdit={handleEdit} onDelete={setDeleteTarget} />
           ) : (

@@ -22,6 +22,7 @@ export interface Client {
 export interface Product {
   id: string;
   sku: string;
+  barcode: string | null;
   name_en: string;
   name_ar: string | null;
   category: string;

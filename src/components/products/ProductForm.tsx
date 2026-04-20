@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
+  Box,
   Button,
   TextField,
   Grid,
@@ -16,7 +14,14 @@ import {
   FormControlLabel,
   Switch,
   Alert,
+  Typography,
+  IconButton,
+  Divider,
+  InputAdornment,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import QrCodeIcon from "@mui/icons-material/QrCode";
+import CasinoIcon from "@mui/icons-material/Casino";
 import { useTranslation } from "react-i18next";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
@@ -24,6 +29,7 @@ import type { Product } from "@/types";
 
 const schema = z.object({
   sku: z.string().min(1),
+  barcode: z.string().optional().nullable(),
   name_en: z.string().min(1),
   name_ar: z.string(),
   category: z.string(),
@@ -41,6 +47,13 @@ interface Props {
   allProducts?: Product[];
 }
 
+function generateEAN13(): string {
+  const digits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10));
+  const checksum = digits.reduce((sum, d, i) => sum + d * (i % 2 === 0 ? 1 : 3), 0);
+  const check = (10 - (checksum % 10)) % 10;
+  return [...digits, check].join("");
+}
+
 export default function ProductForm({ open, product, onClose, allProducts = [] }: Props) {
   const { t } = useTranslation();
   const isEdit = !!product;
@@ -48,7 +61,6 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
   const updateProduct = useUpdateProduct();
   const { data: categories = [] } = useProductCategories();
 
-  // Compute next SKU from all existing products
   const nextSku = useMemo(() => {
     const nums = allProducts
       .map((p) => parseInt(p.sku.replace(/\D/g, ""), 10))
@@ -62,11 +74,14 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
     handleSubmit,
     control,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       sku: "",
+      barcode: "",
       name_en: "",
       name_ar: "",
       category: "",
@@ -82,6 +97,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
         product
           ? {
               sku: product.sku,
+              barcode: product.barcode ?? "",
               name_en: product.name_en,
               name_ar: product.name_ar ?? "",
               category: product.category ?? "",
@@ -91,6 +107,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
             }
           : {
               sku: nextSku,
+              barcode: "",
               name_en: "",
               name_ar: "",
               category: "",
@@ -102,15 +119,29 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
     }
   }, [open, product, nextSku, reset]);
 
+  const handleGenerateBarcode = useCallback(() => {
+    let barcode: string;
+    let attempts = 0;
+    do {
+      barcode = generateEAN13();
+      attempts++;
+    } while (
+      allProducts.some((p) => p.id !== product?.id && p.barcode === barcode) &&
+      attempts < 20
+    );
+    setValue("barcode", barcode, { shouldValidate: true });
+  }, [allProducts, product, setValue]);
+
   const mutation = isEdit ? updateProduct : createProduct;
   const error = mutation.error;
 
   const onSubmit = async (data: FormData) => {
     try {
+      const payload = { ...data, barcode: data.barcode || null };
       if (isEdit && product) {
-        await updateProduct.mutateAsync({ id: product.id, ...data });
+        await updateProduct.mutateAsync({ id: product.id, ...payload });
       } else {
-        await createProduct.mutateAsync(data);
+        await createProduct.mutateAsync(payload);
       }
       onClose();
     } catch {
@@ -119,25 +150,42 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
   };
 
   return (
-    <Dialog
+    <Drawer
+      anchor="right"
       open={open}
       onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      slotProps={{ paper: { sx: { borderRadius: 1.5 } } }}
+      slotProps={{ paper: { sx: { width: { xs: "100%", sm: 480 } } } }}
     >
-      <DialogTitle sx={{ fontWeight: 600, fontSize: 16, pb: 1 }}>
-        {isEdit ? t("common.edit") : t("common.create")} — {t("nav.products")}
-      </DialogTitle>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2.5,
+          py: 1.75,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 15 }}>
+          {isEdit ? t("common.edit") : t("common.create")} — {t("nav.products")}
+        </Typography>
+        <IconButton size="small" onClick={onClose} edge="end">
+          <CloseIcon sx={{ fontSize: 18 }} />
+        </IconButton>
+      </Box>
 
-      <DialogContent sx={{ pt: 1 }}>
+      {/* Body */}
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2.5, py: 2.5 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error.message}
           </Alert>
         )}
 
-        <Grid container spacing={2} sx={{ mt: 0 }}>
+        <Grid container spacing={2}>
+          {/* SKU */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label={t("products.sku")}
@@ -148,24 +196,33 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
               helperText={errors.sku?.message}
             />
           </Grid>
+
+          {/* Category */}
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label={t("products.category")}
-              fullWidth
-              size="small"
-              select
-              defaultValue=""
-              {...register("category")}
-              error={!!errors.category}
-            >
-              <MenuItem value="">{t("common.noData")}</MenuItem>
-              {categories.map((c) => (
-                <MenuItem key={c.id} value={c.name}>
-                  {c.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Controller
+              name="category"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  label={t("products.category")}
+                  fullWidth
+                  size="small"
+                  select
+                  {...field}
+                  error={!!errors.category}
+                >
+                  <MenuItem value="">{t("common.none")}</MenuItem>
+                  {categories.map((c) => (
+                    <MenuItem key={c.id} value={c.name}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
           </Grid>
+
+          {/* Name EN */}
           <Grid size={{ xs: 12 }}>
             <TextField
               label={t("products.name") + " (EN)"}
@@ -176,6 +233,8 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
               helperText={errors.name_en?.message}
             />
           </Grid>
+
+          {/* Name AR */}
           <Grid size={{ xs: 12 }}>
             <TextField
               label={t("products.name") + " (AR)"}
@@ -186,6 +245,53 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
               error={!!errors.name_ar}
             />
           </Grid>
+
+          {/* Barcode */}
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              label={t("products.barcode")}
+              fullWidth
+              size="small"
+              {...register("barcode", {
+                validate: (value) => {
+                  if (!value) return true;
+                  const isDuplicate = allProducts.some(
+                    (p) => p.id !== product?.id && p.barcode === value
+                  );
+                  return !isDuplicate || (t("products.barcodeNotUnique") as string);
+                },
+              })}
+              error={!!errors.barcode}
+              helperText={errors.barcode?.message}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <QrCodeIcon sx={{ fontSize: 16, color: "text.disabled" }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        title={t("products.generateBarcode")}
+                        onClick={handleGenerateBarcode}
+                      >
+                        <CasinoIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Divider />
+          </Grid>
+
+          {/* Unit price */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label={t("products.unitPrice")}
@@ -198,6 +304,8 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
               helperText={errors.unit_price?.message}
             />
           </Grid>
+
+          {/* Stock qty */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label={t("products.stockQty")}
@@ -210,6 +318,8 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
               helperText={errors.stock_qty?.message}
             />
           </Grid>
+
+          {/* Status */}
           <Grid size={{ xs: 12 }}>
             <Controller
               name="status"
@@ -219,19 +329,36 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
                   control={
                     <Switch
                       checked={field.value === "active"}
-                      onChange={(e) => field.onChange(e.target.checked ? "active" : "inactive")}
+                      onChange={(e) =>
+                        field.onChange(e.target.checked ? "active" : "inactive")
+                      }
                       size="small"
                     />
                   }
-                  label={field.value === "active" ? t("products.active") : t("products.inactive")}
+                  label={
+                    field.value === "active"
+                      ? t("products.active")
+                      : t("products.inactive")
+                  }
                 />
               )}
             />
           </Grid>
         </Grid>
-      </DialogContent>
+      </Box>
 
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      {/* Footer */}
+      <Box
+        sx={{
+          px: 2.5,
+          py: 2,
+          borderTop: 1,
+          borderColor: "divider",
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+        }}
+      >
         <Button variant="text" onClick={onClose}>
           {t("common.cancel")}
         </Button>
@@ -242,7 +369,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
         >
           {mutation.isPending ? t("common.loading") : t("common.save")}
         </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 }

@@ -25,7 +25,8 @@
     "total": "الإجمالي",
     "subtotal": "المجموع الفرعي",
     "tax": "الضريبة",
-    "discount": "الخصم"
+    "discount": "الخصم",
+    "none": "لا شيء"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -74,6 +75,9 @@
   },
   "products": {
     "sku": "رمز المنتج",
+    "barcode": "الباركود",
+    "generateBarcode": "توليد باركود",
+    "barcodeNotUnique": "هذا الباركود مستخدم بالفعل",
     "name": "اسم المنتج",
     "category": "الفئة",
     "unitPrice": "سعر الوحدة",

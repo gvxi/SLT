@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/supabase/middleware";
 
 const updateProductSchema = z.object({
   sku: z.string().min(1).optional(),
+  barcode: z.string().optional().nullable(),
   name_en: z.string().min(1).optional(),
   name_ar: z.string().optional(),
   category: z.string().optional(),
