@@ -1,0 +1,93 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "products": "Products",
+    "invoices": "Invoices",
+    "quotations": "Quotations",
+    "settings": "Settings"
+  },
+  "common": {
+    "search": "Search",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "loading": "Loading...",
+    "noData": "No data found",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "actions": "Actions",
+    "status": "Status",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "discount": "Discount"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "logout": "Logout",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "tasks": {
+    "backlog": "Backlog",
+    "in_progress": "In Progress",
+    "review": "Review",
+    "done": "Done",
+    "newTask": "New Task",
+    "priority": "Priority",
+    "assignee": "Assignee",
+    "dueDate": "Due Date"
+  },
+  "products": {
+    "sku": "SKU",
+    "name": "Product Name",
+    "category": "Category",
+    "unitPrice": "Unit Price",
+    "stockQty": "Stock Quantity",
+    "active": "Active",
+    "inactive": "Inactive",
+    "newProduct": "New Product"
+  },
+  "invoices": {
+    "invoiceNumber": "Invoice Number",
+    "client": "Client",
+    "issueDate": "Issue Date",
+    "dueDate": "Due Date",
+    "draft": "Draft",
+    "sent": "Sent",
+    "paid": "Paid",
+    "overdue": "Overdue",
+    "cancelled": "Cancelled",
+    "newInvoice": "New Invoice",
+    "exportPdf": "Export PDF"
+  },
+  "quotations": {
+    "quotationNumber": "Quotation Number",
+    "expiryDate": "Expiry Date",
+    "draft": "Draft",
+    "sent": "Sent",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "expired": "Expired",
+    "newQuotation": "New Quotation",
+    "convertToInvoice": "Convert to Invoice"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "appearance": "Appearance",
+    "language": "Language",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode"
+  }
+}

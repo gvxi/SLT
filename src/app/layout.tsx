@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Cairo } from "next/font/google";
+import AppProviders from "@/components/providers/AppProviders";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,9 +25,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" dir="ltr">
-      <body className={`${inter.variable} ${cairo.variable}`}>
-        {children}
+    <html lang="en" dir="ltr" suppressHydrationWarning>
+      <body className={`${inter.variable} ${cairo.variable}`} style={{ margin: 0 }}>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
