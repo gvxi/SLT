@@ -36,7 +36,8 @@
     "logout": "Logout",
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
-    "hasAccount": "Already have an account?"
+    "hasAccount": "Already have an account?",
+    "checkEmail": "Check your email to confirm your account."
   },
   "tasks": {
     "backlog": "Backlog",
