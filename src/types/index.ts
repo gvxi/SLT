@@ -29,7 +29,6 @@ export interface Product {
   unit_price: number;
   stock_qty: number;
   warning_limit_stock: number;
-  warning_limit_stock: number;
   status: "active" | "inactive";
   created_by: string;
   created_at: string;
@@ -70,17 +69,23 @@ export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 export interface Invoice {
   id: string;
   invoice_number: string;
-  client_id: string;
+  client_id: string | null;
   status: InvoiceStatus;
   issue_date: string;
   due_date: string;
   tax_pct: number;
   discount: number;
+  upfront_payment: number;
+  location: string | null;
+  phone_number: string | null;
   notes_en: string | null;
   notes_ar: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
+  // Joined relations
+  client?: Client | null;
+  invoice_items?: InvoiceItem[];
 }
 
 export interface InvoiceItem {
@@ -91,6 +96,8 @@ export interface InvoiceItem {
   qty: number;
   unit_price: number;
   sort_order: number;
+  // Joined
+  product?: { id: string; name_en: string; name_ar: string | null; sku: string } | null;
 }
 
 export type QuotationStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
@@ -98,7 +105,7 @@ export type QuotationStatus = "draft" | "sent" | "accepted" | "rejected" | "expi
 export interface Quotation {
   id: string;
   quotation_number: string;
-  client_id: string;
+  client_id: string | null;
   status: QuotationStatus;
   issue_date: string;
   expiry_date: string;
@@ -110,6 +117,9 @@ export interface Quotation {
   converted_invoice_id: string | null;
   created_at: string;
   updated_at: string;
+  // Joined relations
+  client?: Client | null;
+  quotation_items?: QuotationItem[];
 }
 
 export interface QuotationItem {
@@ -120,4 +130,13 @@ export interface QuotationItem {
   qty: number;
   unit_price: number;
   sort_order: number;
+  product?: { id: string; name_en: string; name_ar: string | null; sku: string } | null;
+}
+
+// Shared draft type for line item editing
+export interface LineItemDraft {
+  product_id: string | null;
+  description: string;
+  qty: number;
+  unit_price: number;
 }

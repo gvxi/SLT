@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * BarcodeScanner — uses the native BarcodeDetector API (Chrome 88+, Edge 88+, Safari 17.2+).
- * Opens the device back camera, scans continuously for barcodes.
+ * BarcodeScanner — uses the native BarcodeDetector API when available (Chrome 88+, Edge 88+, Safari 17.2+).
+ * Falls back to @zxing/browser for Firefox and other browsers.
  *   - Single barcode detected → auto-fills and closes.
- *   - Multiple barcodes → freezes the frame and lets the user tap to select one.
+ *   - Multiple barcodes (native only) → freezes the frame, user taps to select.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -18,25 +18,23 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
+import { BrowserMultiFormatReader } from "@zxing/browser";
+import { NotFoundException } from "@zxing/library";
 
 // ── Minimal BarcodeDetector type declarations ─────────────────────────────────
-interface BarcodeDetectorResult {
+interface NativeBarcodeDetectorResult {
   rawValue: string;
   format: string;
   boundingBox: DOMRectReadOnly;
   cornerPoints: ReadonlyArray<{ x: number; y: number }>;
 }
-interface BarcodeDetectorClass {
-  new (options?: { formats?: string[] }): {
-    detect(source: HTMLVideoElement | HTMLCanvasElement | ImageBitmap): Promise<BarcodeDetectorResult[]>;
-  };
-}
-declare const BarcodeDetector: BarcodeDetectorClass | undefined;
 // ─────────────────────────────────────────────────────────────────────────────
+
+type ScanEngine = "native" | "zxing";
 
 interface FrozenBarcode {
   rawValue: string;
-  rect: { left: number; top: number; width: number; height: number }; // in %, relative to canvas display
+  rect: { left: number; top: number; width: number; height: number };
 }
 
 interface Props {
@@ -45,75 +43,63 @@ interface Props {
   onDetect: (value: string) => void;
 }
 
-const SUPPORTED_FORMATS = [
+const NATIVE_FORMATS = [
   "ean_13", "ean_8", "code_128", "code_39", "code_93",
   "itf", "upc_a", "upc_e", "qr_code", "data_matrix",
 ];
+
+function getNativeDetector(): { detector: unknown } | null {
+  if (typeof window === "undefined") return null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const BD = (window as any).BarcodeDetector;
+  if (!BD) return null;
+  try {
+    return { detector: new BD({ formats: NATIVE_FORMATS }) };
+  } catch {
+    return null;
+  }
+}
 
 export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const detectorRef = useRef<ReturnType<BarcodeDetectorClass["prototype"]["constructor"]> | null>(null);
   const rafRef = useRef<number>(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nativeDetectorRef = useRef<any>(null);
+  const zxingReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const engineRef = useRef<ScanEngine>("zxing");
 
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [frozen, setFrozen] = useState<FrozenBarcode[] | null>(null); // non-null = frozen frame
+  const [frozen, setFrozen] = useState<FrozenBarcode[] | null>(null);
 
-  // ── Start camera ────────────────────────────────────────────────────────────
-  const startCamera = useCallback(async () => {
-    setError(null);
-    setReady(false);
-    setFrozen(null);
-
-    if (typeof BarcodeDetector === "undefined") {
-      setError(t("scanner.notSupported"));
-      return;
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      streamRef.current = stream;
-
-      detectorRef.current = new BarcodeDetector({ formats: SUPPORTED_FORMATS });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setReady(true);
-      }
-    } catch {
-      setError(t("scanner.cameraError"));
-    }
-  }, [t]);
-
-  // ── Stop camera ─────────────────────────────────────────────────────────────
+  // ── Stop everything ──────────────────────────────────────────────────────────
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current?.getTracks().forEach((tr) => tr.stop());
     streamRef.current = null;
-    detectorRef.current = null;
+    nativeDetectorRef.current = null;
+    if (zxingReaderRef.current) {
+      try { zxingReaderRef.current.reset(); } catch { /* ignore */ }
+      zxingReaderRef.current = null;
+    }
     setReady(false);
     setFrozen(null);
   }, []);
 
-  // ── Scan loop ───────────────────────────────────────────────────────────────
-  const scan = useCallback(async () => {
-    if (!videoRef.current || !detectorRef.current) return;
+  // ── Native scan loop ─────────────────────────────────────────────────────────
+  const nativeScan = useCallback(async () => {
+    if (!videoRef.current || !nativeDetectorRef.current) return;
     if (videoRef.current.readyState < 2) {
-      rafRef.current = requestAnimationFrame(scan);
+      rafRef.current = requestAnimationFrame(nativeScan);
       return;
     }
-
     try {
-      const results = await detectorRef.current.detect(videoRef.current);
+      const results: NativeBarcodeDetectorResult[] = await nativeDetectorRef.current.detect(videoRef.current);
 
       if (results.length === 1) {
-        // Single barcode — fill and close immediately
         stopCamera();
         onDetect(results[0].rawValue);
         onClose();
@@ -121,18 +107,15 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
       }
 
       if (results.length > 1) {
-        // Multiple barcodes — freeze the current frame
         const video = videoRef.current;
         const canvas = canvasRef.current;
         if (!canvas) return;
-
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
         ctx.drawImage(video, 0, 0);
 
-        // Convert absolute px coords to % of canvas natural size
         const toPercent = (b: DOMRectReadOnly): FrozenBarcode["rect"] => ({
           left: (b.x / video.videoWidth) * 100,
           top: (b.y / video.videoHeight) * 100,
@@ -145,20 +128,74 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
         return;
       }
     } catch {
-      // detection error — keep scanning
+      // keep scanning
     }
-
-    rafRef.current = requestAnimationFrame(scan);
+    rafRef.current = requestAnimationFrame(nativeScan);
   }, [onClose, onDetect, stopCamera]);
 
-  // Start scan loop when ready
-  useEffect(() => {
-    if (ready) {
-      rafRef.current = requestAnimationFrame(scan);
-    }
-  }, [ready, scan]);
+  // ── Start camera ─────────────────────────────────────────────────────────────
+  const startCamera = useCallback(async () => {
+    setError(null);
+    setReady(false);
+    setFrozen(null);
 
-  // Lifecycle: start/stop with dialog open state
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+    } catch {
+      setError(t("scanner.cameraError"));
+      return;
+    }
+    streamRef.current = stream;
+
+    // Try native BarcodeDetector first
+    const native = getNativeDetector();
+    if (native) {
+      engineRef.current = "native";
+      nativeDetectorRef.current = native.detector;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setReady(true);
+      }
+      return;
+    }
+
+    // Fallback: ZXing (works in Firefox, older browsers, etc.)
+    engineRef.current = "zxing";
+    const reader = new BrowserMultiFormatReader();
+    zxingReaderRef.current = reader;
+
+    if (!videoRef.current) return;
+    videoRef.current.srcObject = stream;
+    await videoRef.current.play();
+    setReady(true);
+
+    try {
+      reader.decodeFromStream(stream, videoRef.current, (result, err) => {
+        if (result) {
+          stopCamera();
+          onDetect(result.getText());
+          onClose();
+        } else if (err && !(err instanceof NotFoundException)) {
+          console.warn("[BarcodeScanner] ZXing error:", err);
+        }
+      });
+    } catch {
+      setError(t("scanner.cameraError"));
+    }
+  }, [onClose, onDetect, stopCamera, t]);
+
+  // Start native scan loop once ready (native engine only)
+  useEffect(() => {
+    if (ready && engineRef.current === "native") {
+      rafRef.current = requestAnimationFrame(nativeScan);
+    }
+  }, [ready, nativeScan]);
+
+  // Lifecycle: open/close
   useEffect(() => {
     if (open) {
       startCamera();
@@ -176,9 +213,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
 
   const handleRescan = () => {
     setFrozen(null);
-    startCamera().then(() => {
-      // scan loop restarts via the `ready` effect
-    });
+    startCamera();
   };
 
   return (
@@ -230,7 +265,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
 
       {/* Camera / Frozen frame area */}
       <Box sx={{ position: "relative", width: "100%", aspectRatio: "16/9", bgcolor: "#000" }}>
-        {/* Live video — hidden when frozen */}
+        {/* Live video */}
         <video
           ref={videoRef}
           muted
@@ -243,7 +278,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
           }}
         />
 
-        {/* Frozen canvas */}
+        {/* Frozen canvas (native multi-barcode selection) */}
         <canvas
           ref={canvasRef}
           style={{

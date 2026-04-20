@@ -53,7 +53,7 @@ export default function ProductsPage() {
   const [tab, setTab] = useState(0);
   const [view, setView] = useState<ViewMode>("table");
   const [search, setSearch] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [filterStock, setFilterStock] = useState<StockStatus>("all");
   const [formOpen, setFormOpen] = useState(false);
@@ -79,7 +79,7 @@ export default function ProductsPage() {
           (p.category && p.category.toLowerCase().includes(q))
       );
     }
-    if (filterCategory) {
+    if (filterCategory && filterCategory !== "all") {
       result = result.filter((p) => p.category === filterCategory);
     }
     if (filterStatus !== "all") {
@@ -179,7 +179,7 @@ export default function ProductsPage() {
                 onChange={(e) => setFilterCategory(e.target.value)}
                 sx={{ fontSize: 13 }}
               >
-                <MenuItem value=""><em>{t("products.allCategories")}</em></MenuItem>
+                <MenuItem value="all" sx={{ fontSize: 13 }}><em>{t("products.allCategories")}</em></MenuItem>
                 {categories.map((c) => (
                   <MenuItem key={c.id} value={c.name} sx={{ fontSize: 13 }}>{c.name}</MenuItem>
                 ))}

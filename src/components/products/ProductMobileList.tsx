@@ -35,6 +35,8 @@ interface SwipeableRowProps {
 function SwipeableRow({ product, onEdit, onDelete, onPreview }: SwipeableRowProps) {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
+  const closedOffset = 0;
+  const openOffset = isAr ? ACTION_WIDTH : -ACTION_WIDTH;
 
   const [offset, setOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -55,13 +57,18 @@ function SwipeableRow({ product, onEdit, onDelete, onPreview }: SwipeableRowProp
     lastTouchX.current = e.touches[0].clientX;
     totalMovement.current += Math.abs(dx);
     if (totalMovement.current > 4) wasSwipe.current = true;
-    setOffset((prev) => Math.max(-ACTION_WIDTH, Math.min(0, prev + dx)));
-  }, []);
+    setOffset((prev) => {
+      const nextOffset = prev + dx;
+      return isAr
+        ? Math.max(closedOffset, Math.min(openOffset, nextOffset))
+        : Math.max(openOffset, Math.min(closedOffset, nextOffset));
+    });
+  }, [closedOffset, isAr, openOffset]);
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
-    setOffset((prev) => (Math.abs(prev) < ACTION_WIDTH / 2 ? 0 : -ACTION_WIDTH));
-  }, []);
+    setOffset((prev) => (Math.abs(prev) < ACTION_WIDTH / 2 ? closedOffset : openOffset));
+  }, [closedOffset, openOffset]);
 
   const handleClick = () => {
     if (wasSwipe.current) return;
@@ -80,7 +87,7 @@ function SwipeableRow({ product, onEdit, onDelete, onPreview }: SwipeableRowProp
       <Box
         sx={{
           position: "absolute",
-          right: 0,
+          ...(isAr ? { left: 0 } : { right: 0 }),
           top: 0,
           bottom: 0,
           width: ACTION_WIDTH,
@@ -138,6 +145,7 @@ function SwipeableRow({ product, onEdit, onDelete, onPreview }: SwipeableRowProp
           zIndex: 1,
           userSelect: "none",
           WebkitUserSelect: "none",
+          touchAction: "pan-y",
           cursor: "pointer",
           "&:active": { bgcolor: "action.hover" },
         }}

@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
 
 const updateQuotationSchema = z.object({
-  client_id: z.string().uuid().nullable().optional(),
+  client_id: z.string().nullable().optional(),
   status: z.enum(["draft", "sent", "accepted", "rejected", "expired"]).optional(),
   issue_date: z.string().optional(),
   expiry_date: z.string().optional(),
@@ -47,7 +47,7 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = updateQuotationSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues.map((i) => i.message).join(", ") }, { status: 400 });
   }
 
   const supabase = createServerSupabaseClient();

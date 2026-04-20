@@ -20,7 +20,8 @@ export async function apiFetch(
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(body.error ?? "Request failed");
+    const message = typeof body.error === "string" ? body.error : (JSON.stringify(body.error) ?? "Request failed");
+    throw new Error(message);
   }
 
   return response;

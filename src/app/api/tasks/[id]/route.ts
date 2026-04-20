@@ -10,7 +10,7 @@ const updateTaskSchema = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   assignee_id: z.string().uuid().nullable().optional(),
   due_date: z.string().nullable().optional(),
-  product_id: z.string().uuid().nullable().optional(),
+  product_id: z.string().nullable().optional(),
 });
 
 export async function GET(
@@ -45,7 +45,7 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = updateTaskSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues.map((i) => i.message).join(", ") }, { status: 400 });
   }
 
   const supabase = createServerSupabaseClient();

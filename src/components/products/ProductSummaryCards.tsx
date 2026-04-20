@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Box, Typography } from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import RemoveShoppingCartIcon from "@mui/icons-material/RemoveShoppingCart";
 import { useTranslation } from "react-i18next";

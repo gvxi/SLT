@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
 
 const quotationItemSchema = z.object({
-  product_id: z.string().uuid().nullable().optional(),
+  product_id: z.string().nullable().optional(),
   description: z.string().default(""),
   qty: z.number().min(0),
   unit_price: z.number().min(0),
@@ -12,7 +12,7 @@ const quotationItemSchema = z.object({
 });
 
 const createQuotationSchema = z.object({
-  client_id: z.string().uuid().nullable().optional(),
+  client_id: z.string().nullable().optional(),
   status: z.enum(["draft", "sent", "accepted", "rejected", "expired"]).default("draft"),
   issue_date: z.string(),
   expiry_date: z.string(),
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = createQuotationSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues.map((i) => i.message).join(", ") }, { status: 400 });
   }
 
   const { items, ...quotationData } = parsed.data;

@@ -3,15 +3,26 @@ import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
 
+const invoiceItemSchema = z.object({
+  product_id: z.string().nullable().optional(),
+  description: z.string().default(""),
+  qty: z.number().min(0),
+  unit_price: z.number().min(0),
+});
+
 const updateInvoiceSchema = z.object({
-  client_id: z.string().uuid().nullable().optional(),
+  client_id: z.string().nullable().optional(),
   status: z.enum(["draft", "sent", "paid", "overdue", "cancelled"]).optional(),
   issue_date: z.string().optional(),
   due_date: z.string().optional(),
   tax_pct: z.number().min(0).max(100).optional(),
   discount: z.number().min(0).optional(),
+  upfront_payment: z.number().min(0).optional(),
+  location: z.string().optional(),
+  phone_number: z.string().optional(),
   notes_en: z.string().optional(),
   notes_ar: z.string().optional(),
+  items: z.array(invoiceItemSchema).optional(),
 });
 
 export async function GET(
@@ -46,20 +57,41 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = updateInvoiceSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const message = parsed.error.issues.map((i) => i.message).join(", ");
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const supabase = createServerSupabaseClient();
+
+  const { items, ...invoiceFields } = parsed.data;
+
   const { data, error: dbError } = await supabase
     .from("invoices")
-    .update(parsed.data)
+    .update(invoiceFields)
     .eq("id", id)
     .select()
     .single();
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
-  return NextResponse.json(data);
+  // Replace items if provided
+  if (items !== undefined) {
+    await supabase.from("invoice_items").delete().eq("invoice_id", id);
+    if (items.length > 0) {
+      const { error: itemsError } = await supabase
+        .from("invoice_items")
+        .insert(items.map((item, i) => ({ ...item, invoice_id: id, sort_order: i })));
+      if (itemsError) return NextResponse.json({ error: itemsError.message }, { status: 500 });
+    }
+  }
+
+  const { data: full } = await supabase
+    .from("invoices")
+    .select("*, client:clients(*), invoice_items(*, product:products(id, name_en, name_ar, sku))")
+    .eq("id", id)
+    .single();
+
+  return NextResponse.json(full);
 }
 
 export async function DELETE(

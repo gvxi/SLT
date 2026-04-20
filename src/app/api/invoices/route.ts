@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
 
 const invoiceItemSchema = z.object({
-  product_id: z.string().uuid().nullable().optional(),
+  product_id: z.string().nullable().optional(),
   description: z.string().default(""),
   qty: z.number().min(0),
   unit_price: z.number().min(0),
@@ -12,12 +12,15 @@ const invoiceItemSchema = z.object({
 });
 
 const createInvoiceSchema = z.object({
-  client_id: z.string().uuid().nullable().optional(),
+  client_id: z.string().nullable().optional(),
   status: z.enum(["draft", "sent", "paid", "overdue", "cancelled"]).default("draft"),
   issue_date: z.string(),
   due_date: z.string(),
   tax_pct: z.number().min(0).max(100).default(0),
   discount: z.number().min(0).default(0),
+  upfront_payment: z.number().min(0).optional(),
+  location: z.string().optional(),
+  phone_number: z.string().optional(),
   notes_en: z.string().optional(),
   notes_ar: z.string().optional(),
   items: z.array(invoiceItemSchema).optional(),
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = createInvoiceSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues.map((i) => i.message).join(", ") }, { status: 400 });
   }
 
   const { items, ...invoiceData } = parsed.data;

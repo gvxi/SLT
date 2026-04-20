@@ -34,6 +34,8 @@ export default function BottomNav() {
         zIndex: 1100,
         borderTop: "1px solid",
         borderColor: "divider",
+        transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        "body.invoice-drawer-open &": { transform: "translateY(100%)" },
       }}
       elevation={0}
     >
@@ -49,6 +51,16 @@ export default function BottomNav() {
             key={item.key}
             label={t(`nav.${item.key}`)}
             icon={item.icon}
+            sx={{
+              minWidth: 0,
+              maxWidth: 96,
+              "& .MuiBottomNavigationAction-label": {
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
+              },
+            }}
           />
         ))}
       </BottomNavigation>
