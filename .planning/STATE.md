@@ -25,6 +25,7 @@
 - MUI v6 slotProps API (not deprecated *Props)
 - Zustand persist middleware for UI preferences (localStorage key: slt-ui-store)
 - npm init workaround for uppercase project name restriction
+- [Phase 03-task-management]: Drawer state in TasksPage, not KanbanBoard — cleaner separation of concerns
 
 ## Performance Metrics
 
@@ -33,6 +34,7 @@
 | 01 | 01-01 | ~7min | 2 | 8 |
 | 01 | 01-02 | ~5min | 2 | 6 |
 | 01 | 01-03 | ~9min | 2 | 14 |
+| Phase 03-task-management P01 | 45 | 2 tasks | 14 files |
 
 ## Pending User Actions
 - [ ] Verify layout visually at http://localhost:3000 (run `npm run dev`)
@@ -43,4 +45,4 @@
 
 ## Last Session
 - **Date:** 2025-01-20
-- **Stopped At:** Completed Phase 01 (all 3 plans)
+- **Stopped At:** Completed 03-01-PLAN.md — checkpoint human-verify
