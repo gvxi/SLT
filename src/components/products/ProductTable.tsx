@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import OmrSign from "@/components/OmrSign";
 import { useTranslation } from "react-i18next";
 import { useUpdateProduct } from "@/hooks/useProducts";
 import type { Product } from "@/types";
@@ -242,7 +243,7 @@ export default function ProductTable({ products, onEdit, onDelete, compact = fal
                     onDoubleClick={() => startEdit(row.id, "unit_price", row.unit_price)}
                     title={t("products.doubleClickEdit")}
                   >
-                    {row.unit_price.toFixed(2)}
+                    <OmrSign />{row.unit_price.toFixed(2)}
                   </Box>
                 )}
               </TableCell>

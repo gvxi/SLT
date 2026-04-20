@@ -17,6 +17,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -28,13 +32,16 @@ import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import { useTranslation } from "react-i18next";
 import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
+import { useProductCategories } from "@/hooks/useProductCategories";
 import ProductTable from "@/components/products/ProductTable";
 import ProductGrid from "@/components/products/ProductGrid";
 import ProductForm from "@/components/products/ProductForm";
 import ProductCategories from "@/components/products/ProductCategories";
+import ProductSummaryCards from "@/components/products/ProductSummaryCards";
 import type { Product } from "@/types";
 
 type ViewMode = "table" | "compact" | "grid";
+type StockStatus = "all" | "in_stock" | "near_out" | "out_of_stock";
 
 export default function ProductsPage() {
   const { t, i18n } = useTranslation();
@@ -46,27 +53,47 @@ export default function ProductsPage() {
   const [tab, setTab] = useState(0);
   const [view, setView] = useState<ViewMode>("table");
   const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [filterStock, setFilterStock] = useState<StockStatus>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
 
   const { data: products = [], isLoading } = useProducts();
+  const { data: categories = [] } = useProductCategories();
   const deleteProduct = useDeleteProduct();
 
   // Effective view: force grid on mobile
   const effectiveView: ViewMode = isMobile ? "grid" : view;
 
   const filtered = useMemo(() => {
+    let result = products;
     const q = search.toLowerCase().trim();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.sku.toLowerCase().includes(q) ||
-        p.name_en.toLowerCase().includes(q) ||
-        (p.name_ar && p.name_ar.toLowerCase().includes(q)) ||
-        (p.category && p.category.toLowerCase().includes(q))
-    );
-  }, [products, search]);
+    if (q) {
+      result = result.filter(
+        (p) =>
+          p.sku.toLowerCase().includes(q) ||
+          p.name_en.toLowerCase().includes(q) ||
+          (p.name_ar && p.name_ar.toLowerCase().includes(q)) ||
+          (p.category && p.category.toLowerCase().includes(q))
+      );
+    }
+    if (filterCategory) {
+      result = result.filter((p) => p.category === filterCategory);
+    }
+    if (filterStatus !== "all") {
+      result = result.filter((p) => p.status === filterStatus);
+    }
+    if (filterStock === "in_stock") {
+      result = result.filter((p) => p.stock_qty > p.warning_limit_stock);
+    } else if (filterStock === "near_out") {
+      result = result.filter((p) => p.stock_qty > 0 && p.stock_qty <= p.warning_limit_stock);
+    } else if (filterStock === "out_of_stock") {
+      result = result.filter((p) => p.stock_qty === 0);
+    }
+    return result;
+  }, [products, search, filterCategory, filterStatus, filterStock]);
 
   const handleEdit = (product: Product) => {
     setEditProduct(product);
@@ -117,14 +144,21 @@ export default function ProductsPage() {
         <ProductCategories />
       ) : (
         <>
+          {/* Summary cards */}
+          <ProductSummaryCards
+            products={products}
+            activeFilter={filterStock}
+            onFilter={setFilterStock}
+          />
+
           {/* Toolbar */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
             <TextField
               size="small"
               placeholder={t("common.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              sx={{ width: 260 }}
+              sx={{ width: 220 }}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -135,6 +169,38 @@ export default function ProductsPage() {
                 },
               }}
             />
+
+            {/* Category filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel sx={{ fontSize: 13 }}>{t("products.category")}</InputLabel>
+              <Select
+                label={t("products.category")}
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                sx={{ fontSize: 13 }}
+              >
+                <MenuItem value=""><em>{t("products.allCategories")}</em></MenuItem>
+                {categories.map((c) => (
+                  <MenuItem key={c.id} value={c.name} sx={{ fontSize: 13 }}>{c.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Status filter */}
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <InputLabel sx={{ fontSize: 13 }}>{t("products.filterStatus")}</InputLabel>
+              <Select
+                label={t("products.filterStatus")}
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as "all" | "active" | "inactive")}
+                sx={{ fontSize: 13 }}
+              >
+                <MenuItem value="all" sx={{ fontSize: 13 }}>{t("common.all")}</MenuItem>
+                <MenuItem value="active" sx={{ fontSize: 13 }}>{t("products.active")}</MenuItem>
+                <MenuItem value="inactive" sx={{ fontSize: 13 }}>{t("products.inactive")}</MenuItem>
+              </Select>
+            </FormControl>
+
             {/* View toggle — hidden on mobile (auto-grid) */}
             {!isMobile && (
               <ToggleButtonGroup

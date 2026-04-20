@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import OmrSign from "@/components/OmrSign";
 import { useTranslation } from "react-i18next";
 import type { Product } from "@/types";
 
@@ -106,7 +107,7 @@ export default function ProductGrid({ products, onEdit, onDelete }: Props) {
                     {t("products.unitPrice")}
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {p.unit_price.toFixed(2)}
+                    <OmrSign />{p.unit_price.toFixed(2)}
                   </Typography>
                 </Box>
                 <Box>

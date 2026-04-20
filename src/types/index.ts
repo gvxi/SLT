@@ -28,6 +28,8 @@ export interface Product {
   category: string;
   unit_price: number;
   stock_qty: number;
+  warning_limit_stock: number;
+  warning_limit_stock: number;
   status: "active" | "inactive";
   created_by: string;
   created_at: string;

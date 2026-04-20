@@ -13,6 +13,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import QrCodeIcon from "@mui/icons-material/QrCode";
+import OmrSign from "@/components/OmrSign";
 import { useTranslation } from "react-i18next";
 import type { Product } from "@/types";
 
@@ -175,7 +176,7 @@ function SwipeableRow({ product, onEdit, onDelete, onPreview }: SwipeableRowProp
           variant="body2"
           sx={{ fontWeight: 600, fontSize: 13, flexShrink: 0 }}
         >
-          {product.unit_price.toFixed(2)}
+          <OmrSign />{product.unit_price.toFixed(2)}
         </Typography>
 
         {/* Status chip */}

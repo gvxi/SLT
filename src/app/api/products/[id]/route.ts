@@ -11,6 +11,8 @@ const updateProductSchema = z.object({
   category: z.string().optional(),
   unit_price: z.number().min(0).optional(),
   stock_qty: z.number().int().min(0).optional(),
+  warning_limit_stock: z.number().int().min(0).optional(),
+  warning_limit_stock: z.number().int().min(0).optional(),
   status: z.enum(["active", "inactive"]).optional(),
 });
 

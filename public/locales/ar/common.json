@@ -26,7 +26,17 @@
     "subtotal": "المجموع الفرعي",
     "tax": "الضريبة",
     "discount": "الخصم",
-    "none": "لا شيء"
+    "none": "لا شيء",
+    "all": "الكل"
+  },
+  "scanner": {
+    "notSupported": "مسح الباركود غير مدعوم في هذا المتصفح. استخدم Chrome أو Edge.",
+    "cameraError": "تعذّر الوصول إلى الكاميرا. الرجاء منح الإذن.",
+    "pointCamera": "وجّه الكاميرا نحو الباركود",
+    "selectBarcode": "اختر باركوداً",
+    "tapToSelect": "اضغط على الباركود المحدد لتحديده.",
+    "rescan": "إعادة المسح",
+    "hint": "ثبّت الجهاز — يتم الكشف تلقائياً"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -77,11 +87,18 @@
     "sku": "رمز المنتج",
     "barcode": "الباركود",
     "generateBarcode": "توليد باركود",
+    "scanBarcode": "مسح الباركود",
     "barcodeNotUnique": "هذا الباركود مستخدم بالفعل",
     "name": "اسم المنتج",
     "category": "الفئة",
     "unitPrice": "سعر الوحدة",
     "stockQty": "الكمية المتوفرة",
+    "warningLimitStock": "تنبيه مخزون منخفض",
+    "inStock": "متوفر",
+    "nearOut": "مخزون منخفض",
+    "outOfStock": "نفد من المخزون",
+    "allCategories": "كل الفئات",
+    "filterStatus": "الحالة",
     "active": "نشط",
     "inactive": "غير نشط",
     "newProduct": "منتج جديد",

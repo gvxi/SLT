@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,6 +22,8 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import CasinoIcon from "@mui/icons-material/Casino";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import BarcodeScanner from "./BarcodeScanner";
 import { useTranslation } from "react-i18next";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
@@ -35,6 +37,7 @@ const schema = z.object({
   category: z.string(),
   unit_price: z.number({ message: "Required" }).min(0),
   stock_qty: z.number({ message: "Required" }).int().min(0),
+  warning_limit_stock: z.number({ message: "Required" }).int().min(0),
   status: z.enum(["active", "inactive"]),
 });
 
@@ -60,6 +63,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const { data: categories = [] } = useProductCategories();
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const nextSku = useMemo(() => {
     const nums = allProducts
@@ -87,6 +91,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
       category: "",
       unit_price: 0,
       stock_qty: 0,
+      warning_limit_stock: 5,
       status: "active",
     },
   });
@@ -103,6 +108,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
               category: product.category ?? "",
               unit_price: product.unit_price,
               stock_qty: product.stock_qty,
+              warning_limit_stock: product.warning_limit_stock ?? 5,
               status: product.status,
             }
           : {
@@ -113,6 +119,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
               category: "",
               unit_price: 0,
               stock_qty: 0,
+              warning_limit_stock: 5,
               status: "active",
             }
       );
@@ -274,6 +281,13 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
                     <InputAdornment position="end">
                       <IconButton
                         size="small"
+                        title={t("products.scanBarcode")}
+                        onClick={() => setScannerOpen(true)}
+                      >
+                        <CameraAltIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                      <IconButton
+                        size="small"
                         edge="end"
                         title={t("products.generateBarcode")}
                         onClick={handleGenerateBarcode}
@@ -316,6 +330,20 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
               {...register("stock_qty", { valueAsNumber: true })}
               error={!!errors.stock_qty}
               helperText={errors.stock_qty?.message}
+            />
+          </Grid>
+
+          {/* Warning limit stock */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label={t("products.warningLimitStock")}
+              fullWidth
+              size="small"
+              type="number"
+              slotProps={{ htmlInput: { min: 0, step: 1 } }}
+              {...register("warning_limit_stock", { valueAsNumber: true })}
+              error={!!errors.warning_limit_stock}
+              helperText={errors.warning_limit_stock?.message}
             />
           </Grid>
 
@@ -370,6 +398,11 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
           {mutation.isPending ? t("common.loading") : t("common.save")}
         </Button>
       </Box>
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onDetect={(value) => setValue("barcode", value, { shouldValidate: true })}
+      />
     </Drawer>
   );
 }

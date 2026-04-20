@@ -26,7 +26,17 @@
     "subtotal": "Subtotal",
     "tax": "Tax",
     "discount": "Discount",
-    "none": "None"
+    "none": "None",
+    "all": "All"
+  },
+  "scanner": {
+    "notSupported": "Barcode scanning is not supported in this browser. Use Chrome or Edge.",
+    "cameraError": "Could not access camera. Please grant camera permission.",
+    "pointCamera": "Point camera at a barcode",
+    "selectBarcode": "Select a barcode",
+    "tapToSelect": "Tap a highlighted barcode to select it.",
+    "rescan": "Rescan",
+    "hint": "Hold steady — barcodes are detected automatically"
   },
   "auth": {
     "login": "Login",
@@ -77,11 +87,18 @@
     "sku": "SKU",
     "barcode": "Barcode",
     "generateBarcode": "Generate barcode",
+    "scanBarcode": "Scan barcode",
     "barcodeNotUnique": "This barcode is already in use",
     "name": "Product Name",
     "category": "Category",
     "unitPrice": "Unit Price",
     "stockQty": "Stock Quantity",
+    "warningLimitStock": "Low Stock Alert",
+    "inStock": "In Stock",
+    "nearOut": "Low Stock",
+    "outOfStock": "Out of Stock",
+    "allCategories": "All categories",
+    "filterStatus": "Status",
     "active": "Active",
     "inactive": "Inactive",
     "newProduct": "New Product",

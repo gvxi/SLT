@@ -1,0 +1,30 @@
+/**
+ * Inline OMR (Omani Rial) currency symbol using the project logo SVG.
+ * Renders as a small inline element sized relative to surrounding text.
+ */
+interface Props {
+  size?: number | string;
+  style?: React.CSSProperties;
+}
+
+export default function OmrSign({ size = "0.9em", style }: Props) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 741.36 415.06"
+      fill="currentColor"
+      aria-label="OMR"
+      style={{
+        display: "inline-block",
+        height: size,
+        width: "auto",
+        verticalAlign: "middle",
+        marginInlineEnd: "0.2em",
+        flexShrink: 0,
+        ...style,
+      }}
+    >
+      <path d="M259.9,219.89c-.63-49.2,11.44-95.41,35.76-137.75C331.7,19.4,371.24-.36,439.78,34.99c10.67,5.5,53.6,35.43,57.81,44.54,5.03,10.87-27.48,103.87-29.11,122.3-34.69-37.51-99.37-98.66-154.85-69.62-45.05,23.58-12.02,62.54,11.46,87.68h406.25l-39.14,70.23-289.2-2c-1.11,4.66.87,3.3,2.53,4.6,12.44,9.72,80.97,31.54,94.75,31.54l172.05,1.99-39.49,71.25H10.03l39.24-71.24h272.14l-37.11-36.13H69.33l39.23-70.23h151.33Z" />
+    </svg>
+  );
+}
