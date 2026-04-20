@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 import Sidebar from "@/components/layout/Sidebar";
 import TopAppBar from "@/components/layout/TopAppBar";
 import BottomNav from "@/components/layout/BottomNav";
+import SplashScreen from "@/components/shared/SplashScreen";
 import { useUIStore } from "@/store/uiStore";
 
 const DRAWER_WIDTH = 240;
@@ -15,6 +16,13 @@ export default function PageWrapper({ children }: { children: React.ReactNode })
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { sidebarOpen } = useUIStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return <SplashScreen />;
 
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? DRAWER_WIDTH : DRAWER_COLLAPSED;
 

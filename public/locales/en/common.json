@@ -47,7 +47,21 @@
     "newTask": "New Task",
     "priority": "Priority",
     "assignee": "Assignee",
-    "dueDate": "Due Date"
+    "dueDate": "Due Date",
+    "title": "Title",
+    "description": "Description",
+    "checklist": "Checklist",
+    "addChecklist": "Add item",
+    "confirmDelete": "Delete this task?",
+    "noTasks": "No tasks",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent",
+    "linkedProduct": "Linked Product",
+    "unassigned": "Unassigned",
+    "allPriorities": "All priorities",
+    "allAssignees": "All assignees"
   },
   "products": {
     "sku": "SKU",

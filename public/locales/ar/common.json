@@ -47,7 +47,21 @@
     "newTask": "مهمة جديدة",
     "priority": "الأولوية",
     "assignee": "المسؤول",
-    "dueDate": "تاريخ الاستحقاق"
+    "dueDate": "تاريخ الاستحقاق",
+    "title": "العنوان",
+    "description": "الوصف",
+    "checklist": "قائمة التحقق",
+    "addChecklist": "إضافة عنصر",
+    "confirmDelete": "حذف هذه المهمة؟",
+    "noTasks": "لا توجد مهام",
+    "low": "منخفضة",
+    "medium": "متوسطة",
+    "high": "عالية",
+    "urgent": "عاجلة",
+    "linkedProduct": "المنتج المرتبط",
+    "unassigned": "غير محدد",
+    "allPriorities": "كل الأولويات",
+    "allAssignees": "كل المسؤولين"
   },
   "products": {
     "sku": "رمز المنتج",

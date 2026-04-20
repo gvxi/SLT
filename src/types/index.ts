@@ -48,6 +48,10 @@ export interface Task {
   created_by: string;
   created_at: string;
   updated_at: string;
+  // Optional joined relations (returned by API selects)
+  assignee?: { id: string; full_name: string; avatar_url: string | null } | null;
+  product?: { id: string; name_en: string; name_ar: string | null; sku: string } | null;
+  task_checklists?: TaskChecklist[];
 }
 
 export interface TaskChecklist {
