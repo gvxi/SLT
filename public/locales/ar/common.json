@@ -17,6 +17,7 @@
     "loading": "جاري التحميل...",
     "noData": "لا توجد بيانات",
     "confirm": "تأكيد",
+    "confirmDelete": "تأكيد الحذف",
     "back": "رجوع",
     "next": "التالي",
     "actions": "إجراءات",
@@ -81,7 +82,16 @@
     "inactive": "غير نشط",
     "newProduct": "منتج جديد",
     "doubleClickEdit": "انقر مرتين للتعديل",
-    "confirmDelete": "هل أنت متأكد من حذف"
+    "confirmDelete": "هل أنت متأكد من حذف",
+    "deleteConfirm": "هل أنت متأكد من حذف \"{{name}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+    "price": "السعر"
+  },
+  "categories": {
+    "title": "الفئات",
+    "name": "اسم الفئة",
+    "newName": "اسم فئة جديدة",
+    "duplicateName": "الفئة موجودة بالفعل",
+    "deleteWarning": "حذف الفئة \"{{name}}\"؟ المنتجات التي تستخدمها ستحتفظ بالاسم لكنه لن يظهر في القائمة."
   },
   "invoices": {
     "invoiceNumber": "رقم الفاتورة",

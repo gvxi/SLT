@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
+import { useProductCategories } from "@/hooks/useProductCategories";
 import type { Product } from "@/types";
 
 const schema = z.object({
@@ -33,26 +34,28 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const CATEGORIES = [
-  "Electronics",
-  "Furniture",
-  "Office Supplies",
-  "Tools",
-  "Materials",
-  "Other",
-];
-
 interface Props {
   open: boolean;
   product?: Product | null;
   onClose: () => void;
+  allProducts?: Product[];
 }
 
-export default function ProductForm({ open, product, onClose }: Props) {
+export default function ProductForm({ open, product, onClose, allProducts = [] }: Props) {
   const { t } = useTranslation();
   const isEdit = !!product;
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
+  const { data: categories = [] } = useProductCategories();
+
+  // Compute next SKU from all existing products
+  const nextSku = useMemo(() => {
+    const nums = allProducts
+      .map((p) => parseInt(p.sku.replace(/\D/g, ""), 10))
+      .filter((n) => !isNaN(n) && n > 0);
+    const max = nums.length > 0 ? Math.max(...nums) : 0;
+    return String(max + 1).padStart(6, "0");
+  }, [allProducts]);
 
   const {
     register,
@@ -87,7 +90,7 @@ export default function ProductForm({ open, product, onClose }: Props) {
               status: product.status,
             }
           : {
-              sku: "",
+              sku: nextSku,
               name_en: "",
               name_ar: "",
               category: "",
@@ -97,7 +100,7 @@ export default function ProductForm({ open, product, onClose }: Props) {
             }
       );
     }
-  }, [open, product, reset]);
+  }, [open, product, nextSku, reset]);
 
   const mutation = isEdit ? updateProduct : createProduct;
   const error = mutation.error;
@@ -156,9 +159,9 @@ export default function ProductForm({ open, product, onClose }: Props) {
               error={!!errors.category}
             >
               <MenuItem value="">{t("common.noData")}</MenuItem>
-              {CATEGORIES.map((c) => (
-                <MenuItem key={c} value={c}>
-                  {c}
+              {categories.map((c) => (
+                <MenuItem key={c.id} value={c.name}>
+                  {c.name}
                 </MenuItem>
               ))}
             </TextField>

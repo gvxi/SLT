@@ -17,6 +17,7 @@
     "loading": "Loading...",
     "noData": "No data found",
     "confirm": "Confirm",
+    "confirmDelete": "Confirm Delete",
     "back": "Back",
     "next": "Next",
     "actions": "Actions",
@@ -81,7 +82,16 @@
     "inactive": "Inactive",
     "newProduct": "New Product",
     "doubleClickEdit": "Double-click to edit",
-    "confirmDelete": "Are you sure you want to delete"
+    "confirmDelete": "Are you sure you want to delete",
+    "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "price": "Price"
+  },
+  "categories": {
+    "title": "Categories",
+    "name": "Category Name",
+    "newName": "New category name",
+    "duplicateName": "Category already exists",
+    "deleteWarning": "Delete the category \"{{name}}\"? Products using it will keep the name but it will no longer appear in the list."
   },
   "invoices": {
     "invoiceNumber": "Invoice Number",
