@@ -37,7 +37,15 @@
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
-    "checkEmail": "Check your email to confirm your account."
+    "checkEmail": "Check your email to confirm your account.",
+    "error": {
+      "invalidCredentials": "Incorrect email or password.",
+      "emailNotConfirmed": "Email not confirmed. Contact your administrator.",
+      "tooManyRequests": "Too many attempts. Please wait a moment.",
+      "userNotFound": "No account found with this email.",
+      "networkError": "Connection error. Check your internet.",
+      "unknown": "An error occurred. Please try again."
+    }
   },
   "tasks": {
     "backlog": "Backlog",
@@ -71,7 +79,9 @@
     "stockQty": "Stock Quantity",
     "active": "Active",
     "inactive": "Inactive",
-    "newProduct": "New Product"
+    "newProduct": "New Product",
+    "doubleClickEdit": "Double-click to edit",
+    "confirmDelete": "Are you sure you want to delete"
   },
   "invoices": {
     "invoiceNumber": "Invoice Number",

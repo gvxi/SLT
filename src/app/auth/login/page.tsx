@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,6 +23,16 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+function mapAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login") || m.includes("invalid credentials")) return "auth.error.invalidCredentials";
+  if (m.includes("email not confirmed")) return "auth.error.emailNotConfirmed";
+  if (m.includes("too many") || m.includes("rate limit")) return "auth.error.tooManyRequests";
+  if (m.includes("user not found") || m.includes("no user")) return "auth.error.userNotFound";
+  if (m.includes("network") || m.includes("fetch")) return "auth.error.networkError";
+  return "auth.error.unknown";
+}
+
 export default function LoginPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -45,10 +54,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Card
-      variant="outlined"
-      sx={{ width: "100%", maxWidth: 400, borderRadius: 2 }}
-    >
+    <Card variant="outlined" sx={{ width: "100%", maxWidth: 400, borderRadius: 2 }}>
       <CardContent sx={{ p: 4 }}>
         <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
           {t("auth.login")}
@@ -56,7 +62,7 @@ export default function LoginPage() {
 
         {login.error && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {login.error.message}
+            {t(mapAuthError(login.error.message))}
           </Alert>
         )}
 
@@ -68,7 +74,7 @@ export default function LoginPage() {
             size="small"
             {...register("email")}
             error={!!errors.email}
-            helperText={errors.email?.message}
+            helperText={errors.email?.message && t("auth.error.invalidCredentials")}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -78,7 +84,7 @@ export default function LoginPage() {
             size="small"
             {...register("password")}
             error={!!errors.password}
-            helperText={errors.password?.message}
+            helperText={errors.password?.message && t("auth.error.invalidCredentials")}
             sx={{ mb: 3 }}
           />
           <Button
@@ -90,14 +96,8 @@ export default function LoginPage() {
             {login.isPending ? t("common.loading") : t("auth.login")}
           </Button>
         </Box>
-
-        <Typography variant="body2" sx={{ mt: 2, textAlign: "center", color: "text.secondary" }}>
-          {t("auth.noAccount")}{" "}
-          <Link href="/auth/register" style={{ color: "inherit", fontWeight: 600 }}>
-            {t("auth.register")}
-          </Link>
-        </Typography>
       </CardContent>
     </Card>
   );
 }
+

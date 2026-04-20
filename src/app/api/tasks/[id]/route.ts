@@ -25,7 +25,7 @@ export async function GET(
 
   const { data, error: dbError } = await supabase
     .from("tasks")
-    .select("*, assignee:profiles(id, full_name, avatar_url), product:products(id, name_en, name_ar, sku), task_checklists(*)")
+    .select("*, assignee:profiles!assignee_id(id, full_name, avatar_url), product:products!product_id(id, name_en, name_ar, sku), task_checklists(*)")
     .eq("id", id)
     .single();
 

@@ -19,7 +19,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/gvxi/SLT/issues"
   },
@@ -59,6 +58,7 @@
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.2",
     "@types/stylis": "^4.2.7",
+    "postgres": "^3.4.9",
     "wrangler": "^4.84.0"
   }
 }

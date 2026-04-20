@@ -37,7 +37,15 @@
     "forgotPassword": "نسيت كلمة المرور؟",
     "checkEmail": "تحقق من بريدك الإلكتروني لتأكيد حسابك.",
     "noAccount": "ليس لديك حساب؟",
-    "hasAccount": "لديك حساب بالفعل؟"
+    "hasAccount": "لديك حساب بالفعل؟",
+    "error": {
+      "invalidCredentials": "بريد إلكتروني أو كلمة مرور غير صحيحة.",
+      "emailNotConfirmed": "البريد الإلكتروني غير مؤكد. تواصل مع المسؤول.",
+      "tooManyRequests": "محاولات كثيرة. انتظر قليلاً.",
+      "userNotFound": "لا يوجد حساب بهذا البريد.",
+      "networkError": "خطأ في الاتصال. تحقق من الإنترنت.",
+      "unknown": "حدث خطأ. حاول مجدداً."
+    }
   },
   "tasks": {
     "backlog": "قيد الانتظار",
@@ -71,7 +79,9 @@
     "stockQty": "الكمية المتوفرة",
     "active": "نشط",
     "inactive": "غير نشط",
-    "newProduct": "منتج جديد"
+    "newProduct": "منتج جديد",
+    "doubleClickEdit": "انقر مرتين للتعديل",
+    "confirmDelete": "هل أنت متأكد من حذف"
   },
   "invoices": {
     "invoiceNumber": "رقم الفاتورة",
