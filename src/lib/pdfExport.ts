@@ -3,15 +3,16 @@ import type { Invoice } from "@/types";
 
 export async function downloadInvoicePdf(
   invoice: Invoice,
-  language: "en" | "ar"
+  language: "en" | "ar",
+  docType: "invoice" | "quotation" = "invoice",
+  showRules = false
 ): Promise<void> {
-  // Dynamic import — keeps @react-pdf/renderer out of the server bundle
   const [{ pdf }, { InvoicePdfDocument }] = await Promise.all([
     import("@react-pdf/renderer"),
     import("@/components/documents/InvoicePdf"),
   ]);
 
-  const element = React.createElement(InvoicePdfDocument, { invoice, language });
+  const element = React.createElement(InvoicePdfDocument, { invoice, language, docType, showRules });
   const blob = await pdf(element).toBlob();
 
   const url = URL.createObjectURL(blob);

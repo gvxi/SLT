@@ -170,7 +170,19 @@
     "saveChanges": "حفظ التغييرات",
     "saveAsDraft": "حفظ كمسودة",
     "revertToDraft": "إعادة إلى مسودة",
-    "convertToQuotation": "تحويل إلى عرض سعر"
+    "convertToQuotation": "تحويل إلى عرض سعر",
+    "convertConfirm": "إنشاء عرض سعر جديد من الفاتورة {{number}}؟ ستبقى الفاتورة دون تغيير."
+  },
+  "pdfPreview": {
+    "langEn": "EN",
+    "langAr": "AR",
+    "invoice": "فاتورة",
+    "quotation": "عرض سعر",
+    "rules": "الشروط",
+    "rulesShow": "تضمين الشروط والأحكام",
+    "rulesHide": "إخفاء الشروط والأحكام",
+    "print": "طباعة",
+    "download": "تنزيل"
   },
   "quotations": {
     "quotationNumber": "رقم عرض السعر",

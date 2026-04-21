@@ -13,6 +13,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -21,6 +25,9 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import PdfPreviewDialog from "./PdfPreviewDialog";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { useTranslation } from "react-i18next";
@@ -65,6 +72,9 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [convertConfirmOpen, setConvertConfirmOpen] = useState(false);
+  const [moreAnchorEl, setMoreAnchorEl] = useState<HTMLElement | null>(null);
   const [totalsExpanded, setTotalsExpanded] = useState(false);
   const saveAsDraftRef = useRef(false);
   const createQuotation = useCreateQuotation();
@@ -201,17 +211,19 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
         anchor={isMobile ? "bottom" : "right"}
         open={open}
         onClose={onClose}
-        PaperProps={{
-          sx: {
-            width: drawerWidth,
-            height: drawerHeight,
-            borderRadius: isMobile ? "16px 16px 0 0" : 0,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
+        slotProps={{
+          paper: {
+            sx: {
+              width: drawerWidth,
+              height: drawerHeight,
+              borderRadius: isMobile ? "16px 16px 0 0" : 0,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            },
           },
+          transition: { timeout: 280 },
         }}
-        SlideProps={{ timeout: 280 }}
       >
         {/* ── Header ── */}
         <Box
@@ -239,32 +251,91 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
           </Box>
           {isEditMode && (
             <Box sx={{ display: "flex", gap: 0.5 }}>
-              <IconButton
-                size="small"
-                onClick={handleConvertToQuotation}
-                disabled={converting || isLoading}
-                title={t("invoices.convertToQuotation")}
-                sx={{ color: "text.secondary" }}
-              >
-                {converting ? <CircularProgress size={14} /> : <SwapHorizIcon sx={{ fontSize: 16 }} />}
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={handleDuplicate}
-                disabled={duplicating || isLoading}
-                title={t("invoices.duplicate")}
-                sx={{ color: "text.secondary" }}
-              >
-                {duplicating ? <CircularProgress size={14} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={() => setDeleteOpen(true)}
-                title={t("common.delete")}
-                sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
-              >
-                <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
-              </IconButton>
+              {isMobile ? (
+                <>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => setMoreAnchorEl(e.currentTarget)}
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <MoreVertIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                  <Menu
+                    anchorEl={moreAnchorEl}
+                    open={Boolean(moreAnchorEl)}
+                    onClose={() => setMoreAnchorEl(null)}
+                    slotProps={{ paper: { sx: { minWidth: 200 } } }}
+                  >
+                    <MenuItem
+                      onClick={() => { setMoreAnchorEl(null); setConvertConfirmOpen(true); }}
+                      disabled={converting || isLoading}
+                    >
+                      <ListItemIcon><SwapHorizIcon fontSize="small" /></ListItemIcon>
+                      <ListItemText primary={t("invoices.convertToQuotation")} slotProps={{ primary: { sx: { fontSize: 13 } } }} />
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => { setMoreAnchorEl(null); handleDuplicate(); }}
+                      disabled={duplicating || isLoading}
+                    >
+                      <ListItemIcon><ContentCopyIcon fontSize="small" /></ListItemIcon>
+                      <ListItemText primary={t("invoices.duplicate")} slotProps={{ primary: { sx: { fontSize: 13 } } }} />
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => { setMoreAnchorEl(null); setPdfPreviewOpen(true); }}
+                      disabled={isLoading || !invoice}
+                    >
+                      <ListItemIcon><PictureAsPdfIcon fontSize="small" /></ListItemIcon>
+                      <ListItemText primary={t("invoices.exportPdf")} slotProps={{ primary: { sx: { fontSize: 13 } } }} />
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem
+                      onClick={() => { setMoreAnchorEl(null); setDeleteOpen(true); }}
+                      sx={{ color: "error.main" }}
+                    >
+                      <ListItemIcon><DeleteOutlinedIcon fontSize="small" color="error" /></ListItemIcon>
+                      <ListItemText primary={t("common.delete")} slotProps={{ primary: { sx: { fontSize: 13 } } }} />
+                    </MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                <>
+                  <IconButton
+                    size="small"
+                    onClick={() => setConvertConfirmOpen(true)}
+                    disabled={converting || isLoading}
+                    title={t("invoices.convertToQuotation")}
+                    sx={{ color: "text.secondary" }}
+                  >
+                    {converting ? <CircularProgress size={14} /> : <SwapHorizIcon sx={{ fontSize: 16 }} />}
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={handleDuplicate}
+                    disabled={duplicating || isLoading}
+                    title={t("invoices.duplicate")}
+                    sx={{ color: "text.secondary" }}
+                  >
+                    {duplicating ? <CircularProgress size={14} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    disabled={isLoading || !invoice}
+                    title={t("invoices.exportPdf")}
+                    sx={{ color: "text.secondary" }}
+                    onClick={() => setPdfPreviewOpen(true)}
+                  >
+                    <PictureAsPdfIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => setDeleteOpen(true)}
+                    title={t("common.delete")}
+                    sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
+                  >
+                    <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </>
+              )}
             </Box>
           )}
           <IconButton size="small" onClick={onClose} sx={{ color: "text.secondary" }}>
@@ -394,6 +465,27 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
         </Box>
       </Drawer>
 
+      {/* Convert to Quotation confirm */}
+      <Dialog open={convertConfirmOpen} onClose={() => setConvertConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: 15, fontWeight: 600 }}>{t("invoices.convertToQuotation")}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ fontSize: 13, color: "text.secondary" }}>
+            {t("invoices.convertConfirm", { number: invoice?.invoice_number })}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button size="small" onClick={() => setConvertConfirmOpen(false)}>{t("common.cancel")}</Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => { setConvertConfirmOpen(false); handleConvertToQuotation(); }}
+            disabled={converting}
+          >
+            {converting ? <CircularProgress size={13} color="inherit" /> : t("common.confirm")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Delete confirm */}
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontSize: 15, fontWeight: 600 }}>{t("common.confirmDelete")}</DialogTitle>
@@ -409,6 +501,13 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
           </Button>
         </DialogActions>
       </Dialog>
+      {invoice && (
+        <PdfPreviewDialog
+          open={pdfPreviewOpen}
+          onClose={() => setPdfPreviewOpen(false)}
+          invoice={invoice}
+        />
+      )}
     </>
   );
 }

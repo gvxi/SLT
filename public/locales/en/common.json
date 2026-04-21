@@ -170,7 +170,19 @@
     "saveChanges": "Save Changes",
     "saveAsDraft": "Save as Draft",
     "revertToDraft": "Revert to Draft",
-    "convertToQuotation": "Convert to Quotation"
+    "convertToQuotation": "Convert to Quotation",
+    "convertConfirm": "Create a new quotation from invoice {{number}}? The invoice will remain unchanged."
+  },
+  "pdfPreview": {
+    "langEn": "EN",
+    "langAr": "AR",
+    "invoice": "Invoice",
+    "quotation": "Quotation",
+    "rules": "Rules",
+    "rulesShow": "Include terms & conditions",
+    "rulesHide": "Hide terms & conditions",
+    "print": "Print",
+    "download": "Download"
   },
   "quotations": {
     "quotationNumber": "Quotation Number",

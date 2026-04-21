@@ -1,381 +1,523 @@
 import React from "react";
-import { Document, Page, View, Text, StyleSheet, Font } from "@react-pdf/renderer";
+import { Document, Page, View, Text, Image, StyleSheet, Font } from "@react-pdf/renderer";
 import type { Invoice } from "@/types";
+import { TERMS_EN, TERMS_AR } from "@/lib/termsAndConditions";
 
-// Fonts served from public/fonts — loaded client-side via dynamic import
+// ─── Font ─────────────────────────────────────────────────────────────────────
 Font.register({
   family: "Cairo",
   fonts: [
-    { src: "/fonts/Cairo-Regular.ttf", fontWeight: 400 },
-    { src: "/fonts/Cairo-Bold.ttf", fontWeight: 700 },
+    { src: "/fonts/Cairo-Regular.ttf", fontWeight: 400, fontStyle: "normal" },
+    { src: "/fonts/Cairo-Bold.ttf",    fontWeight: 700, fontStyle: "normal" },
   ],
 });
 
-const INDIGO = "#3F51B5";
-const GRAY = "#666666";
-const DARK = "#1a1a1a";
-const LIGHT_BG = "#F5F6FF";
+// ─── Company constants ────────────────────────────────────────────────────────
+const CO = {
+  nameEn: "AL-SULAIMI NATIONAL ENTERPRISES TRAD",
+  nameAr: "مشـاريـع السلـيـمـي الأهـلـيـة للـتـجـارة",
+  regEn: "Registration Num: 1164403",
+  regAr: "رقم التسجيل: 1164403",
+  instagram: "sulyme_treding",
+  by: "AL Sulimi Al-ahliya Ent.",
+};
 
-const styles = StyleSheet.create({
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function fmtDate(s: string | null | undefined): string {
+  if (!s) return "";
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return [
+    String(d.getDate()).padStart(2, "0"),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    d.getFullYear(),
+  ].join("/");
+}
+
+function fmtNum(n: number): string {
+  return n.toFixed(3);
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const S = StyleSheet.create({
+  // Pages
   page: {
     fontFamily: "Cairo",
-    fontSize: 10,
-    color: DARK,
-    paddingTop: 40,
-    paddingBottom: 60,
-    paddingHorizontal: 40,
+    fontSize: 9,
+    color: "#222222",
+    paddingTop: 28,
+    paddingBottom: 52,
+    paddingHorizontal: 28,
+    lineHeight: 1.4,
+    backgroundColor: "#ffffff",
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
-  },
-  companyName: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: INDIGO,
-  },
-  invoiceLabel: {
-    fontSize: 22,
-    fontWeight: 700,
-    color: INDIGO,
-  },
-  statusBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    marginTop: 4,
-    alignSelf: "flex-end",
-  },
-  statusText: {
-    fontSize: 8,
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  accentLine: {
-    height: 3,
-    backgroundColor: INDIGO,
-    borderRadius: 2,
-    marginBottom: 20,
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  infoBlock: {
+
+  // ── Header row: [logo] [vendor] [meta]
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 18, gap: 20 },
+  logoImg: { width: 140, height: 42, objectFit: "contain" },
+  vendor: { flex: 1, paddingLeft: 6 },
+  vendorName: { fontSize: 13, fontWeight: 700, marginBottom: 4 },
+  vendorSub: { fontSize: 8.5, color: "#666666" },
+  vendorReg: { fontSize: 8.5, color: "#666666", marginTop: 2 },
+  metaBlock: { minWidth: 160, alignItems: "flex-end" },
+  metaLabel: { fontSize: 8, color: "#777777" },
+  metaValue: { fontSize: 13, fontWeight: 700 },
+  metaDateLabel: { fontSize: 8, color: "#777777", marginTop: 6 },
+  metaDateValue: { fontSize: 13, fontWeight: 700 },
+
+  // ── Divider + Bilingual title
+  divider: { borderBottomWidth: 1.5, borderBottomColor: "#dddddd", marginBottom: 14 },
+  docTitle: { fontSize: 16, fontWeight: 700, textAlign: "center", marginBottom: 16 },
+
+  // ── Contacts (two cards)
+  contactsRow: { flexDirection: "row", gap: 16, marginBottom: 16 },
+  card: {
     flex: 1,
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: "#fbfbff",
+    borderWidth: 1,
+    borderColor: "#efeff5",
   },
-  sectionLabel: {
-    fontSize: 8,
-    fontWeight: 700,
-    color: GRAY,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 5,
-  },
-  infoName: {
-    fontSize: 11,
-    fontWeight: 700,
-    marginBottom: 2,
-  },
-  infoText: {
-    fontSize: 9,
-    color: GRAY,
-    marginBottom: 1,
-  },
-  metaRow: {
+  cardTitle: { fontSize: 9, fontWeight: 700, marginBottom: 7 },
+  cardLine: { fontSize: 8.5, color: "#555555", marginBottom: 3 },
+  cardSectionTitle: { fontSize: 9, fontWeight: 700, marginTop: 8, marginBottom: 4 },
+  cardRow: { flexDirection: "row", marginBottom: 3 },
+  cardLbl: { fontSize: 8.5, color: "#888888", marginRight: 4 },
+  cardVal: { fontSize: 8.5, color: "#333333" },
+
+  // ── Table
+  tableWrapper: { marginBottom: 6 },
+  tableHeaderRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 3,
-  },
-  metaLabel: {
-    fontSize: 9,
-    color: GRAY,
-    marginRight: 8,
-  },
-  metaValue: {
-    fontSize: 9,
-    fontWeight: 700,
-  },
-  // Table
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: INDIGO,
-    paddingVertical: 6,
+    backgroundColor: "#fafafa",
+    borderBottomWidth: 2,
+    borderBottomColor: "#eeeeee",
+    paddingVertical: 8,
     paddingHorizontal: 8,
-    borderRadius: 3,
-    marginBottom: 0,
   },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#EEEEEE",
-    paddingVertical: 6,
+    borderBottomColor: "#eeeeee",
+    borderBottomStyle: "dashed",
+    paddingVertical: 8,
     paddingHorizontal: 8,
   },
-  tableRowShaded: {
-    backgroundColor: LIGHT_BG,
-  },
-  thText: {
-    fontSize: 8,
-    fontWeight: 700,
-    color: "white",
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  tdText: {
-    fontSize: 9,
-    color: DARK,
-  },
-  tdSub: {
-    fontSize: 8,
-    color: GRAY,
-  },
-  colDesc: { flex: 3 },
-  colQty: { flex: 1, textAlign: "center" },
-  colPrice: { flex: 1.5, textAlign: "right" },
-  colTotal: { flex: 1.5, textAlign: "right" },
-  // Totals
-  totalsWrapper: {
-    marginTop: 16,
-    alignItems: "flex-end",
-  },
-  totalsBox: { width: 230 },
-  totalsRow: {
+  tableLastRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 3,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
   },
-  totalsLabel: { fontSize: 9, color: GRAY },
-  totalsValue: { fontSize: 9 },
-  totalsDivider: {
-    borderTopWidth: 1,
-    borderTopColor: "#DDDDDD",
-    marginVertical: 5,
+  thText: { fontSize: 8.5, fontWeight: 700, color: "#333333" },
+  tdText: { fontSize: 9, color: "#333333" },
+  tdBold: { fontSize: 9, fontWeight: 700, color: "#333333" },
+  colNum: { width: 28 },
+  colDesc: { flex: 1 },
+  colQty: { width: 46, textAlign: "right" },
+  colUnit: { width: 88, textAlign: "right" },
+  colTotal: { width: 88, textAlign: "right" },
+
+  // ── Totals
+  totalsOuter: { flexDirection: "row", justifyContent: "flex-end", marginTop: 6 },
+  totalsBox: {
+    width: 220,
+    backgroundColor: "#fafafa",
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#efeff5",
+    padding: 10,
   },
-  grandLabel: { fontSize: 11, fontWeight: 700, color: INDIGO },
-  grandValue: { fontSize: 11, fontWeight: 700, color: INDIGO },
-  // Notes
-  notesSection: {
-    marginTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: "#EEEEEE",
-    paddingTop: 10,
+  totalsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 5 },
+  totalsLabel: { fontSize: 9.5, color: "#333333" },
+  totalsValue: { fontSize: 9.5, color: "#333333" },
+  totalsDividerLine: { borderBottomWidth: 1, borderBottomColor: "#dddddd", marginVertical: 5 },
+  totalsFinalRow: { flexDirection: "row", justifyContent: "space-between" },
+  totalsFinalLabel: { fontSize: 11, fontWeight: 700 },
+  totalsFinalValue: { fontSize: 11, fontWeight: 700 },
+
+  // ── Signature / stamp footer
+  sigSection: { flexDirection: "row", gap: 16, marginTop: 20, alignItems: "flex-start" },
+  sigBox: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#dddddd",
+    borderStyle: "dashed",
+    minHeight: 80,
+    backgroundColor: "#ffffff",
   },
-  notesText: {
-    fontSize: 9,
-    color: GRAY,
-    lineHeight: 1.5,
+  sigText: { fontSize: 9, color: "#555555", marginBottom: 6 },
+  sigLine: { fontSize: 9, color: "#777777", marginBottom: 10 },
+  sigNote: { fontSize: 7.5, color: "#999999" },
+  stampBlock: { flexDirection: "column", gap: 8, alignItems: "flex-start" },
+  stampImg: { width: 130, height: 75, objectFit: "contain" },
+  stampRegNum: { fontSize: 8, color: "#666666" },
+
+  // ── Notes
+  notes: { marginTop: 12, color: "#666666", fontSize: 9 },
+
+  // ── Footer (absolute at bottom)
+  footer: { position: "absolute", bottom: 20, left: 28, right: 28 },
+  footerPage: { fontSize: 8, color: "#999999", textAlign: "center" },
+
+  // ── T&C page
+  tcPage: {
+    fontFamily: "Cairo",
+    fontSize: 8.5,
+    color: "#222222",
+    paddingTop: 24,
+    paddingBottom: 52,
+    paddingHorizontal: 28,
+    lineHeight: 1.45,
+    backgroundColor: "#ffffff",
   },
-  // Footer
-  footer: {
-    position: "absolute",
-    bottom: 24,
-    left: 40,
-    right: 40,
-    borderTopWidth: 1,
-    borderTopColor: "#EEEEEE",
-    paddingTop: 6,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  footerText: { fontSize: 8, color: GRAY },
+  tcHeaderRow: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 6 },
+  tcLogoImg: { width: 90, height: 28, objectFit: "contain" },
+  tcVendor: { flex: 1 },
+  tcVendorName: { fontSize: 9.5, fontWeight: 700 },
+  tcVendorSub: { fontSize: 7.5, color: "#666666", marginTop: 1 },
+  tcVendorReg: { fontSize: 7.5, color: "#666666", marginTop: 1 },
+  tcDivider: { borderBottomWidth: 1.5, borderBottomColor: "#dddddd", marginVertical: 10 },
+  tcTitle: { fontSize: 14, fontWeight: 700, textAlign: "center", marginBottom: 14 },
+  tcItem: { flexDirection: "row", marginBottom: 7, gap: 6 },
+  tcItemNum: { width: 20, fontSize: 8.5, fontWeight: 700 },
+  tcItemContent: { flex: 1 },
+  tcItemTitle: { fontSize: 8.5, fontWeight: 700, marginBottom: 2 },
+  tcItemBody: { fontSize: 8, color: "#444444" },
 });
 
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  draft:     { bg: "#F5F5F5", color: "#757575" },
-  sent:      { bg: "#E3F2FD", color: "#1565C0" },
-  paid:      { bg: "#E8F5E9", color: "#2E7D32" },
-  overdue:   { bg: "#FFF3E0", color: "#E65100" },
-  cancelled: { bg: "#FFEBEE", color: "#C62828" },
-};
-
-const LABELS = {
-  en: {
-    invoice: "INVOICE", billTo: "Bill To", invoiceNo: "Invoice No.",
-    issueDate: "Issue Date", dueDate: "Due Date",
-    description: "Description", qty: "Qty", unitPrice: "Unit Price", total: "Total",
-    subtotal: "Subtotal", discount: "Discount", tax: "Tax",
-    upfront: "Upfront Payment", grandTotal: "Grand Total", balance: "Balance Due",
-    notes: "Notes", page: "Page",
-    status: { draft: "Draft", sent: "Sent", paid: "Paid", overdue: "Overdue", cancelled: "Cancelled" },
-  },
-  ar: {
-    invoice: "فاتورة", billTo: "تقديم إلى", invoiceNo: "رقم الفاتورة",
-    issueDate: "تاريخ الإصدار", dueDate: "تاريخ الاستحقاق",
-    description: "الوصف", qty: "الكمية", unitPrice: "سعر الوحدة", total: "الإجمالي",
-    subtotal: "المجموع الفرعي", discount: "الخصم", tax: "الضريبة",
-    upfront: "الدفعة الأولى", grandTotal: "الإجمالي الكلي", balance: "المبلغ المتبقي",
-    notes: "ملاحظات", page: "صفحة",
-    status: { draft: "مسودة", sent: "مرسلة", paid: "مدفوعة", overdue: "متأخرة", cancelled: "ملغاة" },
-  },
-};
-
-function fmt(n: number) {
-  return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-export interface InvoicePdfProps {
+// ─── Props ────────────────────────────────────────────────────────────────────
+export interface InvoicePdfDocumentProps {
   invoice: Invoice;
   language: "en" | "ar";
+  docType: "invoice" | "quotation";
+  showRules: boolean;
 }
 
-export function InvoicePdfDocument({ invoice, language }: InvoicePdfProps) {
-  const isRtl = language === "ar";
-  const t = LABELS[language];
-  const sc = STATUS_COLORS[invoice.status] ?? STATUS_COLORS.draft;
+// ─── Main component ───────────────────────────────────────────────────────────
+export function InvoicePdfDocument({ invoice, language, docType, showRules }: InvoicePdfDocumentProps) {
+  const isAr = language === "ar";
+  const isQuotation = docType === "quotation";
 
   const items = invoice.invoice_items ?? [];
   const subtotal = items.reduce((s, i) => s + i.qty * i.unit_price, 0);
-  const discAmt = invoice.discount ?? 0;
-  const taxAmt = ((subtotal - discAmt) * (invoice.tax_pct ?? 0)) / 100;
-  const grand = subtotal - discAmt + taxAmt;
-  const balance = grand - (invoice.upfront_payment ?? 0);
+  const discount = invoice.discount ?? 0;
+  const advance = invoice.upfront_payment ?? 0;
+  const taxAmt = ((subtotal - discount) * (invoice.tax_pct ?? 0)) / 100;
+  const total = subtotal - discount + taxAmt;
 
-  const clientName = isRtl
+  const clientName = isAr
     ? (invoice.client?.name_ar || invoice.client?.name_en || "—")
     : (invoice.client?.name_en || invoice.client?.name_ar || "—");
-  const notes = isRtl ? invoice.notes_ar : invoice.notes_en;
+  const clientPhone = invoice.client?.phone || "";
+  const notes = isAr ? (invoice.notes_ar || invoice.notes_en || "") : (invoice.notes_en || invoice.notes_ar || "");
+  const docNum = `#${invoice.invoice_number}`;
+  const issueDate = fmtDate(invoice.issue_date);
 
-  // RTL flips row direction
-  const rowDir = isRtl ? "row-reverse" : "row";
+  // Label strings
+  const L = isAr ? {
+    docTypeLabel: isQuotation ? "عرض أسعار" : "فاتورة",
+    docTitle: isQuotation ? "عرض أسعار" : "فاتورة",
+    dateLabel: "التاريخ",
+    billTo: "العميل",
+    customerName: "اسم العميل:",
+    contact: "جهة الاتصال:",
+    notesCardTitle: isQuotation ? "المهمة / ملاحظات عرض الأسعار" : "المهمة / ملاحظات الفاتورة",
+    contactSection: "جهة الاتصال",
+    phoneLabel: "الهاتف:",
+    instagramLabel: "انستجرام:",
+    byLabel: "بواسطة:",
+    colNum: "رقم",
+    colDesc: "الصنف / الوصف",
+    colQty: "الكمية",
+    colUnit: "سعر الوحدة",
+    colTotal: "السعر الإجمالي",
+    subtotal: "المجموع الفرعي",
+    discountLabel: "تخفيض",
+    advanceLabel: "دفع مقدم",
+    totalFinal: isQuotation ? "النهائي:" : "الإجمالي",
+    totalLine: isQuotation ? "الإجمالي:" : undefined as string | undefined,
+    currency: "ر.ع.",
+    goodReceived: "البضاعة مستلمة بحالة جيدة",
+    signature: "التوقيع: ____________________",
+    signNote: "بالتوقيع فإنك توافق على شروط الخدمة",
+    thankYou: "شكراً لتعاملكم معنا",
+    tcTitle: "الشروط والأحكام – خدمات التركيب",
+    page: "صفحة",
+    of: "من",
+  } : {
+    docTypeLabel: isQuotation ? "Quotation" : "Invoice",
+    docTitle: isQuotation ? "Quotation" : "Invoice",
+    dateLabel: "Date",
+    billTo: "Bill To",
+    customerName: "Customer Name:",
+    contact: "Contact:",
+    notesCardTitle: isQuotation ? "Task / Quotation Notes" : "Task / Invoice Notes",
+    contactSection: "Contact",
+    phoneLabel: "Phone:",
+    instagramLabel: "Instagram:",
+    byLabel: "By:",
+    colNum: "#",
+    colDesc: "Item / Description",
+    colQty: "QTY",
+    colUnit: "Price Per Piece (RO)",
+    colTotal: "Total Price (RO)",
+    subtotal: "Subtotal",
+    discountLabel: "Discount",
+    advanceLabel: "Advance Payment",
+    totalFinal: isQuotation ? "Final:" : "Total (RO)",
+    totalLine: isQuotation ? "Total:" : undefined as string | undefined,
+    currency: "RO",
+    goodReceived: "Good Received In Good Condition",
+    signature: "Signature: ____________________",
+    signNote: "By signing you agree to terms of service",
+    thankYou: "Thank you for your business",
+    tcTitle: "Terms and Conditions – Installation Services",
+    page: "Page",
+    of: "of",
+  };
+
+  const terms = isAr ? TERMS_AR : TERMS_EN;
+  const regLabel = isAr ? CO.regAr : CO.regEn;
+
+  // RTL page direction
+  const pageDir = isAr ? ({ direction: "rtl" } as const) : {};
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={[styles.header, { flexDirection: rowDir }]}>
-          <Text style={styles.companyName}>SLT</Text>
-          <View style={{ alignItems: isRtl ? "flex-start" : "flex-end" }}>
-            <Text style={styles.invoiceLabel}>{t.invoice}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
-              <Text style={[styles.statusText, { color: sc.color }]}>
-                {t.status[invoice.status]}
-              </Text>
-            </View>
+      {/* ── Page 1: Invoice / Quotation ───────────────────────────────────────── */}
+      <Page size="A4" style={[S.page, pageDir]}>
+
+        {/* Header: [Logo] [Company name] [Doc meta] */}
+        <View style={S.headerRow}>
+          <Image style={S.logoImg} src="/images/logo.png" />
+
+          <View style={S.vendor}>
+            {isAr ? (
+              <>
+                <Text style={S.vendorName}>{CO.nameAr}</Text>
+                <Text style={S.vendorSub}>{CO.nameEn}</Text>
+                <Text style={S.vendorReg}>{CO.regAr}</Text>
+              </>
+            ) : (
+              <>
+                <Text style={S.vendorName}>{CO.nameEn}</Text>
+                <Text style={S.vendorSub}>{CO.nameAr}</Text>
+                <Text style={S.vendorReg}>{CO.regEn}</Text>
+              </>
+            )}
+          </View>
+
+          <View style={S.metaBlock}>
+            <Text style={S.metaLabel}>{L.docTypeLabel}</Text>
+            <Text style={S.metaValue}>{docNum}</Text>
+            <Text style={S.metaDateLabel}>{L.dateLabel}</Text>
+            <Text style={S.metaDateValue}>{issueDate}</Text>
           </View>
         </View>
 
-        <View style={styles.accentLine} />
+        {/* Divider */}
+        <View style={S.divider} />
 
-        {/* Info row */}
-        <View style={[styles.infoRow, { flexDirection: rowDir }]}>
-          <View style={styles.infoBlock}>
-            <Text style={styles.sectionLabel}>{t.billTo}</Text>
-            <Text style={styles.infoName}>{clientName}</Text>
-            {invoice.client?.email ? <Text style={styles.infoText}>{invoice.client.email}</Text> : null}
-            {invoice.client?.phone ? <Text style={styles.infoText}>{invoice.client.phone}</Text> : null}
-            {invoice.phone_number && !invoice.client?.phone
-              ? <Text style={styles.infoText}>{invoice.phone_number}</Text>
-              : null}
-            {invoice.location ? <Text style={styles.infoText}>{invoice.location}</Text> : null}
-          </View>
+        {/* Document title (centered, bilingual) */}
+        <Text style={S.docTitle}>{L.docTitle}</Text>
 
-          <View style={[styles.infoBlock, { alignItems: isRtl ? "flex-start" : "flex-end" }]}>
-            <View style={[styles.metaRow, { flexDirection: rowDir }]}>
-              <Text style={styles.metaLabel}>{t.invoiceNo}</Text>
-              <Text style={styles.metaValue}>{invoice.invoice_number}</Text>
-            </View>
-            <View style={[styles.metaRow, { flexDirection: rowDir }]}>
-              <Text style={styles.metaLabel}>{t.issueDate}</Text>
-              <Text style={styles.metaValue}>{invoice.issue_date}</Text>
-            </View>
-            <View style={[styles.metaRow, { flexDirection: rowDir }]}>
-              <Text style={styles.metaLabel}>{t.dueDate}</Text>
-              <Text style={styles.metaValue}>{invoice.due_date}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Table header */}
-        <View style={[styles.tableHeader, { flexDirection: rowDir }]}>
-          <Text style={[styles.thText, styles.colDesc, isRtl ? { textAlign: "right" } : {}]}>{t.description}</Text>
-          <Text style={[styles.thText, styles.colQty]}>{t.qty}</Text>
-          <Text style={[styles.thText, styles.colPrice, isRtl ? { textAlign: "left" } : {}]}>{t.unitPrice}</Text>
-          <Text style={[styles.thText, styles.colTotal, isRtl ? { textAlign: "left" } : {}]}>{t.total}</Text>
-        </View>
-
-        {/* Table rows */}
-        {items.map((item, idx) => {
-          const pName = isRtl
-            ? (item.product?.name_ar || item.product?.name_en || "")
-            : (item.product?.name_en || item.product?.name_ar || "");
-          const desc = item.description || pName || "—";
-          return (
-            <View key={item.id} style={[styles.tableRow, idx % 2 !== 0 ? styles.tableRowShaded : {}, { flexDirection: rowDir }]}>
-              <View style={styles.colDesc}>
-                <Text style={[styles.tdText, isRtl ? { textAlign: "right" } : {}]}>{desc}</Text>
-                {item.product?.sku ? <Text style={styles.tdSub}>{item.product.sku}</Text> : null}
+        {/* Contacts row: [Bill To card] [Notes + Contact card] */}
+        <View style={S.contactsRow}>
+          {/* Left card: Bill To */}
+          <View style={S.card}>
+            <Text style={S.cardTitle}>{L.billTo}</Text>
+            {clientName !== "—" && (
+              <View style={S.cardRow}>
+                <Text style={S.cardLbl}>{L.customerName}</Text>
+                <Text style={S.cardVal}>{clientName}</Text>
               </View>
-              <Text style={[styles.tdText, styles.colQty]}>{item.qty}</Text>
-              <Text style={[styles.tdText, styles.colPrice, isRtl ? { textAlign: "left" } : {}]}>{fmt(item.unit_price)}</Text>
-              <Text style={[styles.tdText, styles.colTotal, isRtl ? { textAlign: "left" } : {}]}>{fmt(item.qty * item.unit_price)}</Text>
+            )}
+            {clientPhone ? (
+              <View style={S.cardRow}>
+                <Text style={S.cardLbl}>{L.contact}</Text>
+                <Text style={S.cardVal}>{clientPhone}</Text>
+              </View>
+            ) : null}
+            {invoice.location ? (
+              <Text style={S.cardLine}>{invoice.location}</Text>
+            ) : null}
+          </View>
+
+          {/* Right card: Notes + Contact */}
+          <View style={S.card}>
+            <Text style={S.cardTitle}>{L.notesCardTitle}</Text>
+            {notes ? <Text style={S.cardLine}>{notes}</Text> : null}
+
+            <Text style={S.cardSectionTitle}>{L.contactSection}</Text>
+            {invoice.phone_number ? (
+              <View style={S.cardRow}>
+                <Text style={S.cardLbl}>{L.phoneLabel}</Text>
+                <Text style={S.cardVal}>{invoice.phone_number}</Text>
+              </View>
+            ) : null}
+            <View style={S.cardRow}>
+              <Text style={S.cardLbl}>{L.instagramLabel}</Text>
+              <Text style={S.cardVal}>{CO.instagram}</Text>
             </View>
-          );
-        })}
+            {isQuotation && (
+              <View style={S.cardRow}>
+                <Text style={S.cardLbl}>{L.byLabel}</Text>
+                <Text style={S.cardVal}>{CO.by}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Line items table */}
+        <View style={S.tableWrapper}>
+          {/* Header row */}
+          <View style={S.tableHeaderRow}>
+            <Text style={[S.thText, S.colNum]}>{L.colNum}</Text>
+            <Text style={[S.thText, S.colDesc]}>{L.colDesc}</Text>
+            <Text style={[S.thText, S.colQty]}>{L.colQty}</Text>
+            <Text style={[S.thText, S.colUnit]}>{L.colUnit}</Text>
+            <Text style={[S.thText, S.colTotal]}>{L.colTotal}</Text>
+          </View>
+
+          {/* Data rows */}
+          {items.filter(Boolean).map((item, idx) => {
+            const desc = item.product
+              ? (isAr ? (item.product.name_ar || item.product.name_en) : item.product.name_en) || item.description
+              : item.description;
+            const isLast = idx === items.length - 1;
+            return (
+              <View key={item.id} style={isLast ? S.tableLastRow : S.tableRow}>
+                <Text style={[S.tdText, S.colNum]}>{idx + 1}</Text>
+                <Text style={[S.tdBold, S.colDesc]}>{desc}</Text>
+                <Text style={[S.tdText, S.colQty]}>{item.qty}</Text>
+                <Text style={[S.tdText, S.colUnit]}>{fmtNum(item.unit_price)}</Text>
+                <Text style={[S.tdText, S.colTotal]}>{fmtNum(item.qty * item.unit_price)}</Text>
+              </View>
+            );
+          })}
+        </View>
 
         {/* Totals */}
-        <View style={[styles.totalsWrapper, isRtl ? { alignItems: "flex-start" } : {}]}>
-          <View style={styles.totalsBox}>
-            <View style={[styles.totalsRow, { flexDirection: rowDir }]}>
-              <Text style={styles.totalsLabel}>{t.subtotal}</Text>
-              <Text style={styles.totalsValue}>{fmt(subtotal)}</Text>
-            </View>
-            {discAmt > 0 && (
-              <View style={[styles.totalsRow, { flexDirection: rowDir }]}>
-                <Text style={styles.totalsLabel}>{t.discount}</Text>
-                <Text style={styles.totalsValue}>- {fmt(discAmt)}</Text>
-              </View>
-            )}
-            {taxAmt > 0 && (
-              <View style={[styles.totalsRow, { flexDirection: rowDir }]}>
-                <Text style={styles.totalsLabel}>{t.tax} ({invoice.tax_pct}%)</Text>
-                <Text style={styles.totalsValue}>{fmt(taxAmt)}</Text>
-              </View>
-            )}
-            <View style={styles.totalsDivider} />
-            <View style={[styles.totalsRow, { flexDirection: rowDir }]}>
-              <Text style={styles.grandLabel}>{t.grandTotal}</Text>
-              <Text style={styles.grandValue}>{fmt(grand)}</Text>
-            </View>
-            {(invoice.upfront_payment ?? 0) > 0 && (
+        <View style={S.totalsOuter}>
+          <View style={S.totalsBox}>
+            {isQuotation ? (
               <>
-                <View style={[styles.totalsRow, { flexDirection: rowDir }]}>
-                  <Text style={styles.totalsLabel}>{t.upfront}</Text>
-                  <Text style={styles.totalsValue}>- {fmt(invoice.upfront_payment!)}</Text>
+                {L.totalLine && (
+                  <View style={S.totalsRow}>
+                    <Text style={S.totalsLabel}>{L.totalLine}</Text>
+                    <Text style={S.totalsValue}>{fmtNum(total)}</Text>
+                  </View>
+                )}
+                <View style={S.totalsDividerLine} />
+                <View style={S.totalsFinalRow}>
+                  <Text style={S.totalsFinalLabel}>{L.totalFinal}</Text>
+                  <Text style={S.totalsFinalValue}>{fmtNum(total)}</Text>
                 </View>
-                <View style={styles.totalsDivider} />
-                <View style={[styles.totalsRow, { flexDirection: rowDir }]}>
-                  <Text style={styles.grandLabel}>{t.balance}</Text>
-                  <Text style={styles.grandValue}>{fmt(balance)}</Text>
+              </>
+            ) : (
+              <>
+                <View style={S.totalsRow}>
+                  <Text style={S.totalsLabel}>{L.subtotal}</Text>
+                  <Text style={S.totalsValue}>{fmtNum(subtotal)}</Text>
+                </View>
+                <View style={S.totalsRow}>
+                  <Text style={S.totalsLabel}>{L.discountLabel}</Text>
+                  <Text style={S.totalsValue}>{fmtNum(discount)}</Text>
+                </View>
+                <View style={S.totalsRow}>
+                  <Text style={S.totalsLabel}>{L.advanceLabel}</Text>
+                  <Text style={S.totalsValue}>{fmtNum(advance)}</Text>
+                </View>
+                <View style={S.totalsDividerLine} />
+                <View style={S.totalsFinalRow}>
+                  <Text style={S.totalsFinalLabel}>{L.totalFinal}</Text>
+                  <Text style={S.totalsFinalValue}>{fmtNum(total)}</Text>
                 </View>
               </>
             )}
           </View>
         </View>
 
-        {/* Notes */}
-        {notes ? (
-          <View style={styles.notesSection}>
-            <Text style={styles.sectionLabel}>{t.notes}</Text>
-            <Text style={[styles.notesText, isRtl ? { textAlign: "right" } : {}]}>{notes}</Text>
+        {/* Signature + stamp */}
+        <View style={S.sigSection}>
+          {/* Signature box */}
+          <View style={S.sigBox}>
+            <Text style={S.sigText}>{L.goodReceived}</Text>
+            <View style={{ height: 14 }} />
+            <Text style={S.sigLine}>{L.signature}</Text>
+            <Text style={S.sigNote}>{L.signNote}</Text>
           </View>
-        ) : null}
 
-        {/* Footer */}
-        <View style={[styles.footer, { flexDirection: rowDir }]} fixed>
-          <Text style={styles.footerText}>{invoice.invoice_number}</Text>
+          {/* Stamp + reg num */}
+          <View style={S.stampBlock}>
+            <Image style={S.stampImg} src="/images/stamp.png" />
+            <Text style={S.stampRegNum}>{regLabel}</Text>
+          </View>
+        </View>
+
+        {/* Thank you note */}
+        <Text style={S.notes}>{L.thankYou}</Text>
+
+        {/* Page number footer */}
+        <View style={S.footer}>
           <Text
-            style={styles.footerText}
+            style={S.footerPage}
             render={({ pageNumber, totalPages }) =>
-              `${t.page} ${pageNumber} / ${totalPages}`
+              `${L.page} ${pageNumber} ${L.of} ${totalPages}`
             }
           />
         </View>
       </Page>
+
+      {/* ── Page 2: Terms & Conditions (optional) ────────────────────────────── */}
+      {showRules && (
+        <Page size="A4" style={[S.tcPage, pageDir]}>
+          {/* Mini header */}
+          <View style={S.tcHeaderRow}>
+            <Image style={S.tcLogoImg} src="/images/logo.png" />
+            <View style={S.tcVendor}>
+              {isAr ? (
+                <>
+                  <Text style={S.tcVendorName}>{CO.nameAr}</Text>
+                  <Text style={S.tcVendorSub}>{CO.nameEn}</Text>
+                  <Text style={S.tcVendorReg}>{CO.regAr}</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={S.tcVendorName}>{CO.nameEn}</Text>
+                  <Text style={S.tcVendorSub}>{CO.nameAr}</Text>
+                  <Text style={S.tcVendorReg}>{CO.regEn}</Text>
+                </>
+              )}
+            </View>
+          </View>
+
+          <View style={S.tcDivider} />
+          <Text style={S.tcTitle}>{L.tcTitle}</Text>
+
+          {terms.map((term, i) => (
+            <View key={i} style={S.tcItem}>
+              <Text style={S.tcItemNum}>{i + 1}.</Text>
+              <View style={S.tcItemContent}>
+                <Text style={S.tcItemTitle}>{term.title}</Text>
+                <Text style={S.tcItemBody}>{term.body}</Text>
+              </View>
+            </View>
+          ))}
+
+          <View style={S.footer}>
+            <Text
+              style={S.footerPage}
+              render={({ pageNumber, totalPages }) =>
+                `${L.page} ${pageNumber} ${L.of} ${totalPages}`
+              }
+            />
+          </View>
+        </Page>
+      )}
     </Document>
   );
 }
