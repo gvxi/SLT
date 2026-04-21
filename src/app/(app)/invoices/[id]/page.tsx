@@ -17,8 +17,10 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { useTranslation } from "react-i18next";
 import { useInvoice, useUpdateInvoice, useDeleteInvoice, useCreateInvoice } from "@/hooks/useInvoices";
+import { downloadInvoicePdf } from "@/lib/pdfExport";
 import StatusChip from "@/components/documents/StatusChip";
 import DocumentForm, { type DocumentFormSubmitData } from "@/components/documents/DocumentForm";
 import type { InvoiceStatus } from "@/types";
@@ -32,7 +34,7 @@ const NEXT_STATUS: Partial<Record<InvoiceStatus, { label: string; status: Invoic
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
 
   const { data: invoice, isLoading } = useInvoice(id);
@@ -42,6 +44,18 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!invoice) return;
+    setPdfLoading(true);
+    try {
+      const lang = (i18n.language?.startsWith("ar") ? "ar" : "en") as "en" | "ar";
+      await downloadInvoicePdf(invoice, lang);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const handleSubmit = async (data: DocumentFormSubmitData) => {
     await updateInvoice.mutateAsync({
@@ -141,6 +155,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               {t("invoices.markCancelled")}
             </Button>
           )}
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<PictureAsPdfIcon sx={{ fontSize: 16 }} />}
+            onClick={handleExportPdf}
+            disabled={pdfLoading}
+          >
+            {t("invoices.exportPdf")}
+          </Button>
           <IconButton
             size="small"
             onClick={handleDuplicate}
