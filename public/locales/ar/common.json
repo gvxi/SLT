@@ -81,7 +81,8 @@
     "linkedProduct": "المنتج المرتبط",
     "unassigned": "غير محدد",
     "allPriorities": "كل الأولويات",
-    "allAssignees": "كل المسؤولين"
+    "allAssignees": "كل المسؤولين",
+    "tasks": "مهام"
   },
   "products": {
     "sku": "رمز المنتج",
@@ -183,6 +184,16 @@
     "rulesHide": "إخفاء الشروط والأحكام",
     "print": "طباعة",
     "download": "تنزيل"
+  },
+  "dashboard": {
+    "openTasks": "المهام المفتوحة",
+    "totalProducts": "إجمالي المنتجات",
+    "unpaidInvoices": "فواتير غير مدفوعة",
+    "pendingQuotations": "عروض أسعار معلقة",
+    "totalRevenue": "إجمالي الإيرادات",
+    "tasksByStatus": "المهام حسب الحالة",
+    "monthlyRevenue": "الإيرادات الشهرية (6 أشهر)",
+    "recentActivity": "آخر النشاطات"
   },
   "quotations": {
     "quotationNumber": "رقم عرض السعر",

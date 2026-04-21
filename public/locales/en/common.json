@@ -81,7 +81,8 @@
     "linkedProduct": "Linked Product",
     "unassigned": "Unassigned",
     "allPriorities": "All priorities",
-    "allAssignees": "All assignees"
+    "allAssignees": "All assignees",
+    "tasks": "Tasks"
   },
   "products": {
     "sku": "SKU",
@@ -183,6 +184,16 @@
     "rulesHide": "Hide terms & conditions",
     "print": "Print",
     "download": "Download"
+  },
+  "dashboard": {
+    "openTasks": "Open Tasks",
+    "totalProducts": "Total Products",
+    "unpaidInvoices": "Unpaid Invoices",
+    "pendingQuotations": "Pending Quotations",
+    "totalRevenue": "Total Revenue",
+    "tasksByStatus": "Tasks by Status",
+    "monthlyRevenue": "Monthly Revenue (6 months)",
+    "recentActivity": "Recent Activity"
   },
   "quotations": {
     "quotationNumber": "Quotation Number",
