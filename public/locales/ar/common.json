@@ -204,7 +204,20 @@
     "rejected": "مرفوض",
     "expired": "منتهي",
     "newQuotation": "عرض سعر جديد",
-    "convertToInvoice": "تحويل إلى فاتورة"
+    "convertToInvoice": "تحويل إلى فاتورة",
+    "editQuotation": "تعديل عرض السعر",
+    "saveChanges": "حفظ التغييرات",
+    "saveAsDraft": "حفظ كمسودة",
+    "duplicate": "تكرار",
+    "deleteConfirm": "حذف عرض السعر {{number}}؟ لا يمكن التراجع عن هذا الإجراء.",
+    "exportPdf": "تصدير PDF",
+    "markSent": "تعيين كمرسل",
+    "markAccepted": "تعيين كمقبول",
+    "markRejected": "تعيين كمرفوض",
+    "markExpired": "تعيين كمنتهي",
+    "revertToDraft": "إعادة إلى المسودة",
+    "convertConfirm": "إنشاء فاتورة من عرض السعر {{number}}؟ سيبقى عرض السعر دون تغيير.",
+    "converted": "تم التحويل إلى فاتورة"
   },
   "settings": {
     "title": "الإعدادات",
@@ -212,6 +225,10 @@
     "appearance": "المظهر",
     "language": "اللغة",
     "darkMode": "الوضع الداكن",
-    "lightMode": "الوضع الفاتح"
+    "lightMode": "الوضع الفاتح",
+    "fullName": "الاسم الكامل",
+    "saveProfile": "حفظ الملف الشخصي",
+    "profileSaved": "تم حفظ الملف الشخصي",
+    "profileSaveError": "فشل في حفظ الملف الشخصي"
   }
 }

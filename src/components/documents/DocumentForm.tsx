@@ -169,7 +169,7 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
     });
   };
 
-  const endDateLabel = type === "invoice" ? t("invoices.dueDate") : t("invoices.expiryDate");
+  const endDateLabel = type === "invoice" ? t("invoices.dueDate") : t("quotations.expiryDate");
 
   return (
     <Box component="form" id={formId} onSubmit={handleSubmit(handleFormSubmit)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -204,7 +204,7 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
                     <Select {...field} label={t("common.status")} sx={{ fontSize: 13 }}>
                       {statuses.map((s) => (
                         <MenuItem key={s} value={s} sx={{ fontSize: 13 }}>
-                          {t(`invoices.${s}`)}
+                          {t(`invoices.${s}`, { defaultValue: t(`quotations.${s}`, { defaultValue: s }) })}
                         </MenuItem>
                       ))}
                     </Select>

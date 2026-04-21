@@ -204,7 +204,20 @@
     "rejected": "Rejected",
     "expired": "Expired",
     "newQuotation": "New Quotation",
-    "convertToInvoice": "Convert to Invoice"
+    "convertToInvoice": "Convert to Invoice",
+    "editQuotation": "Edit Quotation",
+    "saveChanges": "Save Changes",
+    "saveAsDraft": "Save as Draft",
+    "duplicate": "Duplicate",
+    "deleteConfirm": "Delete quotation {{number}}? This action cannot be undone.",
+    "exportPdf": "Export PDF",
+    "markSent": "Mark as Sent",
+    "markAccepted": "Mark as Accepted",
+    "markRejected": "Mark as Rejected",
+    "markExpired": "Mark as Expired",
+    "revertToDraft": "Revert to Draft",
+    "convertConfirm": "Create an invoice from quotation {{number}}? The quotation will remain unchanged.",
+    "converted": "Converted to Invoice"
   },
   "settings": {
     "title": "Settings",
@@ -212,6 +225,10 @@
     "appearance": "Appearance",
     "language": "Language",
     "darkMode": "Dark Mode",
-    "lightMode": "Light Mode"
+    "lightMode": "Light Mode",
+    "fullName": "Full Name",
+    "saveProfile": "Save Profile",
+    "profileSaved": "Profile saved",
+    "profileSaveError": "Failed to save profile"
   }
 }

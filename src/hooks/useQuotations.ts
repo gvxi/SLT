@@ -65,3 +65,17 @@ export function useDeleteQuotation() {
     onSuccess: () => qc.invalidateQueries({ queryKey: quotationKeys.lists() }),
   });
 }
+
+export function useConvertQuotation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string): Promise<{ invoice_id: string }> => {
+      const res = await apiFetch(`quotations/${id}/convert`, { method: "POST" });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: quotationKeys.lists() });
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}

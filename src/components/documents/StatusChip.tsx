@@ -27,7 +27,10 @@ export default function StatusChip({ status, size = "small" }: Props) {
   const colors = STATUS_COLORS[status] ?? STATUS_COLORS.draft;
 
   const labelKey = `invoices.${status}` as const;
-  const label = t(labelKey, { defaultValue: status });
+  const quotationOnlyStatuses: AnyStatus[] = ["accepted", "rejected", "expired"];
+  const label = quotationOnlyStatuses.includes(status)
+    ? t(`quotations.${status}`, { defaultValue: status })
+    : t(labelKey, { defaultValue: status });
 
   return (
     <Chip

@@ -24,11 +24,13 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
+import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import { useTranslation } from "react-i18next";
 import { useInvoices, useDeleteInvoice } from "@/hooks/useInvoices";
 import StatusChip from "@/components/documents/StatusChip";
 import InvoiceDrawer from "@/components/documents/InvoiceDrawer";
 import OmrSign from "@/components/OmrSign";
+import EmptyState from "@/components/shared/EmptyState";
 import type { Invoice, InvoiceStatus } from "@/types";
 
 const STATUS_TABS: (InvoiceStatus | "all")[] = ["all", "draft", "sent", "paid", "overdue", "cancelled"];
@@ -149,9 +151,12 @@ export default function InvoicesPage() {
           {[...Array(5)].map((_, i) => <Skeleton key={i} height={44} variant="rectangular" sx={{ borderRadius: 1 }} />)}
         </Box>
       ) : filtered.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 8, color: "text.disabled" }}>
-          <Typography variant="body2">{t("common.noData")}</Typography>
-        </Box>
+        <EmptyState
+          icon={ReceiptLongOutlinedIcon}
+          title={t("common.noData")}
+          actionLabel={t("invoices.newInvoice")}
+          onAction={() => openDrawer(null)}
+        />
       ) : isMobile ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {filtered.map((inv) => (

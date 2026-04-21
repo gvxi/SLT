@@ -1,10 +1,10 @@
 # STATE.md — Current Project State
 
 ## Position
-- **Current Phase:** 07-dashboard (COMPLETE)
-- **Current Plan:** Ready for Phase 08
+- **Current Phase:** 08-settings-polish (COMPLETE)
+- **Current Plan:** 08-01 complete
 - **Blockers:** None
-- **Next Action:** Verify dashboard at /dashboard, then run Phase 08-01-PLAN.md (settings page + shared components)
+- **Next Action:** Human verify — test settings page, empty states, error boundaries, 404
 
 ## Progress
 - [x] Phase 01: Foundation & Setup (3/3 plans complete)
@@ -14,7 +14,7 @@
 - [x] Phase 05: Invoice Management (with PDF export)
 - [x] Phase 06: Quotation Management
 - [x] Phase 07: Dashboard & Analytics (07-01 complete)
-- [ ] Phase 08: Settings & Polish
+- [x] Phase 08: Settings & Polish (08-01 complete)
 
 ## Decisions
 - Supabase accessed via Next.js API routes (server-side only) — not direct client calls
