@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
+import { logActivity } from "@/lib/logActivity";
 
 const updateProductSchema = z.object({
   sku: z.string().min(1).optional(),
@@ -40,7 +41,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(request);
+  const { user, error } = await requireAuth(request);
   if (error) return error;
 
   const { id } = await params;
@@ -60,6 +61,8 @@ export async function PATCH(
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
+  await logActivity({ supabase, userId: user!.id, entityType: "product", entityId: id, action: "updated", summary: `Updated product: ${data.name_en}` });
+
   return NextResponse.json(data);
 }
 
@@ -67,14 +70,17 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(request);
+  const { user, error } = await requireAuth(request);
   if (error) return error;
 
   const { id } = await params;
   const supabase = createServerSupabaseClient();
 
+  const { data: prod } = await supabase.from("products").select("name_en").eq("id", id).single();
   const { error: dbError } = await supabase.from("products").delete().eq("id", id);
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+
+  if (prod) await logActivity({ supabase, userId: user!.id, entityType: "product", entityId: id, action: "deleted", summary: `Deleted product: ${prod.name_en}` });
 
   return new NextResponse(null, { status: 204 });
 }

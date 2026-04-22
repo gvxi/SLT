@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
+import { logActivity } from "@/lib/logActivity";
 
 const updateClientSchema = z.object({
   name_en: z.string().min(1).optional(),
@@ -40,7 +41,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(request);
+  const { user, error } = await requireAuth(request);
   if (error) return error;
 
   const { id } = await params;
@@ -60,6 +61,8 @@ export async function PATCH(
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
+  await logActivity({ supabase, userId: user!.id, entityType: "client", entityId: id, action: "updated", summary: `Updated client: ${data.name_en}` });
+
   return NextResponse.json(data);
 }
 
@@ -67,14 +70,17 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(request);
+  const { user, error } = await requireAuth(request);
   if (error) return error;
 
   const { id } = await params;
   const supabase = createServerSupabaseClient();
 
+  const { data: client } = await supabase.from("clients").select("name_en").eq("id", id).single();
   const { error: dbError } = await supabase.from("clients").delete().eq("id", id);
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+
+  if (client) await logActivity({ supabase, userId: user!.id, entityType: "client", entityId: id, action: "deleted", summary: `Deleted client: ${client.name_en}` });
 
   return new NextResponse(null, { status: 204 });
 }

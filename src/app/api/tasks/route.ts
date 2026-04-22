@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
+import { logActivity } from "@/lib/logActivity";
 
 const PAGE_SIZE = 20;
 
@@ -20,8 +21,9 @@ const createTaskSchema = z.object({
   assignee_id: z.string().uuid().nullable().optional(),
   due_date: z.string().nullable().optional(),
   product_id: z.string().nullable().optional(),
-  client_id: z.string().uuid().nullable().optional(),
+  client_id: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
+  internal_notes: z.string().nullable().optional(),
   items: z.array(taskItemSchema).optional(),
 });
 
@@ -106,6 +108,8 @@ export async function POST(request: NextRequest) {
       .from("task_items")
       .insert(items.map((item, i) => ({ ...item, task_id: data.id, sort_order: i })));
   }
+
+  await logActivity({ supabase, userId: user!.id, entityType: "task", entityId: data.id, action: "created", summary: `Created task: ${data.title}` });
 
   return NextResponse.json(data, { status: 201 });
 }

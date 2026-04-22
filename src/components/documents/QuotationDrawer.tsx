@@ -21,6 +21,7 @@ import {
   useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -41,6 +42,7 @@ import DocumentForm, { type DocumentFormSubmitData, type TotalsSnapshot } from "
 import StatusChip from "./StatusChip";
 import PdfPreviewDialog from "./PdfPreviewDialog";
 import OmrSign from "@/components/OmrSign";
+import { toast } from "@/store/toastStore";
 import type { QuotationStatus } from "@/types";
 
 const FORM_ID = "quotation-drawer-form";
@@ -68,6 +70,7 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
   const convertQuotation = useConvertQuotation();
 
   const [isSaving, setIsSaving] = useState(false);
+  const [viewMode, setViewMode] = useState(!!quotationId);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [converting, setConverting] = useState(false);
@@ -115,6 +118,7 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
           notes_ar: data.notes_ar,
           status: effectiveStatus as QuotationStatus,
         } as Parameters<typeof updateQuotation.mutateAsync>[0]);
+        toast(t("toast.saved"), "success");
       } else {
         await createQuotation.mutateAsync({
           client_id: data.client_id ?? undefined,
@@ -127,8 +131,11 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
           status: "draft",
           items: data.items,
         } as Parameters<typeof createQuotation.mutateAsync>[0]);
+        toast(t("toast.created"), "success");
       }
       onClose();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
     } finally {
       setIsSaving(false);
     }
@@ -174,6 +181,12 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
 
   const nextAction = quotation ? NEXT_STATUS[quotation.status] : undefined;
   const isEditMode = !!quotationId;
+
+  const prevQuotationId = useRef(quotationId);
+  if (prevQuotationId.current !== quotationId) {
+    prevQuotationId.current = quotationId;
+    setViewMode(!!quotationId);
+  }
   const drawerWidth = isMobile ? "100%" : 680;
   const drawerHeight = isMobile ? "96dvh" : "100%";
 
@@ -241,6 +254,17 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
 
           {isEditMode && (
             <Box sx={{ display: "flex", gap: 0.5 }}>
+              {viewMode && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<EditOutlinedIcon sx={{ fontSize: 15 }} />}
+                  onClick={() => setViewMode(false)}
+                  sx={{ fontSize: 12, textTransform: "none", px: 1.25 }}
+                >
+                  {t("common.edit")}
+                </Button>
+              )}
               {isMobile ? (
                 <>
                   <IconButton size="small" onClick={(e) => setMoreAnchorEl(e.currentTarget)} sx={{ color: "text.secondary" }}>
@@ -348,21 +372,29 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
         )}
 
         {/* Scrollable body */}
-        <Box sx={{ flex: 1, overflowY: "auto", px: 2.5, py: 2.5 }}>
+        <Box sx={{ flex: 1, overflowY: "auto", px: 2.5, py: 2.5, position: "relative" }}>
           {isEditMode && isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 200 }}>
               <CircularProgress size={28} />
             </Box>
           ) : (
-            <DocumentForm
-              type="quotation"
-              mode={isEditMode ? "edit" : "create"}
-              initialData={quotation}
-              onSubmit={handleSubmit}
-              formId={FORM_ID}
-              hideActions
-              onTotalsChange={onTotalsChange}
-            />
+            <>
+              {viewMode && (
+                <Box
+                  sx={{ position: "absolute", inset: 0, zIndex: 2, cursor: "default" }}
+                  onClick={() => {}}
+                />
+              )}
+              <DocumentForm
+                type="quotation"
+                mode={isEditMode ? "edit" : "create"}
+                initialData={quotation}
+                onSubmit={handleSubmit}
+                formId={FORM_ID}
+                hideActions
+                onTotalsChange={onTotalsChange}
+              />
+            </>
           )}
         </Box>
 
@@ -396,6 +428,7 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
 
           <Divider sx={{ mb: 1.5 }} />
 
+          {!viewMode && (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
             <Button size="small" variant="outlined" onClick={onClose} disabled={isSaving}>
               {t("common.cancel")}
@@ -422,6 +455,7 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
               {isEditMode ? t("invoices.saveChanges") : t("common.create")}
             </Button>
           </Box>
+          )}
         </Box>
       </Drawer>
 

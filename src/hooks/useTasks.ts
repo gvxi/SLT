@@ -18,6 +18,17 @@ export type TaskFilters = {
 
 export type TasksPage = { data: Task[]; total: number; page: number; page_size: number };
 export type TaskMonthCount = { year: number; month: number; count: number };
+export type TaskStats = { backlog: number; in_progress: number; review: number; done: number };
+
+export function useTaskStats() {
+  return useQuery({
+    queryKey: [...taskKeys.all, "stats"],
+    queryFn: async () => {
+      const res = await apiFetch("tasks/stats");
+      return res.json() as Promise<TaskStats>;
+    },
+  });
+}
 
 export function useTasks(filters: TaskFilters = {}) {
   return useQuery({

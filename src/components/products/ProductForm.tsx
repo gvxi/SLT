@@ -20,6 +20,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import CasinoIcon from "@mui/icons-material/Casino";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
@@ -48,6 +49,7 @@ interface Props {
   product?: Product | null;
   onClose: () => void;
   allProducts?: Product[];
+  initialViewMode?: boolean;
 }
 
 function generateEAN13(): string {
@@ -57,13 +59,18 @@ function generateEAN13(): string {
   return [...digits, check].join("");
 }
 
-export default function ProductForm({ open, product, onClose, allProducts = [] }: Props) {
+export default function ProductForm({ open, product, onClose, allProducts = [], initialViewMode }: Props) {
   const { t } = useTranslation();
   const isEdit = !!product;
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const { data: categories = [] } = useProductCategories();
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [viewMode, setViewMode] = useState(initialViewMode ?? false);
+
+  useEffect(() => {
+    if (open) setViewMode(initialViewMode ?? false);
+  }, [open, initialViewMode]);
 
   const nextSku = useMemo(() => {
     const nums = allProducts
@@ -176,15 +183,33 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
         }}
       >
         <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 15 }}>
-          {isEdit ? t("common.edit") : t("common.create")} — {t("nav.products")}
+          {isEdit
+            ? (viewMode ? t("common.view", { defaultValue: "View" }) : t("common.edit"))
+            : t("common.create")} — {t("nav.products")}
         </Typography>
-        <IconButton size="small" onClick={onClose} edge="end">
-          <CloseIcon sx={{ fontSize: 18 }} />
-        </IconButton>
+        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+          {isEdit && viewMode && (
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<EditOutlinedIcon sx={{ fontSize: 15 }} />}
+              onClick={() => setViewMode(false)}
+              sx={{ fontSize: 12, textTransform: "none", px: 1.25 }}
+            >
+              {t("common.edit")}
+            </Button>
+          )}
+          <IconButton size="small" onClick={onClose} edge="end">
+            <CloseIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Box>
       </Box>
 
       {/* Body */}
-      <Box sx={{ flex: 1, overflowY: "auto", px: 2.5, py: 2.5 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2.5, py: 2.5, position: "relative" }}>
+        {viewMode && (
+          <Box sx={{ position: "absolute", inset: 0, zIndex: 2, cursor: "default" }} onClick={() => {}} />
+        )}
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error.message}
@@ -390,6 +415,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
         <Button variant="text" onClick={onClose}>
           {t("common.cancel")}
         </Button>
+        {!viewMode && (
         <Button
           variant="contained"
           disabled={isSubmitting || mutation.isPending}
@@ -397,6 +423,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [] }
         >
           {mutation.isPending ? t("common.loading") : t("common.save")}
         </Button>
+        )}
       </Box>
       <BarcodeScanner
         open={scannerOpen}

@@ -5,10 +5,12 @@ interface UIState {
   language: "en" | "ar";
   themeMode: "light" | "dark";
   sidebarOpen: boolean;
+  startPage: string;
   setLanguage: (lang: "en" | "ar") => void;
   toggleTheme: () => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  setStartPage: (page: string) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -17,6 +19,7 @@ export const useUIStore = create<UIState>()(
       language: "en",
       themeMode: "light",
       sidebarOpen: true,
+      startPage: "dashboard",
       setLanguage: (lang) => set({ language: lang }),
       toggleTheme: () =>
         set((state) => ({
@@ -25,12 +28,14 @@ export const useUIStore = create<UIState>()(
       toggleSidebar: () =>
         set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      setStartPage: (page) => set({ startPage: page }),
     }),
     {
       name: "slt-ui-store",
       partialize: (state) => ({
         language: state.language,
         themeMode: state.themeMode,
+        startPage: state.startPage,
       }),
     }
   )

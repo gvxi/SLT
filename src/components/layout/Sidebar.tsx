@@ -23,6 +23,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import { useUIStore } from "@/store/uiStore";
 
 const DRAWER_WIDTH = 240;
@@ -35,6 +36,7 @@ const navItems = [
   { key: "invoices", path: "/invoices", icon: <ReceiptIcon /> },
   { key: "quotations", path: "/quotations", icon: <RequestQuoteIcon /> },
   { key: "customers", path: "/customers", icon: <PeopleAltOutlinedIcon /> },
+  { key: "logs", path: "/logs", icon: <HistoryOutlinedIcon /> },
   { key: "settings", path: "/settings", icon: <SettingsIcon /> },
 ];
 

@@ -24,6 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import ClientSelect from "./ClientSelect";
 import LineItemsTable from "./LineItemsTable";
+import { toast } from "@/store/toastStore";
 import type { Invoice, Quotation, InvoiceStatus, QuotationStatus, LineItemDraft, InvoiceItem, QuotationItem } from "@/types";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -153,20 +154,24 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
   }, [lineItems, watchedTaxPct, watchedDiscount, watchedUpfront, onTotalsChange]);
 
   const handleFormSubmit = async (values: FormValues) => {
-    await onSubmit({
-      client_id: values.client_id ?? null,
-      issue_date: values.issue_date,
-      ...(type === "invoice" ? { due_date: values.end_date } : { expiry_date: values.end_date }),
-      tax_pct: values.tax_pct,
-      discount: values.discount,
-      upfront_payment: values.upfront_payment,
-      location: values.location,
-      phone_number: values.phone_number,
-      notes_en: values.notes_en,
-      notes_ar: values.notes_ar,
-      status: values.status,
-      items: lineItems,
-    });
+    try {
+      await onSubmit({
+        client_id: values.client_id ?? null,
+        issue_date: values.issue_date,
+        ...(type === "invoice" ? { due_date: values.end_date } : { expiry_date: values.end_date }),
+        tax_pct: values.tax_pct,
+        discount: values.discount,
+        upfront_payment: values.upfront_payment,
+        location: values.location,
+        phone_number: values.phone_number,
+        notes_en: values.notes_en,
+        notes_ar: values.notes_ar,
+        status: values.status,
+        items: lineItems,
+      });
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Something went wrong", "error");
+    }
   };
 
   const endDateLabel = type === "invoice" ? t("invoices.dueDate") : t("quotations.expiryDate");

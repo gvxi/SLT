@@ -26,8 +26,15 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  Chip,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
 import { useRouter } from "next/navigation";
@@ -38,6 +45,7 @@ import { useCreateQuotation } from "@/hooks/useQuotations";
 import ClientSelect from "@/components/documents/ClientSelect";
 import LineItemsTable from "@/components/documents/LineItemsTable";
 import { useTranslation } from "react-i18next";
+import { toast } from "@/store/toastStore";
 import type { TaskStatus, TaskPriority, LineItemDraft } from "@/types";
 
 const formSchema = z.object({
@@ -47,8 +55,9 @@ const formSchema = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]),
   assignee_id: z.string().uuid().nullable().optional(),
   due_date: z.string().nullable().optional(),
-  client_id: z.string().uuid().nullable().optional(),
+  client_id: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
+  internal_notes: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -85,6 +94,7 @@ export default function TaskDrawer({
   const [convertMenuAnchor, setConvertMenuAnchor] = useState<HTMLElement | null>(null);
   const [convertTarget, setConvertTarget] = useState<"invoice" | "quotation" | null>(null);
   const [converting, setConverting] = useState(false);
+  const [viewMode, setViewMode] = useState(isEditing);
 
   const {
     control,
@@ -102,11 +112,14 @@ export default function TaskDrawer({
       due_date: null,
       client_id: null,
       location: null,
+      internal_notes: null,
     },
   });
 
 
   useEffect(() => {
+    if (!open) return;
+    setViewMode(isEditing);
     if (task && isEditing) {
       reset({
         title: task.title,
@@ -117,6 +130,7 @@ export default function TaskDrawer({
         due_date: task.due_date,
         client_id: task.client_id,
         location: task.location,
+        internal_notes: task.internal_notes ?? null,
       });
       const items = task.task_items ?? [];
       setLineItems(
@@ -141,26 +155,38 @@ export default function TaskDrawer({
         due_date: null,
         client_id: null,
         location: null,
+        internal_notes: null,
       });
       setLineItems([{ product_id: null, description: "", qty: 1, unit_price: 0 }]);
     }
-  }, [task, isEditing, initialStatus, reset]);
+  }, [open, task, isEditing, initialStatus, reset]);
 
   const onSubmit = async (values: FormValues) => {
     const items = lineItems.filter((i) => i.description.trim() || i.product_id);
-    if (isEditing && taskId) {
-      await updateTask.mutateAsync({ id: taskId, ...values, items });
-    } else {
-      await createTask.mutateAsync({ ...values, items });
+    try {
+      if (isEditing && taskId) {
+        await updateTask.mutateAsync({ id: taskId, ...values, items });
+        toast(t("toast.saved"), "success");
+      } else {
+        await createTask.mutateAsync({ ...values, items });
+        toast(t("toast.created"), "success");
+      }
+      onClose();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
     }
-    onClose();
   };
 
   const handleDelete = async () => {
     if (taskId) {
-      await deleteTask.mutateAsync(taskId);
-      setConfirmDelete(false);
-      onClose();
+      try {
+        await deleteTask.mutateAsync(taskId);
+        toast(t("toast.deleted"), "success");
+        setConfirmDelete(false);
+        onClose();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : t("toast.error"), "error");
+      }
     }
   };
 
@@ -228,10 +254,23 @@ export default function TaskDrawer({
           }}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            {isEditing ? t("common.edit") : t("tasks.newTask")}
+            {isEditing
+              ? (viewMode ? t("common.view", { defaultValue: "View" }) : t("common.edit"))
+              : t("tasks.newTask")}
           </Typography>
           <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-            {isEditing && (
+            {isEditing && viewMode && (
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<EditOutlinedIcon sx={{ fontSize: 15 }} />}
+                onClick={() => setViewMode(false)}
+                sx={{ fontSize: 12, textTransform: "none", px: 1.25 }}
+              >
+                {t("common.edit")}
+              </Button>
+            )}
+            {isEditing && !viewMode && (
               <Button
                 size="small"
                 variant="outlined"
@@ -253,6 +292,104 @@ export default function TaskDrawer({
         {isLoading && isEditing ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
             <CircularProgress size={24} />
+          </Box>
+        ) : viewMode && task ? (
+          /* ── VIEW MODE ──────────────────────────────────────────── */
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2.5, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 15 }}>{task.title}</Typography>
+
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <Chip label={t(`tasks.${task.status}`)} size="small" color={
+                task.status === "done" ? "success" : task.status === "in_progress" ? "warning" : task.status === "review" ? "info" : "default"
+              } />
+              <Chip label={t(`tasks.${task.priority}`)} size="small" variant="outlined" />
+            </Box>
+
+            {[
+              { label: t("invoices.client"), value: task.client ? task.client.name_en : null },
+              { label: t("tasks.assignee"), value: task.assignee ? task.assignee.full_name : null },
+              { label: t("tasks.dueDate"), value: task.due_date },
+              { label: t("invoices.location"), value: task.location },
+            ].map(({ label, value }) =>
+              value ? (
+                <Box key={label} sx={{ display: "flex", gap: 1 }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary", fontSize: 12, minWidth: 80, flexShrink: 0 }}>{label}</Typography>
+                  <Typography variant="body2" sx={{ fontSize: 13 }}>{value}</Typography>
+                </Box>
+              ) : null
+            )}
+
+            {task.description && (
+              <Box>
+                <Typography variant="body2" sx={{ color: "text.secondary", fontSize: 12, mb: 0.5 }}>{t("tasks.description")}</Typography>
+                <Typography variant="body2" sx={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{task.description}</Typography>
+              </Box>
+            )}
+
+            {task.task_items && task.task_items.length > 0 && (
+              <Box>
+                <Divider sx={{ mb: 1.5 }} />
+                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>{t("invoices.lineItems")}</Typography>
+                <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ "& th": { fontSize: 11, color: "text.secondary", bgcolor: "action.hover", fontWeight: 600 } }}>
+                        <TableCell>{t("products.name")}</TableCell>
+                        <TableCell align="right">Qty</TableCell>
+                        <TableCell align="right">{t("invoices.unitPrice")}</TableCell>
+                        <TableCell align="right">{t("invoices.total")}</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {[...task.task_items]
+                        .sort((a, b) => a.sort_order - b.sort_order)
+                        .map((item, i) => (
+                          <TableRow key={i} sx={{ "& td": { fontSize: 12 } }}>
+                            <TableCell>{item.description || item.product?.name_en}</TableCell>
+                            <TableCell align="right">{item.qty}</TableCell>
+                            <TableCell align="right">{item.unit_price.toFixed(3)}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>{(item.qty * item.unit_price).toFixed(3)}</TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 1, pr: 0.5, gap: 1 }}>
+                  <Typography variant="body2" sx={{ fontSize: 12, color: "text.secondary" }}>{t("invoices.total")}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontSize: 13 }}>
+                    {task.task_items.reduce((s, i) => s + i.qty * i.unit_price, 0).toFixed(3)} OMR
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {task.internal_notes && (
+              <Box sx={{ bgcolor: "action.hover", borderRadius: 1, p: 1.5 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary", fontSize: 11, mb: 0.25 }}>{t("tasks.internalNotes", { defaultValue: "Internal Notes" })}</Typography>
+                <Typography variant="body2" sx={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{task.internal_notes}</Typography>
+              </Box>
+            )}
+
+            <Divider />
+            <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={() => setConfirmDelete(true)}
+              >
+                {t("common.delete")}
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={(e) => setConvertMenuAnchor(e.currentTarget)}
+                disabled={converting}
+                sx={{ fontSize: 12, textTransform: "none" }}
+              >
+                {t("tasks.convertTo", { defaultValue: "Convert to…" })}
+              </Button>
+            </Box>
           </Box>
         ) : (
           <Box
@@ -420,6 +557,43 @@ export default function TaskDrawer({
             <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
               <LineItemsTable items={lineItems} onChange={setLineItems} />
             </Box>
+
+            {/* Line items total */}
+            {lineItems.some((i) => i.qty * i.unit_price > 0) && (
+              <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 1, pr: 0.5 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontSize: 12 }}>
+                  {t("invoices.total", { defaultValue: "Total" })}
+                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 15 }}>
+                  {lineItems.reduce((s, i) => s + i.qty * i.unit_price, 0).toFixed(3)}{" "}
+                  <Typography component="span" sx={{ fontSize: 11, color: "text.secondary", fontWeight: 400 }}>OMR</Typography>
+                </Typography>
+              </Box>
+            )}
+
+            {/* Internal Notes (not printed) */}
+            <Divider />
+            <Controller
+              name="internal_notes"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value || null)}
+                  label={t("tasks.internalNotes", { defaultValue: "Internal Notes" })}
+                  placeholder={t("tasks.internalNotesHint", { defaultValue: "Private — not shown on documents" })}
+                  size="small"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  slotProps={{
+                    input: { sx: { fontSize: 13 } },
+                    inputLabel: { sx: { fontSize: 13 } },
+                  }}
+                />
+              )}
+            />
 
             {/* Actions */}
             <Box sx={{ mt: "auto", pt: 1.5, display: "flex", justifyContent: "space-between", gap: 1 }}>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
+import { logActivity } from "@/lib/logActivity";
 
 const createProductSchema = z.object({
   sku: z.string().min(1),
@@ -54,6 +55,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+
+  await logActivity({ supabase, userId: user!.id, entityType: "product", entityId: data.id, action: "created", summary: `Created product: ${data.name_en} (${data.sku})` });
 
   return NextResponse.json(data, { status: 201 });
 }

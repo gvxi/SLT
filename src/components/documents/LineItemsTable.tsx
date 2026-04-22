@@ -15,14 +15,24 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Divider,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import SearchIcon from "@mui/icons-material/Search";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import { useTranslation } from "react-i18next";
-import { useProducts } from "@/hooks/useProducts";
+import { useProducts, useCreateProduct } from "@/hooks/useProducts";
+import { toast } from "@/store/toastStore";
 import BatchBarcodeScanner from "@/components/products/BatchBarcodeScanner";
 import ProductPickerDialog from "@/components/documents/ProductPickerDialog";
 import type { LineItemDraft } from "@/types";
@@ -36,10 +46,14 @@ export default function LineItemsTable({ items, onChange }: Props) {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
   const { data: products = [] } = useProducts();
+  const createProduct = useCreateProduct();
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Save-as-product dialog state
+  const [saveDialogIndex, setSaveDialogIndex] = useState<number | null>(null);
+  const [saveForm, setSaveForm] = useState({ name_en: "", sku: "", sale_price: "" });
 
   const activeProducts = products.filter((p) => p.status === "active");
 
@@ -56,6 +70,34 @@ export default function LineItemsTable({ items, onChange }: Props) {
   const handleBarcodeDetectBatch = (newItems: LineItemDraft[]) => {
     onChange([...items, ...newItems]);
     setScannerOpen(false);
+  };
+
+  const addManualItem = () => {
+    onChange([...items, { product_id: null, description: "", qty: 1, unit_price: 0 }]);
+    setMenuAnchor(null);
+  };
+
+  const openSaveDialog = (index: number) => {
+    const item = items[index];
+    setSaveForm({ name_en: item.description, sku: "", sale_price: String(item.unit_price) });
+    setSaveDialogIndex(index);
+  };
+
+  const handleSaveAsProduct = async () => {
+    if (saveDialogIndex === null) return;
+    try {
+      const created = await createProduct.mutateAsync({
+        name_en: saveForm.name_en.trim(),
+        sku: saveForm.sku.trim() || undefined,
+        unit_price: saveForm.sale_price ? Number(saveForm.sale_price) : 0,
+        status: "active",
+      });
+      update(saveDialogIndex, { product_id: created.id });
+      toast(t("products.savedAsProduct", { defaultValue: "Saved as product" }), "success");
+      setSaveDialogIndex(null);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
+    }
   };
 
   return (
@@ -99,6 +141,17 @@ export default function LineItemsTable({ items, onChange }: Props) {
                       <Typography sx={{ fontSize: 10, color: "text.disabled", mt: 0.25, lineHeight: 1 }}>
                         {linked.sku}
                       </Typography>
+                    )}
+                    {/* Save-as-product chip for manual items */}
+                    {!item.product_id && item.description.trim() && (
+                      <Chip
+                        icon={<SaveOutlinedIcon sx={{ fontSize: 12 }} />}
+                        label={t("products.saveAsProduct", { defaultValue: "Save as product" })}
+                        size="small"
+                        variant="outlined"
+                        onClick={() => openSaveDialog(i)}
+                        sx={{ mt: 0.5, fontSize: 10, height: 20, cursor: "pointer", color: "primary.main", borderColor: "primary.light", "& .MuiChip-icon": { color: "primary.main" } }}
+                      />
                     )}
                   </TableCell>
 
@@ -194,6 +247,11 @@ export default function LineItemsTable({ items, onChange }: Props) {
           <ListItemIcon><QrCodeScannerIcon sx={{ fontSize: 17 }} /></ListItemIcon>
           <ListItemText slotProps={{ primary: { sx: { fontSize: 13 } } }}>{t("invoices.addByScan")}</ListItemText>
         </MenuItem>
+        <Divider sx={{ my: 0.5 }} />
+        <MenuItem onClick={addManualItem} dense>
+          <ListItemIcon><EditOutlinedIcon sx={{ fontSize: 17 }} /></ListItemIcon>
+          <ListItemText slotProps={{ primary: { sx: { fontSize: 13 } } }}>{t("invoices.addManually", { defaultValue: "Add manually" })}</ListItemText>
+        </MenuItem>
       </Menu>
 
       {/* Barcode scanner dialog (batch mode) */}
@@ -209,6 +267,49 @@ export default function LineItemsTable({ items, onChange }: Props) {
         onClose={() => setPickerOpen(false)}
         onConfirm={handlePickerConfirm}
       />
+
+      {/* Save-as-product dialog */}
+      <Dialog open={saveDialogIndex !== null} onClose={() => setSaveDialogIndex(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 600, pb: 1 }}>
+          {t("products.saveAsProduct", { defaultValue: "Save as product" })}
+        </DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 1.5, pt: "12px !important" }}>
+          <TextField
+            label={t("products.nameEn")}
+            size="small"
+            fullWidth
+            value={saveForm.name_en}
+            onChange={(e) => setSaveForm((f) => ({ ...f, name_en: e.target.value }))}
+            autoFocus
+          />
+          <TextField
+            label={t("products.sku")}
+            size="small"
+            fullWidth
+            value={saveForm.sku}
+            onChange={(e) => setSaveForm((f) => ({ ...f, sku: e.target.value }))}
+          />
+          <TextField
+            label={t("products.salePrice")}
+            size="small"
+            fullWidth
+            type="number"
+            value={saveForm.sale_price}
+            onChange={(e) => setSaveForm((f) => ({ ...f, sale_price: e.target.value }))}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button size="small" onClick={() => setSaveDialogIndex(null)}>{t("common.cancel")}</Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={handleSaveAsProduct}
+            disabled={!saveForm.name_en.trim() || createProduct.isPending}
+          >
+            {t("common.save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

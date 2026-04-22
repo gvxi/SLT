@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar_url    TEXT,
   role          TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
   lang_preference TEXT NOT NULL DEFAULT 'en' CHECK (lang_preference IN ('en', 'ar')),
+  bottom_nav_config JSONB,
+  start_page    TEXT CHECK (start_page IN ('dashboard','tasks','products','invoices','quotations','customers','settings')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );

@@ -31,6 +31,7 @@ interface Props {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onView?: (product: Product) => void;
   compact?: boolean;
 }
 
@@ -40,7 +41,7 @@ interface InlineEditState {
   value: string;
 }
 
-export default function ProductTable({ products, onEdit, onDelete, compact = false }: Props) {
+export default function ProductTable({ products, onEdit, onDelete, onView, compact = false }: Props) {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
   const updateProduct = useUpdateProduct();
@@ -161,7 +162,8 @@ export default function ProductTable({ products, onEdit, onDelete, compact = fal
             <TableRow
               key={row.id}
               hover
-              sx={{ "& td": { fontSize, py: cellPy } }}
+              sx={{ "& td": { fontSize, py: cellPy }, cursor: onView ? "pointer" : "default" }}
+              onClick={() => onView?.(row)}
             >
               {/* SKU */}
               <TableCell
@@ -303,12 +305,12 @@ export default function ProductTable({ products, onEdit, onDelete, compact = fal
               {/* Actions */}
               <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                 <Tooltip title={t("common.edit")}>
-                  <IconButton size="small" onClick={() => onEdit(row)}>
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(row); }}>
                     <EditIcon sx={{ fontSize: 15 }} />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title={t("common.delete")}>
-                  <IconButton size="small" onClick={() => onDelete(row)}>
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDelete(row); }}>
                     <DeleteIcon sx={{ fontSize: 15 }} />
                   </IconButton>
                 </Tooltip>

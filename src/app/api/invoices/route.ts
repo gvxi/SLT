@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
+import { logActivity } from "@/lib/logActivity";
 
 const invoiceItemSchema = z.object({
   product_id: z.string().nullable().optional(),
@@ -83,6 +84,8 @@ export async function POST(request: NextRequest) {
     .select("*, client:clients(id, name_en, name_ar), invoice_items(*)")
     .eq("id", invoice.id)
     .single();
+
+  await logActivity({ supabase, userId: user!.id, entityType: "invoice", entityId: invoice.id, action: "created", summary: `Created invoice: ${invoice.invoice_number ?? invoice.id}` });
 
   return NextResponse.json(full, { status: 201 });
 }

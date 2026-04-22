@@ -25,6 +25,7 @@ import {
   useTheme,
 } from "@mui/material";
 import ProductMobileList from "@/components/products/ProductMobileList";
+import CollapsibleFilters from "@/components/shared/CollapsibleFilters";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import GridViewIcon from "@mui/icons-material/GridView";
 import DensitySmallIcon from "@mui/icons-material/DensitySmall";
@@ -58,6 +59,7 @@ export default function ProductsPage() {
   const [filterStock, setFilterStock] = useState<StockStatus>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [formViewMode, setFormViewMode] = useState(false);
 
   const searchParams = useSearchParams();
   const { replace: routerReplace } = useRouter();
@@ -108,12 +110,20 @@ export default function ProductsPage() {
 
   const handleEdit = (product: Product) => {
     setEditProduct(product);
+    setFormViewMode(false);
+    setFormOpen(true);
+  };
+
+  const handleView = (product: Product) => {
+    setEditProduct(product);
+    setFormViewMode(true);
     setFormOpen(true);
   };
 
   const handleCloseForm = () => {
     setFormOpen(false);
     setEditProduct(null);
+    setFormViewMode(false);
   };
 
   const handleConfirmDelete = async () => {
@@ -163,13 +173,13 @@ export default function ProductsPage() {
           />
 
           {/* Toolbar */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5, flexWrap: "wrap" }}>
             <TextField
               size="small"
               placeholder={t("common.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              sx={{ width: 220 }}
+              sx={{ flex: 1, minWidth: 180 }}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -180,37 +190,6 @@ export default function ProductsPage() {
                 },
               }}
             />
-
-            {/* Category filter */}
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel sx={{ fontSize: 13 }}>{t("products.category")}</InputLabel>
-              <Select
-                label={t("products.category")}
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                sx={{ fontSize: 13 }}
-              >
-                <MenuItem value="all" sx={{ fontSize: 13 }}><em>{t("products.allCategories")}</em></MenuItem>
-                {categories.map((c) => (
-                  <MenuItem key={c.id} value={c.name} sx={{ fontSize: 13 }}>{c.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* Status filter */}
-            <FormControl size="small" sx={{ minWidth: 110 }}>
-              <InputLabel sx={{ fontSize: 13 }}>{t("products.filterStatus")}</InputLabel>
-              <Select
-                label={t("products.filterStatus")}
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as "all" | "active" | "inactive")}
-                sx={{ fontSize: 13 }}
-              >
-                <MenuItem value="all" sx={{ fontSize: 13 }}>{t("common.all")}</MenuItem>
-                <MenuItem value="active" sx={{ fontSize: 13 }}>{t("products.active")}</MenuItem>
-                <MenuItem value="inactive" sx={{ fontSize: 13 }}>{t("products.inactive")}</MenuItem>
-              </Select>
-            </FormControl>
 
             {/* View toggle — hidden on mobile (auto-grid) */}
             {!isMobile && (
@@ -233,6 +212,42 @@ export default function ProductsPage() {
             )}
           </Box>
 
+          {/* Collapsible filters */}
+          <CollapsibleFilters activeCount={[(filterCategory !== "all" ? filterCategory : ""), (filterStatus !== "all" ? filterStatus : "")].filter(Boolean).length}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.25 }}>
+              {/* Category filter */}
+              <FormControl size="small" fullWidth>
+                <InputLabel sx={{ fontSize: 13 }}>{t("products.category")}</InputLabel>
+                <Select
+                  label={t("products.category")}
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  sx={{ fontSize: 13 }}
+                >
+                  <MenuItem value="all" sx={{ fontSize: 13 }}><em>{t("products.allCategories")}</em></MenuItem>
+                  {categories.map((c) => (
+                    <MenuItem key={c.id} value={c.name} sx={{ fontSize: 13 }}>{c.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Status filter */}
+              <FormControl size="small" fullWidth>
+                <InputLabel sx={{ fontSize: 13 }}>{t("products.filterStatus")}</InputLabel>
+                <Select
+                  label={t("products.filterStatus")}
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as "all" | "active" | "inactive")}
+                  sx={{ fontSize: 13 }}
+                >
+                  <MenuItem value="all" sx={{ fontSize: 13 }}>{t("common.all")}</MenuItem>
+                  <MenuItem value="active" sx={{ fontSize: 13 }}>{t("products.active")}</MenuItem>
+                  <MenuItem value="inactive" sx={{ fontSize: 13 }}>{t("products.inactive")}</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </CollapsibleFilters>
+
           {/* Content */}
           {isLoading ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -247,6 +262,7 @@ export default function ProductsPage() {
           ) : (
             <ProductTable
               products={filtered}
+              onView={handleView}
               onEdit={handleEdit}
               onDelete={setDeleteTarget}
               compact={effectiveView === "compact"}
@@ -261,6 +277,7 @@ export default function ProductsPage() {
         product={editProduct}
         onClose={handleCloseForm}
         allProducts={products}
+        initialViewMode={formViewMode}
       />
 
       {/* Delete confirmation dialog */}

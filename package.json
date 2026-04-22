@@ -55,6 +55,7 @@
     "react-hook-form": "^7.72.1",
     "react-i18next": "^17.0.4",
     "react-leaflet": "^5.0.0",
+    "react-onesignal": "^3.5.1",
     "recharts": "^3.8.1",
     "stylis-plugin-rtl": "^2.1.1",
     "typescript": "^6.0.3",
@@ -62,6 +63,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260422.1",
     "@opennextjs/cloudflare": "^1.19.2",
     "@types/stylis": "^4.2.7",
     "postgres": "^3.4.9",

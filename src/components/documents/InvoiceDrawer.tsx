@@ -21,6 +21,7 @@ import {
   useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -69,6 +70,7 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
   const deleteInvoice = useDeleteInvoice();
 
   const [isSaving, setIsSaving] = useState(false);
+  const [viewMode, setViewMode] = useState(!!invoiceId);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [converting, setConverting] = useState(false);
@@ -202,6 +204,13 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
   const nextAction = invoice ? NEXT_STATUS[invoice.status] : undefined;
   const isEditMode = !!invoiceId;
 
+  // Reset viewMode when drawer opens/invoiceId changes
+  const prevInvoiceId = useRef(invoiceId);
+  if (prevInvoiceId.current !== invoiceId) {
+    prevInvoiceId.current = invoiceId;
+    setViewMode(!!invoiceId);
+  }
+
   const drawerWidth = isMobile ? "100%" : 680;
   const drawerHeight = isMobile ? "96dvh" : "100%";
 
@@ -251,6 +260,17 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
           </Box>
           {isEditMode && (
             <Box sx={{ display: "flex", gap: 0.5 }}>
+              {viewMode && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<EditOutlinedIcon sx={{ fontSize: 15 }} />}
+                  onClick={() => setViewMode(false)}
+                  sx={{ fontSize: 12, textTransform: "none", px: 1.25 }}
+                >
+                  {t("common.edit")}
+                </Button>
+              )}
               {isMobile ? (
                 <>
                   <IconButton
@@ -385,21 +405,32 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
         )}
 
         {/* ── Scrollable body ── */}
-        <Box sx={{ flex: 1, overflowY: "auto", px: 2.5, py: 2.5 }}>
+        <Box sx={{ flex: 1, overflowY: "auto", px: 2.5, py: 2.5, position: "relative" }}>
           {isEditMode && isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 200 }}>
               <CircularProgress size={28} />
             </Box>
           ) : (
-            <DocumentForm
-              type="invoice"
-              mode={isEditMode ? "edit" : "create"}
-              initialData={invoice}
-              onSubmit={handleSubmit}
-              formId={FORM_ID}
-              hideActions
+            <>
+              {viewMode && (
+                <Box
+                  sx={{
+                    position: "absolute", inset: 0, zIndex: 2,
+                    cursor: "default",
+                  }}
+                  onClick={() => {}}
+                />
+              )}
+              <DocumentForm
+                type="invoice"
+                mode={isEditMode ? "edit" : "create"}
+                initialData={invoice}
+                onSubmit={handleSubmit}
+                formId={FORM_ID}
+                hideActions
               onTotalsChange={onTotalsChange}
             />
+            </>
           )}
         </Box>
 
@@ -436,6 +467,7 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
           <Divider sx={{ mb: 1.5 }} />
 
           {/* Actions */}
+          {!viewMode && (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
             <Button size="small" variant="outlined" onClick={onClose} disabled={isSaving}>
               {t("common.cancel")}
@@ -462,6 +494,7 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
               {isEditMode ? t("invoices.saveChanges") : t("common.create")}
             </Button>
           </Box>
+          )}
         </Box>
       </Drawer>
 

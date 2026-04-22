@@ -9,6 +9,8 @@ import { useUIStore } from "@/store/uiStore";
 import { createAppTheme } from "@/theme/theme";
 import { createEmotionCache } from "@/theme/rtlCache";
 import i18n from "@/lib/i18n";
+import ToastContainer from "./ToastContainer";
+import OneSignalProvider from "./OneSignalProvider";
 
 export default function AppProviders({ children }: { children: React.ReactNode }) {
   const { language, themeMode } = useUIStore();
@@ -42,6 +44,8 @@ export default function AppProviders({ children }: { children: React.ReactNode }
           <CssBaseline />
           <QueryClientProvider client={queryClient}>
             {children}
+            <ToastContainer />
+            <OneSignalProvider />
           </QueryClientProvider>
         </ThemeProvider>
       </CacheProvider>

@@ -17,6 +17,7 @@ type MyProfile = {
   lang_preference: "en" | "ar" | null;
   role: string;
   bottom_nav_config: string[] | null;
+  start_page: string | null;
 };
 
 export function useProfiles() {
@@ -42,7 +43,7 @@ export function useProfile() {
 export function useUpdateProfile() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { full_name?: string; bottom_nav_config?: string[] }) => {
+    mutationFn: async (data: { full_name?: string; bottom_nav_config?: string[]; start_page?: string | null }) => {
       const res = await apiFetch("profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

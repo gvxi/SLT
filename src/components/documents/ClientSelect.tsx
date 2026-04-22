@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Autocomplete,
   TextField,
@@ -39,11 +39,31 @@ export default function ClientSelect({ value, onChange, error, helperText }: Pro
   const [newEmail, setNewEmail] = useState("");
   const [newPhone, setNewPhone] = useState("");
 
+  const getLabel = useCallback(
+    (c: Client) => (isAr && c.name_ar ? c.name_ar : c.name_en),
+    [isAr]
+  );
+
   const selected = clients.find((c) => c.id === value) ?? null;
 
-  const options: (Client | { id: typeof ADD_NEW_ID; name_en: string; name_ar: null; email: string; phone: string; address: string; created_at: string; updated_at: string })[] = [
+  // Explicitly manage inputValue so it updates when clients load asynchronously
+  const [inputValue, setInputValue] = useState(() =>
+    selected ? getLabel(selected) : ""
+  );
+
+  useEffect(() => {
+    if (selected) {
+      setInputValue(getLabel(selected));
+    } else if (!value) {
+      setInputValue("");
+    }
+    // If value is set but clients haven't loaded yet, keep existing inputValue
+  }, [selected, value, getLabel]);
+
+  type AddNewOption = { id: typeof ADD_NEW_ID; name_en: string; name_ar: null; email: string; phone: string; address: string; customer_type: null; notes: null; lat: null; lng: null; created_at: string; updated_at: string };
+  const options: (Client | AddNewOption)[] = [
     ...clients,
-    { id: ADD_NEW_ID, name_en: t("invoices.addNewClient"), name_ar: null, email: "", phone: "", address: "", created_at: "", updated_at: "" },
+    { id: ADD_NEW_ID, name_en: t("invoices.addNewClient"), name_ar: null, email: "", phone: "", address: "", customer_type: null, notes: null, lat: null, lng: null, created_at: "", updated_at: "" },
   ];
 
   const handleChange = (_: unknown, val: (typeof options)[number] | null) => {
@@ -69,6 +89,13 @@ export default function ClientSelect({ value, onChange, error, helperText }: Pro
         value={selected}
         onChange={handleChange}
         loading={isLoading}
+        inputValue={inputValue}
+        onInputChange={(_, newVal, reason) => {
+          // Let the user type freely; on "reset" (value change), our useEffect handles it
+          if (reason !== "reset") {
+            setInputValue(newVal);
+          }
+        }}
         getOptionLabel={(o) => {
           if (o.id === ADD_NEW_ID) return t("invoices.addNewClient");
           return (isAr && o.name_ar) ? o.name_ar : o.name_en;

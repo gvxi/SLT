@@ -6,6 +6,7 @@
     "invoices": "Invoices",
     "quotations": "Quotations",
     "customers": "Customers",
+    "logs": "Activity Logs",
     "settings": "Settings"
   },
   "common": {
@@ -28,7 +29,9 @@
     "tax": "Tax",
     "discount": "Discount",
     "none": "None",
-    "all": "All"
+    "all": "All",
+    "filters": "Filters",
+    "save": "Save"
   },
   "scanner": {
     "notSupported": "Barcode scanning is not supported in this browser. Use Chrome or Edge.",
@@ -156,6 +159,7 @@
     "addItem": "Add Item",
     "addBySearch": "Search product",
     "addByScan": "Scan barcode",
+    "addManually": "Add manually",
     "selectProducts": "Select Products",
     "searchProducts": "Search by name, SKU or barcode…",
     "allCategories": "All",
@@ -249,7 +253,17 @@
     "bottomNav": "Bottom Navigation",
     "bottomNavDesc": "Choose up to 5 shortcuts shown in the mobile navigation bar.",
     "bottomNavSaved": "Navigation saved",
-    "bottomNavSaveError": "Failed to save navigation"
+    "bottomNavSaveError": "Failed to save navigation",
+    "startPage": "App Start",
+    "startPageLabel": "Start Page",
+    "startPageDesc": "Page that opens when you launch the app",
+    "saved": "Saved"
+  },
+  "toast": {
+    "saved": "Saved",
+    "created": "Created",
+    "deleted": "Deleted",
+    "error": "Something went wrong"
   },
   "customers": {
     "title": "Customers",
@@ -260,6 +274,8 @@
     "type_customer": "Individual",
     "type_company": "Company",
     "type_government": "Government",
+    "saveAsProduct": "Save as product",
+    "savedAsProduct": "Saved as product",
     "nameEn": "Name (English)",
     "nameAr": "Name (Arabic)",
     "phone": "Phone",

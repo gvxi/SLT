@@ -6,6 +6,7 @@
     "invoices": "الفواتير",
     "quotations": "عروض الأسعار",
     "customers": "العملاء",
+    "logs": "سجل الأنشطة",
     "settings": "الإعدادات"
   },
   "common": {
@@ -28,7 +29,9 @@
     "tax": "الضريبة",
     "discount": "الخصم",
     "none": "لا شيء",
-    "all": "الكل"
+    "all": "الكل",
+    "filters": "الفلاتر",
+    "save": "حفظ"
   },
   "scanner": {
     "notSupported": "مسح الباركود غير مدعوم في هذا المتصفح. استخدم Chrome أو Edge.",
@@ -156,6 +159,7 @@
     "addItem": "إضافة صنف",
     "addBySearch": "بحث عن منتج",
     "addByScan": "مسح الباركود",
+    "addManually": "إضافة يدوية",
     "selectProducts": "اختر المنتجات",
     "searchProducts": "ابحث بالاسم أو الرمز أو الباركود…",
     "allCategories": "الكل",
@@ -249,7 +253,17 @@
     "bottomNav": "شريط التنقل السفلي",
     "bottomNavDesc": "اختر حتى 5 اختصارات تظهر في شريط التنقل.",
     "bottomNavSaved": "تم حفظ التنقل",
-    "bottomNavSaveError": "فشل في حفظ التنقل"
+    "bottomNavSaveError": "فشل في حفظ التنقل",
+    "startPage": "بدء التطبيق",
+    "startPageLabel": "صفحة البداية",
+    "startPageDesc": "الصفحة التي تفتح عند تشغيل التطبيق",
+    "saved": "تم الحفظ"
+  },
+  "toast": {
+    "saved": "تم الحفظ",
+    "created": "تم الإنشاء",
+    "deleted": "تم الحذف",
+    "error": "حدث خطأ ما"
   },
   "customers": {
     "title": "العملاء",
@@ -260,7 +274,8 @@
     "type_customer": "فرد",
     "type_company": "شركة",
     "type_government": "جهة حكومية",
-    "nameEn": "الاسم (إنجليزي)",
+    "saveAsProduct": "حفظ كمنتج",
+    "savedAsProduct": "تم الحفظ كمنتج",
     "nameAr": "الاسم (عربي)",
     "phone": "الهاتف",
     "email": "البريد الإلكتروني",

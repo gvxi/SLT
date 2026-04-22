@@ -73,6 +73,7 @@ export interface Task {
   assignee?: { id: string; full_name: string; avatar_url: string | null } | null;
   product?: { id: string; name_en: string; name_ar: string | null; sku: string } | null;
   client?: { id: string; name_en: string; name_ar: string | null; phone?: string } | null;
+  internal_notes: string | null;
   task_checklists?: TaskChecklist[];
   task_items?: TaskItem[];
 }

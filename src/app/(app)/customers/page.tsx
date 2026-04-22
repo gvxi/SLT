@@ -25,6 +25,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useClients } from "@/hooks/useClients";
 import ClientDrawer from "@/components/clients/ClientDrawer";
+import CollapsibleFilters from "@/components/shared/CollapsibleFilters";
 import type { Client, CustomerType } from "@/types";
 
 const TYPE_ICONS: Record<CustomerType, React.ReactNode> = {
@@ -258,14 +259,14 @@ function CustomersPageInner() {
         </Button>
       </Box>
 
-      {/* Search + Type filter */}
-      <Box sx={{ display: "flex", gap: 1.5, mb: 1.5, flexWrap: "wrap" }}>
+      {/* Search */}
+      <Box sx={{ mb: 1.5 }}>
         <TextField
           size="small"
           placeholder={t("common.search")}
           value={search}
           onChange={(e) => setParam({ search: e.target.value || undefined })}
-          sx={{ flex: 1, minWidth: 200 }}
+          fullWidth
           slotProps={{
             input: {
               startAdornment: (
@@ -276,7 +277,11 @@ function CustomersPageInner() {
             },
           }}
         />
-        <FormControl size="small" sx={{ minWidth: 140 }}>
+      </Box>
+
+      {/* Collapsible filters */}
+      <CollapsibleFilters activeCount={typeFilter ? 1 : 0}>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
           <InputLabel>{t("customers.type")}</InputLabel>
           <Select
             value={typeFilter}
@@ -289,7 +294,7 @@ function CustomersPageInner() {
             <MenuItem value="government">{t("customers.type_government")}</MenuItem>
           </Select>
         </FormControl>
-      </Box>
+      </CollapsibleFilters>
 
       {/* List */}
       {isLoading ? (

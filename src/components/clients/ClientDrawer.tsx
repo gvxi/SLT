@@ -30,9 +30,11 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutlined";
 import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useTranslation } from "react-i18next";
 import { useClient, useCreateClient, useUpdateClient, useDeleteClient } from "@/hooks/useClients";
 import LocationPicker from "./LocationPicker";
+import { toast } from "@/store/toastStore";
 import type { CustomerType } from "@/types";
 
 const formSchema = z.object({
@@ -65,6 +67,7 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [viewMode, setViewMode] = useState(isEditing);
 
   const {
     control,
@@ -86,6 +89,7 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
 
   useEffect(() => {
     if (!open) return;
+    setViewMode(isEditing);
     if (isEditing && client) {
       reset({
         name_en: client.name_en,
@@ -117,19 +121,30 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
       lng: lng ?? undefined,
     };
 
-    if (isEditing && clientId) {
-      await updateClient.mutateAsync({ id: clientId, ...payload });
-    } else {
-      await createClient.mutateAsync(payload);
+    try {
+      if (isEditing && clientId) {
+        await updateClient.mutateAsync({ id: clientId, ...payload });
+        toast(t("toast.saved"), "success");
+      } else {
+        await createClient.mutateAsync(payload);
+        toast(t("toast.created"), "success");
+      }
+      onClose();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
     }
-    onClose();
   };
 
   const handleDelete = async () => {
     if (!clientId) return;
-    await deleteClient.mutateAsync(clientId);
-    setConfirmDelete(false);
-    onClose();
+    try {
+      await deleteClient.mutateAsync(clientId);
+      toast(t("toast.deleted"), "success");
+      setConfirmDelete(false);
+      onClose();
+    } catch {
+      toast(t("toast.error"), "error");
+    }
   };
 
   return (
@@ -162,9 +177,22 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
           }}
         >
           <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 14 }}>
-            {isEditing ? t("customers.editCustomer") : t("customers.newCustomer")}
+            {isEditing
+              ? (viewMode ? t("common.view", { defaultValue: "View" }) : t("customers.editCustomer"))
+              : t("customers.newCustomer")}
           </Typography>
           <Box sx={{ display: "flex", gap: 0.5 }}>
+            {isEditing && viewMode && (
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<EditOutlinedIcon sx={{ fontSize: 15 }} />}
+                onClick={() => setViewMode(false)}
+                sx={{ fontSize: 12, textTransform: "none", px: 1.25 }}
+              >
+                {t("common.edit")}
+              </Button>
+            )}
             {isEditing && (
               <IconButton
                 size="small"
@@ -184,8 +212,11 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
         <Box
           component="form"
           onSubmit={handleSubmit(onSubmit)}
-          sx={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}
+          sx={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", position: "relative" }}
         >
+          {viewMode && (
+            <Box sx={{ position: "absolute", inset: 0, zIndex: 2, cursor: "default" }} onClick={() => {}} />
+          )}
           {isEditing && isLoading ? (
             <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <CircularProgress size={28} />
@@ -208,6 +239,7 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
                       onChange={(_, v) => field.onChange(v)}
                       size="small"
                       sx={{ gap: 1 }}
+                      disabled={viewMode}
                     >
                       {([["customer", <PersonOutlineIcon sx={{ fontSize: 15 }} />], ["company", <BusinessOutlinedIcon sx={{ fontSize: 15 }} />], ["government", <AccountBalanceOutlinedIcon sx={{ fontSize: 15 }} />]] as [CustomerType, React.ReactNode][]).map(([type, icon]) => (
                         <ToggleButton
@@ -375,6 +407,7 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
             <Button size="small" onClick={onClose} sx={{ color: "text.secondary" }}>
               {t("common.cancel")}
             </Button>
+            {!viewMode && (
             <Button
               type="submit"
               size="small"
@@ -385,6 +418,7 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
             >
               {isEditing ? t("common.save") : t("common.create")}
             </Button>
+            )}
           </Box>
         </Box>
       </Drawer>

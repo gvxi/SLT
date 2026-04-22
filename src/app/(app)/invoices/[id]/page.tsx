@@ -23,6 +23,7 @@ import { useInvoice, useUpdateInvoice, useDeleteInvoice, useCreateInvoice } from
 import { downloadInvoicePdf } from "@/lib/pdfExport";
 import StatusChip from "@/components/documents/StatusChip";
 import DocumentForm, { type DocumentFormSubmitData } from "@/components/documents/DocumentForm";
+import { toast } from "@/store/toastStore";
 import type { InvoiceStatus } from "@/types";
 
 // Status workflow: draft→sent→paid; any→overdue; any→cancelled
@@ -58,18 +59,23 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleSubmit = async (data: DocumentFormSubmitData) => {
-    await updateInvoice.mutateAsync({
-      id,
-      client_id: data.client_id ?? undefined,
-      issue_date: data.issue_date,
-      due_date: data.due_date!,
-      tax_pct: data.tax_pct,
-      discount: data.discount,
-      notes_en: data.notes_en,
-      notes_ar: data.notes_ar,
-      status: data.status as InvoiceStatus,
-      items: data.items,
-    });
+    try {
+      await updateInvoice.mutateAsync({
+        id,
+        client_id: data.client_id ?? undefined,
+        issue_date: data.issue_date,
+        due_date: data.due_date!,
+        tax_pct: data.tax_pct,
+        discount: data.discount,
+        notes_en: data.notes_en,
+        notes_ar: data.notes_ar,
+        status: data.status as InvoiceStatus,
+        items: data.items,
+      });
+      toast(t("toast.saved"), "success");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
+    }
   };
 
   const handleStatusAction = async (newStatus: InvoiceStatus) => {

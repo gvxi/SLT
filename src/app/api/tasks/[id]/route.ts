@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
+import { logActivity } from "@/lib/logActivity";
 
 const taskItemSchema = z.object({
   product_id: z.string().nullable().optional(),
@@ -18,8 +19,9 @@ const updateTaskSchema = z.object({
   assignee_id: z.string().uuid().nullable().optional(),
   due_date: z.string().nullable().optional(),
   product_id: z.string().nullable().optional(),
-  client_id: z.string().uuid().nullable().optional(),
+  client_id: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
+  internal_notes: z.string().nullable().optional(),
   items: z.array(taskItemSchema).optional(),
 });
 
@@ -53,7 +55,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(request);
+  const { user, error } = await requireAuth(request);
   if (error) return error;
 
   const { id } = await params;
@@ -96,6 +98,8 @@ export async function PATCH(
     .eq("id", id)
     .single();
 
+  if (full) await logActivity({ supabase, userId: user!.id, entityType: "task", entityId: id, action: "updated", summary: `Updated task: ${(full as { title?: string }).title ?? id}` });
+
   return NextResponse.json(full);
 }
 
@@ -103,14 +107,17 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(request);
+  const { user, error } = await requireAuth(request);
   if (error) return error;
 
   const { id } = await params;
   const supabase = createServerSupabaseClient();
 
+  const { data: task } = await supabase.from("tasks").select("title").eq("id", id).single();
   const { error: dbError } = await supabase.from("tasks").delete().eq("id", id);
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+
+  if (task) await logActivity({ supabase, userId: user!.id, entityType: "task", entityId: id, action: "deleted", summary: `Deleted task: ${task.title}` });
 
   return new NextResponse(null, { status: 204 });
 }

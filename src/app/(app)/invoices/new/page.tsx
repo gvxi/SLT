@@ -6,6 +6,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useTranslation } from "react-i18next";
 import { useCreateInvoice } from "@/hooks/useInvoices";
 import DocumentForm, { type DocumentFormSubmitData } from "@/components/documents/DocumentForm";
+import { toast } from "@/store/toastStore";
 
 export default function InvoiceNewPage() {
   const { t } = useTranslation();
@@ -13,18 +14,22 @@ export default function InvoiceNewPage() {
   const createInvoice = useCreateInvoice();
 
   const handleSubmit = async (data: DocumentFormSubmitData) => {
-    const invoice = await createInvoice.mutateAsync({
-      client_id: data.client_id ?? undefined,
-      issue_date: data.issue_date,
-      due_date: data.due_date!,
-      tax_pct: data.tax_pct,
-      discount: data.discount,
-      notes_en: data.notes_en,
-      notes_ar: data.notes_ar,
-      status: data.status as "draft",
-      items: data.items,
-    });
-    router.push(`/invoices/${invoice.id}`);
+    try {
+      const invoice = await createInvoice.mutateAsync({
+        client_id: data.client_id ?? undefined,
+        issue_date: data.issue_date,
+        due_date: data.due_date!,
+        tax_pct: data.tax_pct,
+        discount: data.discount,
+        notes_en: data.notes_en,
+        notes_ar: data.notes_ar,
+        status: data.status as "draft",
+        items: data.items,
+      });
+      router.push(`/invoices/${invoice.id}`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
+    }
   };
 
   return (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
+import { logActivity } from "@/lib/logActivity";
 
 const updateQuotationSchema = z.object({
   client_id: z.string().nullable().optional(),
@@ -40,7 +41,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(request);
+  const { user, error } = await requireAuth(request);
   if (error) return error;
 
   const { id } = await params;
@@ -60,6 +61,8 @@ export async function PATCH(
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
+  await logActivity({ supabase, userId: user!.id, entityType: "quotation", entityId: id, action: "updated", summary: `Updated quotation: ${(data as { quotation_number?: string }).quotation_number ?? id}` });
+
   return NextResponse.json(data);
 }
 
@@ -67,14 +70,17 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await requireAuth(request);
+  const { user, error } = await requireAuth(request);
   if (error) return error;
 
   const { id } = await params;
   const supabase = createServerSupabaseClient();
 
+  const { data: quot } = await supabase.from("quotations").select("quotation_number").eq("id", id).single();
   const { error: dbError } = await supabase.from("quotations").delete().eq("id", id);
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+
+  if (quot) await logActivity({ supabase, userId: user!.id, entityType: "quotation", entityId: id, action: "deleted", summary: `Deleted quotation: ${quot.quotation_number ?? id}` });
 
   return new NextResponse(null, { status: 204 });
 }

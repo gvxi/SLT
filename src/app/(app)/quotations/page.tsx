@@ -13,14 +13,20 @@ import {
   TableCell,
   TextField,
   InputAdornment,
-  Tabs,
-  Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
   Skeleton,
+  ToggleButton,
+  ToggleButtonGroup,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
 import { useTranslation } from "react-i18next";
 import { useQuotations } from "@/hooks/useQuotations";
@@ -30,7 +36,7 @@ import OmrSign from "@/components/OmrSign";
 import EmptyState from "@/components/shared/EmptyState";
 import type { Quotation, QuotationStatus } from "@/types";
 
-const STATUS_TABS: (QuotationStatus | "all")[] = ["all", "draft", "sent", "accepted", "rejected", "expired"];
+const STATUS_OPTIONS: (QuotationStatus | "all")[] = ["all", "draft", "sent", "accepted", "rejected", "expired"];
 
 function calcTotal(q: Quotation): number {
   if (!q.quotation_items?.length) return 0;
@@ -44,8 +50,9 @@ export default function QuotationsPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const [tabIndex, setTabIndex] = useState(0);
+  const [activeStatus, setActiveStatus] = useState<QuotationStatus | "all">("all");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"asc" | "desc">("desc");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerQuotationId, setDrawerQuotationId] = useState<string | null>(null);
 
@@ -73,64 +80,54 @@ export default function QuotationsPage() {
     return () => document.body.classList.remove("quotation-drawer-open");
   }, [drawerOpen]);
 
-  const activeStatus = STATUS_TABS[tabIndex];
   const { data: quotations = [], isLoading } = useQuotations(
     activeStatus !== "all" ? { status: activeStatus } : {}
   );
 
   const filtered = useMemo(() => {
+    let list = [...quotations];
     const q = search.toLowerCase().trim();
-    if (!q) return quotations;
-    return quotations.filter(
-      (qt) =>
-        qt.quotation_number?.toLowerCase().includes(q) ||
-        qt.client?.name_en.toLowerCase().includes(q) ||
-        (qt.client?.name_ar && qt.client.name_ar.toLowerCase().includes(q))
-    );
-  }, [quotations, search]);
+    if (q) {
+      list = list.filter(
+        (qt) =>
+          qt.quotation_number?.toLowerCase().includes(q) ||
+          qt.client?.name_en.toLowerCase().includes(q) ||
+          (qt.client?.name_ar && qt.client.name_ar.toLowerCase().includes(q))
+      );
+    }
+    list.sort((a, b) => {
+      const da = new Date(a.issue_date).getTime();
+      const db = new Date(b.issue_date).getTime();
+      return sort === "desc" ? db - da : da - db;
+    });
+    return list;
+  }, [quotations, search, sort]);
 
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           {t("nav.quotations")}
+          {filtered.length > 0 && (
+            <Typography component="span" variant="body2" sx={{ ml: 1, color: "text.secondary", fontWeight: 400 }}>
+              {filtered.length}
+            </Typography>
+          )}
         </Typography>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={() => openDrawer(null)}
-        >
+        <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => openDrawer(null)}>
           {t("quotations.newQuotation")}
         </Button>
       </Box>
 
-      {/* Status tabs */}
-      <Tabs
-        value={tabIndex}
-        onChange={(_, v) => setTabIndex(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ mb: 2, borderBottom: 1, borderColor: "divider", minHeight: 36, "& .MuiTab-root": { minHeight: 36 } }}
-      >
-        {STATUS_TABS.map((s) => (
-          <Tab
-            key={s}
-            label={s === "all" ? t("common.all") : t(`quotations.${s}`)}
-            sx={{ textTransform: "none", fontSize: 13 }}
-          />
-        ))}
-      </Tabs>
-
-      {/* Search */}
-      <Box sx={{ mb: 2 }}>
+      {/* Filters row */}
+      <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap", alignItems: "center" }}>
         <TextField
           size="small"
           placeholder={t("common.search")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: 260 }}
+          sx={{ flex: 1, minWidth: 160 }}
           slotProps={{
             input: {
               startAdornment: (
@@ -141,6 +138,41 @@ export default function QuotationsPage() {
             },
           }}
         />
+
+        <FormControl size="small" sx={{ minWidth: 130 }}>
+          <InputLabel>{t("common.status")}</InputLabel>
+          <Select
+            value={activeStatus}
+            label={t("common.status")}
+            onChange={(e) => setActiveStatus(e.target.value as typeof activeStatus)}
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <MenuItem key={s} value={s}>
+                {s === "all" ? t("common.all") : t(`quotations.${s}`)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={sort}
+          onChange={(_, v) => v && setSort(v)}
+        >
+          <ToggleButton value="desc" sx={{ px: 1.25 }}>
+            <ArrowDownwardIcon sx={{ fontSize: 15, mr: 0.5 }} />
+            <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, fontSize: 12 }}>
+              {t("tasks.newest", { defaultValue: "Newest" })}
+            </Box>
+          </ToggleButton>
+          <ToggleButton value="asc" sx={{ px: 1.25 }}>
+            <ArrowUpwardIcon sx={{ fontSize: 15, mr: 0.5 }} />
+            <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, fontSize: 12 }}>
+              {t("tasks.oldest", { defaultValue: "Oldest" })}
+            </Box>
+          </ToggleButton>
+        </ToggleButtonGroup>
       </Box>
 
       {/* List */}
@@ -196,18 +228,7 @@ export default function QuotationsPage() {
         <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
           <Table size="small">
             <TableHead>
-              <TableRow
-                sx={{
-                  "& th": {
-                    fontWeight: 600,
-                    color: "text.secondary",
-                    fontSize: 12,
-                    bgcolor: "action.hover",
-                    borderBottom: "1px solid",
-                    borderColor: "divider",
-                  },
-                }}
-              >
+              <TableRow sx={{ "& th": { fontWeight: 600, color: "text.secondary", fontSize: 12, bgcolor: "action.hover", borderBottom: "1px solid", borderColor: "divider" } }}>
                 <TableCell>{t("quotations.quotationNumber")}</TableCell>
                 <TableCell>{t("invoices.client")}</TableCell>
                 <TableCell>{t("invoices.issueDate")}</TableCell>
@@ -221,26 +242,16 @@ export default function QuotationsPage() {
                 <TableRow
                   key={qt.id}
                   onClick={() => openDrawer(qt.id)}
-                  sx={{
-                    cursor: "pointer",
-                    "&:hover": { bgcolor: "action.hover" },
-                    "& td": { fontSize: 13 },
-                  }}
+                  sx={{ cursor: "pointer", "&:hover": { bgcolor: "action.hover" }, "& td": { fontSize: 13 } }}
                 >
-                  <TableCell sx={{ fontFamily: "monospace", fontWeight: 500 }}>
-                    {qt.quotation_number}
-                  </TableCell>
-                  <TableCell>
-                    {(isAr && qt.client?.name_ar) ? qt.client.name_ar : qt.client?.name_en ?? "—"}
-                  </TableCell>
+                  <TableCell sx={{ fontFamily: "monospace", fontWeight: 500 }}>{qt.quotation_number}</TableCell>
+                  <TableCell>{(isAr && qt.client?.name_ar) ? qt.client.name_ar : qt.client?.name_en ?? "—"}</TableCell>
                   <TableCell sx={{ color: "text.secondary" }}>{qt.issue_date}</TableCell>
                   <TableCell sx={{ color: "text.secondary" }}>{qt.expiry_date}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
                     <OmrSign size="0.8em" />{calcTotal(qt).toFixed(3)}
                   </TableCell>
-                  <TableCell>
-                    <StatusChip status={qt.status} />
-                  </TableCell>
+                  <TableCell><StatusChip status={qt.status} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -249,12 +260,7 @@ export default function QuotationsPage() {
       )}
 
       {/* Quotation drawer */}
-      <QuotationDrawer
-        open={drawerOpen}
-        quotationId={drawerQuotationId}
-        onClose={() => setDrawerOpen(false)}
-      />
+      <QuotationDrawer open={drawerOpen} quotationId={drawerQuotationId} onClose={() => setDrawerOpen(false)} />
     </Box>
   );
 }
-

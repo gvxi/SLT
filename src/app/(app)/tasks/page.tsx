@@ -16,17 +16,23 @@ import {
   Pagination,
   Skeleton,
   Chip,
+  Grid,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import HourglassEmptyOutlinedIcon from "@mui/icons-material/HourglassEmptyOutlined";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutlined";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useProfiles } from "@/hooks/useProfiles";
-import { useTasks, useTaskMonthCounts } from "@/hooks/useTasks";
+import { useTasks, useTaskMonthCounts, useTaskStats } from "@/hooks/useTasks";
 import TaskListItem from "@/components/tasks/TaskListItem";
 import TaskDrawer from "@/components/tasks/TaskDrawer";
+import CollapsibleFilters from "@/components/shared/CollapsibleFilters";
 import type { TaskStatus } from "@/types";
 
 const MONTH_NAMES = [
@@ -91,6 +97,7 @@ function TasksPageInner() {
   // Data
   const { data: profilesData = [] } = useProfiles();
   const { data: monthCounts = [] } = useTaskMonthCounts();
+  const { data: statsData } = useTaskStats();
   const { data: tasksPage, isLoading } = useTasks({
     search: search || undefined,
     status: status || undefined,
@@ -137,6 +144,50 @@ function TasksPageInner() {
         </Button>
       </Box>
 
+      {/* Summary cards */}
+      <Grid container spacing={1.5} sx={{ mb: 2 }}>
+        {([
+          { key: "backlog",     label: t("tasks.backlog"),     icon: <HourglassEmptyOutlinedIcon sx={{ fontSize: 18 }} />, color: "text.secondary" },
+          { key: "in_progress", label: t("tasks.in_progress"), icon: <PlayCircleOutlineIcon     sx={{ fontSize: 18 }} />, color: "primary.main" },
+          { key: "review",      label: t("tasks.review"),      icon: <RateReviewOutlinedIcon    sx={{ fontSize: 18 }} />, color: "warning.main" },
+          { key: "done",        label: t("tasks.done"),        icon: <CheckCircleOutlineIcon    sx={{ fontSize: 18 }} />, color: "success.main" },
+        ] as const).map(({ key, label, icon, color }) => (
+          <Grid key={key} size={{ xs: 6, sm: 3 }}>
+            <Box
+              onClick={() => setParam({ status: status === key ? undefined : key })}
+              sx={{
+                border: "1px solid",
+                borderColor: status === key ? "primary.main" : "divider",
+                borderRadius: 1.5,
+                px: 1.75,
+                py: 1.5,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.25,
+                bgcolor: status === key ? "primary.main" : "background.paper",
+                cursor: "pointer",
+                transition: "border-color 0.15s",
+                "&:hover": { borderColor: "primary.main" },
+              }}
+            >
+              <Box sx={{ color: status === key ? "primary.contrastText" : color, lineHeight: 0, flexShrink: 0 }}>{icon}</Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {statsData ? (
+                  <Typography sx={{ fontWeight: 700, fontSize: 17, lineHeight: 1.2, color: status === key ? "primary.contrastText" : "text.primary" }}>
+                    {statsData[key]}
+                  </Typography>
+                ) : (
+                  <Skeleton variant="text" width={28} height={24} />
+                )}
+                <Typography variant="caption" sx={{ fontSize: 11, color: status === key ? "rgba(255,255,255,0.8)" : "text.secondary", display: "block" }}>
+                  {label}
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+        ))}
+      </Grid>
+
       {/* Search + Sort */}
       <Box sx={{ display: "flex", gap: 1.5, mb: 1.5, flexWrap: "wrap" }}>
         <TextField
@@ -178,92 +229,94 @@ function TasksPageInner() {
       </Box>
 
       {/* Filters */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 1.5, mb: 1.5 }}>
-        <FormControl size="small" fullWidth>
-          <InputLabel>{t("common.status")}</InputLabel>
-          <Select
-            value={status}
-            label={t("common.status")}
-            onChange={(e) => setParam({ status: e.target.value })}
-          >
-            <MenuItem value="">{t("tasks.allStatuses", { defaultValue: "All statuses" })}</MenuItem>
-            {(["backlog", "in_progress", "review", "done"] as const).map((s) => (
-              <MenuItem key={s} value={s}>{t(`tasks.${s}`)}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" fullWidth>
-          <InputLabel>{t("tasks.priority")}</InputLabel>
-          <Select
-            value={priority}
-            label={t("tasks.priority")}
-            onChange={(e) => setParam({ priority: e.target.value })}
-          >
-            <MenuItem value="">{t("tasks.allPriorities")}</MenuItem>
-            {(["low", "medium", "high", "urgent"] as const).map((p) => (
-              <MenuItem key={p} value={p}>{t(`tasks.${p}`)}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" fullWidth>
-          <InputLabel>{t("tasks.assignee")}</InputLabel>
-          <Select
-            value={assigneeId}
-            label={t("tasks.assignee")}
-            onChange={(e) => setParam({ assignee_id: e.target.value })}
-          >
-            <MenuItem value="">{t("tasks.allAssignees")}</MenuItem>
-            {profilesData.map((p) => (
-              <MenuItem key={p.id} value={p.id}>{p.full_name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Year filter */}
-        {years.length > 0 && (
+      <CollapsibleFilters activeCount={[status, priority, assigneeId, year ? String(year) : "", month ? String(month) : ""].filter(Boolean).length}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 1.5 }}>
           <FormControl size="small" fullWidth>
-            <InputLabel>{t("tasks.year", { defaultValue: "Year" })}</InputLabel>
+            <InputLabel>{t("common.status")}</InputLabel>
             <Select
-              value={year ?? ""}
-              label={t("tasks.year", { defaultValue: "Year" })}
-              onChange={(e) => setParam({ year: e.target.value ? String(e.target.value) : undefined, month: undefined })}
+              value={status}
+              label={t("common.status")}
+              onChange={(e) => setParam({ status: e.target.value })}
             >
-              <MenuItem value="">{t("tasks.allYears", { defaultValue: "All years" })}</MenuItem>
-              {years.map((y) => (
-                <MenuItem key={y} value={y}>{y}</MenuItem>
+              <MenuItem value="">{t("tasks.allStatuses", { defaultValue: "All statuses" })}</MenuItem>
+              {(["backlog", "in_progress", "review", "done"] as const).map((s) => (
+                <MenuItem key={s} value={s}>{t(`tasks.${s}`)}</MenuItem>
               ))}
             </Select>
           </FormControl>
-        )}
-      </Box>
 
-      {/* Month chips (only when year is selected) */}
-      {year && (
-        <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mb: 1.5 }}>
-          {monthCounts
-            .filter((m) => m.year === year)
-            .sort((a, b) => a.month - b.month)
-            .map((m) => {
-              const label = isAr ? MONTH_NAMES_AR[m.month - 1] : MONTH_NAMES[m.month - 1];
-              const active = month === m.month;
-              return (
-                <Chip
-                  key={m.month}
-                  label={`${label} (${m.count})`}
-                  size="small"
-                  variant={active ? "filled" : "outlined"}
-                  color={active ? "primary" : "default"}
-                  onClick={() =>
-                    setParam({ month: active ? undefined : String(m.month) })
-                  }
-                  sx={{ fontSize: 12 }}
-                />
-              );
-            })}
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t("tasks.priority")}</InputLabel>
+            <Select
+              value={priority}
+              label={t("tasks.priority")}
+              onChange={(e) => setParam({ priority: e.target.value })}
+            >
+              <MenuItem value="">{t("tasks.allPriorities")}</MenuItem>
+              {(["low", "medium", "high", "urgent"] as const).map((p) => (
+                <MenuItem key={p} value={p}>{t(`tasks.${p}`)}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t("tasks.assignee")}</InputLabel>
+            <Select
+              value={assigneeId}
+              label={t("tasks.assignee")}
+              onChange={(e) => setParam({ assignee_id: e.target.value })}
+            >
+              <MenuItem value="">{t("tasks.allAssignees")}</MenuItem>
+              {profilesData.map((p) => (
+                <MenuItem key={p.id} value={p.id}>{p.full_name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Year filter */}
+          {years.length > 0 && (
+            <FormControl size="small" fullWidth>
+              <InputLabel>{t("tasks.year", { defaultValue: "Year" })}</InputLabel>
+              <Select
+                value={year ?? ""}
+                label={t("tasks.year", { defaultValue: "Year" })}
+                onChange={(e) => setParam({ year: e.target.value ? String(e.target.value) : undefined, month: undefined })}
+              >
+                <MenuItem value="">{t("tasks.allYears", { defaultValue: "All years" })}</MenuItem>
+                {years.map((y) => (
+                  <MenuItem key={y} value={y}>{y}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Box>
-      )}
+
+        {/* Month chips (only when year is selected) */}
+        {year && (
+          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+            {monthCounts
+              .filter((m) => m.year === year)
+              .sort((a, b) => a.month - b.month)
+              .map((m) => {
+                const label = isAr ? MONTH_NAMES_AR[m.month - 1] : MONTH_NAMES[m.month - 1];
+                const active = month === m.month;
+                return (
+                  <Chip
+                    key={m.month}
+                    label={`${label} (${m.count})`}
+                    size="small"
+                    variant={active ? "filled" : "outlined"}
+                    color={active ? "primary" : "default"}
+                    onClick={() =>
+                      setParam({ month: active ? undefined : String(m.month) })
+                    }
+                    sx={{ fontSize: 12 }}
+                  />
+                );
+              })}
+          </Box>
+        )}
+      </CollapsibleFilters>
 
       {/* List */}
       {isLoading ? (

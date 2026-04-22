@@ -8,9 +8,10 @@ import {
   Button,
   Switch,
   CircularProgress,
-  Divider,
+  Select,
+  MenuItem,
+  FormControl,
   Checkbox,
-  FormControlLabel,
 } from "@mui/material";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
@@ -21,70 +22,159 @@ import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
+import LanguageOutlinedIcon from "@mui/icons-material/LanguageOutlined";
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import { useTranslation } from "react-i18next";
 import { useUIStore } from "@/store/uiStore";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfiles";
+import { toast } from "@/store/toastStore";
 
 const NAV_OPTIONS = [
-  { key: "dashboard", icon: <DashboardOutlinedIcon sx={{ fontSize: 18 }} /> },
-  { key: "tasks", icon: <TaskAltOutlinedIcon sx={{ fontSize: 18 }} /> },
-  { key: "products", icon: <Inventory2OutlinedIcon sx={{ fontSize: 18 }} /> },
-  { key: "invoices", icon: <ReceiptOutlinedIcon sx={{ fontSize: 18 }} /> },
-  { key: "quotations", icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 18 }} /> },
-  { key: "customers", icon: <PeopleAltOutlinedIcon sx={{ fontSize: 18 }} /> },
-  { key: "settings", icon: <SettingsOutlinedIcon sx={{ fontSize: 18 }} /> },
+  { key: "dashboard", icon: <DashboardOutlinedIcon sx={{ fontSize: 16 }} /> },
+  { key: "tasks", icon: <TaskAltOutlinedIcon sx={{ fontSize: 16 }} /> },
+  { key: "products", icon: <Inventory2OutlinedIcon sx={{ fontSize: 16 }} /> },
+  { key: "invoices", icon: <ReceiptOutlinedIcon sx={{ fontSize: 16 }} /> },
+  { key: "quotations", icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 16 }} /> },
+  { key: "customers", icon: <PeopleAltOutlinedIcon sx={{ fontSize: 16 }} /> },
+  { key: "settings", icon: <SettingsOutlinedIcon sx={{ fontSize: 16 }} /> },
+] as const;
+
+const START_PAGE_OPTIONS = [
+  { key: "dashboard", icon: <DashboardOutlinedIcon sx={{ fontSize: 15 }} /> },
+  { key: "tasks", icon: <TaskAltOutlinedIcon sx={{ fontSize: 15 }} /> },
+  { key: "products", icon: <Inventory2OutlinedIcon sx={{ fontSize: 15 }} /> },
+  { key: "invoices", icon: <ReceiptOutlinedIcon sx={{ fontSize: 15 }} /> },
+  { key: "quotations", icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 15 }} /> },
+  { key: "customers", icon: <PeopleAltOutlinedIcon sx={{ fontSize: 15 }} /> },
 ] as const;
 
 const DEFAULT_NAV = ["dashboard", "tasks", "products", "invoices"];
 
-function SectionLabel({ label }: { label: string }) {
+/** Thin section header label */
+function SectionTitle({ label }: { label: string }) {
   return (
     <Typography
       variant="caption"
-      sx={{ fontSize: 11, fontWeight: 600, color: "text.disabled", letterSpacing: 0.5, textTransform: "uppercase", display: "block", mb: 1.5 }}
+      sx={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: "text.disabled",
+        letterSpacing: 0.6,
+        textTransform: "uppercase",
+        display: "block",
+        mb: 0.75,
+        px: 0.25,
+      }}
     >
       {label}
     </Typography>
   );
 }
 
+/** Grouped card container */
+function SettingGroup({ children }: { children: React.ReactNode }) {
+  return (
+    <Box
+      sx={{
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 1,
+        bgcolor: "background.paper",
+        overflow: "hidden",
+        mb: 3,
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+/** Single setting row inside a SettingGroup */
+function SettingRow({
+  icon,
+  label,
+  description,
+  control,
+  noDivider,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  description?: string;
+  control: React.ReactNode;
+  noDivider?: boolean;
+}) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        px: 2,
+        py: 1.25,
+        borderBottom: noDivider ? "none" : "1px solid",
+        borderColor: "divider",
+        minHeight: 48,
+      }}
+    >
+      {icon && (
+        <Box sx={{ color: "text.secondary", display: "flex", flexShrink: 0 }}>
+          {icon}
+        </Box>
+      )}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500 }}>
+          {label}
+        </Typography>
+        {description && (
+          <Typography variant="caption" sx={{ fontSize: 11, color: "text.disabled" }}>
+            {description}
+          </Typography>
+        )}
+      </Box>
+      <Box sx={{ flexShrink: 0 }}>{control}</Box>
+    </Box>
+  );
+}
+
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const { themeMode, toggleTheme, language, setLanguage } = useUIStore();
+  const { themeMode, toggleTheme, language, setLanguage, startPage, setStartPage } = useUIStore();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const updateProfile = useUpdateProfile();
 
   const [fullName, setFullName] = useState("");
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [nameSaving, setNameSaving] = useState(false);
   const [navConfig, setNavConfig] = useState<string[]>(DEFAULT_NAV);
-  const [navSaveStatus, setNavSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [navSaving, setNavSaving] = useState(false);
 
   useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
     if (profile?.bottom_nav_config?.length) setNavConfig(profile.bottom_nav_config);
-  }, [profile?.full_name, profile?.bottom_nav_config]);
+    if (profile?.start_page) {
+      setStartPage(profile.start_page);
+    }
+  }, [profile?.full_name, profile?.bottom_nav_config, profile?.start_page, setStartPage]);
 
-  const handleSaveProfile = async () => {
-    setSaveStatus("saving");
+  const handleSaveName = async () => {
+    setNameSaving(true);
     try {
       await updateProfile.mutateAsync({ full_name: fullName });
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 2000);
+      toast(t("settings.profileSaved"), "success");
     } catch {
-      setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
+      toast(t("settings.profileSaveError"), "error");
+    } finally {
+      setNameSaving(false);
     }
   };
 
-  const handleSaveNav = async () => {
-    setNavSaveStatus("saving");
+  const handleStartPageChange = async (page: string) => {
+    setStartPage(page);
     try {
-      await updateProfile.mutateAsync({ bottom_nav_config: navConfig });
-      setNavSaveStatus("saved");
-      setTimeout(() => setNavSaveStatus("idle"), 2000);
+      await updateProfile.mutateAsync({ start_page: page });
+      toast(t("settings.saved"), "success");
     } catch {
-      setNavSaveStatus("error");
-      setTimeout(() => setNavSaveStatus("idle"), 3000);
+      toast(t("toast.error"), "error");
     }
   };
 
@@ -99,215 +189,157 @@ export default function SettingsPage() {
     });
   };
 
+  const handleSaveNav = async () => {
+    setNavSaving(true);
+    try {
+      await updateProfile.mutateAsync({ bottom_nav_config: navConfig });
+      toast(t("settings.bottomNavSaved"), "success");
+    } catch {
+      toast(t("settings.bottomNavSaveError"), "error");
+    } finally {
+      setNavSaving(false);
+    }
+  };
+
   return (
-    <Box sx={{ maxWidth: 520 }}>
+    <Box sx={{ maxWidth: 480 }}>
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
         {t("settings.title")}
       </Typography>
 
       {/* Profile */}
-      <Box sx={{ mb: 3 }}>
-        <SectionLabel label={t("settings.profile")} />
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 1.5,
-            p: 2.5,
-            bgcolor: "background.paper",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          <TextField
-            label={t("settings.fullName")}
-            size="small"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            disabled={profileLoading}
-            fullWidth
-            slotProps={{ inputLabel: { sx: { fontSize: 13 } }, input: { sx: { fontSize: 13 } } }}
-          />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleSaveProfile}
-              disabled={saveStatus === "saving" || profileLoading || !fullName.trim()}
-              startIcon={saveStatus === "saving" ? <CircularProgress size={13} color="inherit" /> : undefined}
-            >
-              {t("settings.saveProfile")}
-            </Button>
-            {saveStatus === "saved" && (
-              <Typography variant="caption" sx={{ color: "success.main", fontSize: 12 }}>
-                {t("settings.profileSaved")}
-              </Typography>
-            )}
-            {saveStatus === "error" && (
-              <Typography variant="caption" sx={{ color: "error.main", fontSize: 12 }}>
-                {t("settings.profileSaveError")}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-      </Box>
-
-      <Divider sx={{ mb: 3 }} />
+      <SectionTitle label={t("settings.profile")} />
+      <SettingGroup>
+        <SettingRow
+          icon={<PersonOutlinedIcon sx={{ fontSize: 18 }} />}
+          label={t("settings.fullName")}
+          noDivider
+          control={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <TextField
+                size="small"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={profileLoading}
+                sx={{ width: 180 }}
+                slotProps={{ input: { sx: { fontSize: 13 } } }}
+              />
+              <Button
+                size="small"
+                variant="contained"
+                onClick={handleSaveName}
+                disabled={nameSaving || profileLoading || !fullName.trim()}
+                startIcon={nameSaving ? <CircularProgress size={12} color="inherit" /> : undefined}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                {t("common.save")}
+              </Button>
+            </Box>
+          }
+        />
+      </SettingGroup>
 
       {/* Appearance */}
-      <Box sx={{ mb: 3 }}>
-        <SectionLabel label={t("settings.appearance")} />
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 1.5,
-            bgcolor: "background.paper",
-          }}
-        >
-          <Box
-            sx={{
-              px: 2.5,
-              py: 1.75,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-              {themeMode === "dark" ? (
-                <DarkModeOutlinedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-              ) : (
-                <LightModeOutlinedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-              )}
-              <Typography variant="body2" sx={{ fontSize: 13 }}>
-                {themeMode === "dark" ? t("settings.darkMode") : t("settings.lightMode")}
-              </Typography>
+      <SectionTitle label={t("settings.appearance")} />
+      <SettingGroup>
+        <SettingRow
+          icon={themeMode === "dark"
+            ? <DarkModeOutlinedIcon sx={{ fontSize: 18 }} />
+            : <LightModeOutlinedIcon sx={{ fontSize: 18 }} />}
+          label={themeMode === "dark" ? t("settings.darkMode") : t("settings.lightMode")}
+          control={
+            <Switch size="small" checked={themeMode === "dark"} onChange={toggleTheme} />
+          }
+        />
+        <SettingRow
+          icon={<LanguageOutlinedIcon sx={{ fontSize: 18 }} />}
+          label={t("settings.language")}
+          noDivider
+          control={
+            <Box sx={{ display: "flex", gap: 0.75 }}>
+              {(["en", "ar"] as const).map((lang) => (
+                <Button
+                  key={lang}
+                  size="small"
+                  variant={language === lang ? "contained" : "outlined"}
+                  onClick={() => setLanguage(lang)}
+                  sx={{
+                    minWidth: 56,
+                    fontSize: 12,
+                    py: 0.4,
+                    borderColor: "divider",
+                    ...(language !== lang && { color: "text.secondary" }),
+                  }}
+                >
+                  {lang === "en" ? "EN" : "AR"}
+                </Button>
+              ))}
             </Box>
-            <Switch
-              size="small"
-              checked={themeMode === "dark"}
-              onChange={toggleTheme}
-            />
-          </Box>
-        </Box>
-      </Box>
+          }
+        />
+      </SettingGroup>
 
-      <Divider sx={{ mb: 3 }} />
-
-      {/* Language */}
-      <Box>
-        <SectionLabel label={t("settings.language")} />
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 1.5,
-            bgcolor: "background.paper",
-          }}
-        >
-          <Box
-            sx={{
-              px: 2.5,
-              py: 1.75,
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
-            {(["en", "ar"] as const).map((lang) => (
-              <Button
-                key={lang}
-                size="small"
-                variant={language === lang ? "contained" : "outlined"}
-                onClick={() => setLanguage(lang)}
-                sx={{
-                  minWidth: 60,
-                  fontSize: 12,
-                  py: 0.5,
-                  borderColor: "divider",
-                  ...(language !== lang && { color: "text.secondary" }),
-                }}
+      {/* App Start Page */}
+      <SectionTitle label={t("settings.startPage")} />
+      <SettingGroup>
+        <SettingRow
+          icon={<HomeOutlinedIcon sx={{ fontSize: 18 }} />}
+          label={t("settings.startPageLabel")}
+          description={t("settings.startPageDesc")}
+          noDivider
+          control={
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <Select
+                value={startPage || "dashboard"}
+                onChange={(e) => handleStartPageChange(e.target.value)}
+                sx={{ fontSize: 13 }}
               >
-                {lang === "en" ? "English" : "العربية"}
-              </Button>
-            ))}
-          </Box>
-        </Box>
-      </Box>
+                {START_PAGE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.key} value={opt.key} sx={{ fontSize: 13, gap: 1 }}>
+                    {t(`nav.${opt.key}`)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          }
+        />
+      </SettingGroup>
 
-      <Divider sx={{ mb: 3 }} />
-
-      {/* Bottom Navigation */}
-      <Box>
-        <SectionLabel label={t("settings.bottomNav")} />
-        <Box
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 1.5,
-            bgcolor: "background.paper",
-            p: 2.5,
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          <Typography variant="caption" sx={{ fontSize: 12, color: "text.secondary" }}>
-            {t("settings.bottomNavDesc")}
-          </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column" }}>
-            {NAV_OPTIONS.map((opt) => (
-              <FormControlLabel
-                key={opt.key}
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={navConfig.includes(opt.key)}
-                    onChange={() => toggleNavItem(opt.key)}
-                    disabled={
-                      (navConfig.includes(opt.key) && navConfig.length <= 2) ||
-                      (!navConfig.includes(opt.key) && navConfig.length >= 4)
-                    }
-                  />
+      {/* Bottom Nav */}
+      <SectionTitle label={t("settings.bottomNav")} />
+      <SettingGroup>
+        {NAV_OPTIONS.map((opt, i) => (
+          <SettingRow
+            key={opt.key}
+            icon={opt.icon}
+            label={t(`nav.${opt.key}`)}
+            noDivider={i === NAV_OPTIONS.length - 1}
+            control={
+              <Checkbox
+                size="small"
+                checked={navConfig.includes(opt.key)}
+                onChange={() => toggleNavItem(opt.key)}
+                disabled={
+                  (navConfig.includes(opt.key) && navConfig.length <= 2) ||
+                  (!navConfig.includes(opt.key) && navConfig.length >= 5)
                 }
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    {opt.icon}
-                    <Typography variant="body2" sx={{ fontSize: 13 }}>
-                      {t(`nav.${opt.key}`)}
-                    </Typography>
-                  </Box>
-                }
-                sx={{ ml: 0, py: 0.25 }}
+                sx={{ p: 0.5 }}
               />
-            ))}
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleSaveNav}
-              disabled={navSaveStatus === "saving"}
-              startIcon={navSaveStatus === "saving" ? <CircularProgress size={13} color="inherit" /> : undefined}
-            >
-              {t("settings.saveProfile")}
-            </Button>
-            {navSaveStatus === "saved" && (
-              <Typography variant="caption" sx={{ color: "success.main", fontSize: 12 }}>
-                {t("settings.bottomNavSaved")}
-              </Typography>
-            )}
-            {navSaveStatus === "error" && (
-              <Typography variant="caption" sx={{ color: "error.main", fontSize: 12 }}>
-                {t("settings.bottomNavSaveError")}
-              </Typography>
-            )}
-          </Box>
-        </Box>
+            }
+          />
+        ))}
+      </SettingGroup>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: -2, mb: 3 }}>
+        <Button
+          size="small"
+          variant="contained"
+          onClick={handleSaveNav}
+          disabled={navSaving}
+          startIcon={navSaving ? <CircularProgress size={12} color="inherit" /> : undefined}
+        >
+          {t("common.save")}
+        </Button>
       </Box>
     </Box>
   );
 }
-
