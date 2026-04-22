@@ -36,7 +36,12 @@
     "selectBarcode": "Select a barcode",
     "tapToSelect": "Tap a highlighted barcode to select it.",
     "rescan": "Rescan",
-    "hint": "Hold steady — barcodes are detected automatically"
+    "hint": "Hold steady — barcodes are detected automatically",
+    "batchTitle": "Scan Items",
+    "noItemsYet": "Point camera at barcodes to add items",
+    "addItems": "Add {{count}} Item(s)",
+    "unknownBarcode": "Unknown product",
+    "itemsScanned": "{{count}} scanned"
   },
   "auth": {
     "login": "Login",
@@ -82,6 +87,16 @@
     "unassigned": "Unassigned",
     "allPriorities": "All priorities",
     "allAssignees": "All assignees",
+    "allStatuses": "All statuses",
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "year": "Year",
+    "allYears": "All years",
+    "client": "Client",
+    "location": "Location",
+    "convertTo": "Convert to…",
+    "convertToInvoiceConfirm": "Create a new invoice from this task? The task will remain unchanged.",
+    "convertToQuotationConfirm": "Create a new quotation from this task? The task will remain unchanged.",
     "tasks": "Tasks"
   },
   "products": {

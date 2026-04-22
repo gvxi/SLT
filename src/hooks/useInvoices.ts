@@ -45,7 +45,7 @@ export function useCreateInvoice() {
 export function useUpdateInvoice() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...body }: Partial<Invoice> & { id: string }) => {
+    mutationFn: async ({ id, ...body }: Partial<Invoice> & { id: string; items?: unknown[] }) => {
       const res = await apiFetch(`invoices/${id}`, { method: "PATCH", body: JSON.stringify(body) });
       return res.json() as Promise<Invoice>;
     },

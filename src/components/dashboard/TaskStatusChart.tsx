@@ -55,7 +55,7 @@ export default function TaskStatusChart({ data, loading }: Props) {
                     border: `1px solid ${theme.palette.divider}`,
                     background: theme.palette.background.paper,
                   }}
-                  formatter={(val: number) => [val, t("tasks.tasks")]}
+                  formatter={(val) => [val, t("tasks.tasks")]}  
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry) => (

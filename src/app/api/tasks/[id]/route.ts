@@ -3,6 +3,13 @@ import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
 
+const taskItemSchema = z.object({
+  product_id: z.string().nullable().optional(),
+  description: z.string().default(""),
+  qty: z.number().min(0),
+  unit_price: z.number().min(0),
+});
+
 const updateTaskSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
@@ -11,6 +18,9 @@ const updateTaskSchema = z.object({
   assignee_id: z.string().uuid().nullable().optional(),
   due_date: z.string().nullable().optional(),
   product_id: z.string().nullable().optional(),
+  client_id: z.string().uuid().nullable().optional(),
+  location: z.string().nullable().optional(),
+  items: z.array(taskItemSchema).optional(),
 });
 
 export async function GET(
@@ -25,7 +35,12 @@ export async function GET(
 
   const { data, error: dbError } = await supabase
     .from("tasks")
-    .select("*, assignee:profiles!assignee_id(id, full_name, avatar_url), product:products!product_id(id, name_en, name_ar, sku), task_checklists(*)")
+    .select(
+      "*, assignee:profiles!assignee_id(id, full_name, avatar_url), " +
+      "product:products!product_id(id, name_en, name_ar, sku), " +
+      "client:clients!client_id(id, name_en, name_ar, phone), " +
+      "task_items(*, product:products(id, name_en, name_ar, sku))"
+    )
     .eq("id", id)
     .single();
 
@@ -49,16 +64,39 @@ export async function PATCH(
   }
 
   const supabase = createServerSupabaseClient();
+  const { items, ...taskFields } = parsed.data;
+
   const { data, error: dbError } = await supabase
     .from("tasks")
-    .update(parsed.data)
+    .update(taskFields)
     .eq("id", id)
     .select()
     .single();
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
-  return NextResponse.json(data);
+  // Replace items if provided
+  if (items !== undefined) {
+    await supabase.from("task_items").delete().eq("task_id", id);
+    if (items.length > 0) {
+      await supabase
+        .from("task_items")
+        .insert(items.map((item, i) => ({ ...item, task_id: id, sort_order: i })));
+    }
+  }
+
+  const { data: full } = await supabase
+    .from("tasks")
+    .select(
+      "*, assignee:profiles!assignee_id(id, full_name, avatar_url), " +
+      "product:products!product_id(id, name_en, name_ar, sku), " +
+      "client:clients!client_id(id, name_en, name_ar, phone), " +
+      "task_items(*, product:products(id, name_en, name_ar, sku))"
+    )
+    .eq("id", id)
+    .single();
+
+  return NextResponse.json(full);
 }
 
 export async function DELETE(

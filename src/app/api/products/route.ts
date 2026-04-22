@@ -12,7 +12,6 @@ const createProductSchema = z.object({
   unit_price: z.number().min(0),
   stock_qty: z.number().int().min(0).default(0),
   warning_limit_stock: z.number().int().min(0).default(5),
-  warning_limit_stock: z.number().int().min(0).default(5),
   status: z.enum(["active", "inactive"]).default("active"),
 });
 

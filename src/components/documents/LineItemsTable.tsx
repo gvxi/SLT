@@ -23,7 +23,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import { useTranslation } from "react-i18next";
 import { useProducts } from "@/hooks/useProducts";
-import BarcodeScanner from "@/components/products/BarcodeScanner";
+import BatchBarcodeScanner from "@/components/products/BatchBarcodeScanner";
 import ProductPickerDialog from "@/components/documents/ProductPickerDialog";
 import type { LineItemDraft } from "@/types";
 
@@ -53,18 +53,8 @@ export default function LineItemsTable({ items, onChange }: Props) {
     onChange([...items, ...newItems]);
   };
 
-  const handleBarcodeDetect = (barcode: string) => {
-    const found = activeProducts.find((p) => p.barcode === barcode);
-    if (found) {
-      onChange([...items, {
-        product_id: found.id,
-        description: (isAr && found.name_ar) ? found.name_ar : found.name_en,
-        qty: 1,
-        unit_price: found.unit_price,
-      }]);
-    } else {
-      onChange([...items, { product_id: null, description: barcode, qty: 1, unit_price: 0 }]);
-    }
+  const handleBarcodeDetectBatch = (newItems: LineItemDraft[]) => {
+    onChange([...items, ...newItems]);
     setScannerOpen(false);
   };
 
@@ -206,11 +196,11 @@ export default function LineItemsTable({ items, onChange }: Props) {
         </MenuItem>
       </Menu>
 
-      {/* Barcode scanner dialog */}
-      <BarcodeScanner
+      {/* Barcode scanner dialog (batch mode) */}
+      <BatchBarcodeScanner
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
-        onDetect={handleBarcodeDetect}
+        onConfirm={handleBarcodeDetectBatch}
       />
 
       {/* Product picker dialog */}

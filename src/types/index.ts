@@ -38,6 +38,17 @@ export interface Product {
 export type TaskStatus = "backlog" | "in_progress" | "review" | "done";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
+export interface TaskItem {
+  id: string;
+  task_id: string;
+  product_id: string | null;
+  description: string;
+  qty: number;
+  unit_price: number;
+  sort_order: number;
+  product?: { id: string; name_en: string; name_ar: string | null; sku: string } | null;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -47,13 +58,17 @@ export interface Task {
   assignee_id: string | null;
   due_date: string | null;
   product_id: string | null;
+  client_id: string | null;
+  location: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
   // Optional joined relations (returned by API selects)
   assignee?: { id: string; full_name: string; avatar_url: string | null } | null;
   product?: { id: string; name_en: string; name_ar: string | null; sku: string } | null;
+  client?: { id: string; name_en: string; name_ar: string | null; phone?: string } | null;
   task_checklists?: TaskChecklist[];
+  task_items?: TaskItem[];
 }
 
 export interface TaskChecklist {

@@ -52,7 +52,7 @@ export default function RevenueChart({ data, loading }: Props) {
                     border: `1px solid ${theme.palette.divider}`,
                     background: theme.palette.background.paper,
                   }}
-                  formatter={(val: number) => [`${val.toFixed(3)} OMR`, t("common.total")]}
+                  formatter={(val) => [typeof val === "number" ? `${val.toFixed(3)} OMR` : val, t("common.total")]}  
                 />
                 <Area
                   type="monotone"

@@ -82,7 +82,6 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     streamRef.current = null;
     nativeDetectorRef.current = null;
     if (zxingReaderRef.current) {
-      try { zxingReaderRef.current.reset(); } catch { /* ignore */ }
       zxingReaderRef.current = null;
     }
     setReady(false);

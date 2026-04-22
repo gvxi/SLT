@@ -10,11 +10,7 @@ const updateProfileSchema = z.object({
   full_name: z.string().min(1).optional(),
   avatar_url: z.string().url().nullable().optional(),
   lang_preference: z.enum(["en", "ar"]).optional(),
-  bottom_nav_config: z
-    .array(z.enum(NAV_KEYS))
-    .min(2)
-    .max(4)
-    .optional() as z.ZodOptional<z.ZodArray<z.ZodEnum<[NavKey, ...NavKey[]]>>>,
+  bottom_nav_config: z.array(z.enum(NAV_KEYS)).min(2).max(4).optional(),
 });
 
 export async function GET(request: NextRequest) {

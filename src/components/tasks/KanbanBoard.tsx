@@ -37,7 +37,8 @@ export default function KanbanBoard({ onTaskClick, onAddTask }: KanbanBoardProps
   const priority = searchParams.get("priority") ?? undefined;
   const assignee_id = searchParams.get("assignee_id") ?? undefined;
 
-  const { data: tasks = [], isLoading } = useTasks({ priority, assignee_id });
+  const { data: tasksPage, isLoading } = useTasks({ priority, assignee_id });
+  const tasks: Task[] = Array.isArray(tasksPage) ? tasksPage : (tasksPage?.data ?? []);
   const updateTask = useUpdateTask();
   const [activeId, setActiveId] = useState<string | null>(null);
 

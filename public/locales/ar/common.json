@@ -36,7 +36,12 @@
     "selectBarcode": "اختر باركوداً",
     "tapToSelect": "اضغط على الباركود المحدد لتحديده.",
     "rescan": "إعادة المسح",
-    "hint": "ثبّت الجهاز — يتم الكشف تلقائياً"
+    "hint": "ثبّت الجهاز — يتم الكشف تلقائياً",
+    "batchTitle": "مسح المنتجات",
+    "noItemsYet": "وجّه الكاميرا نحو الباركودات لإضافة عناصر",
+    "addItems": "إضافة {{count}} عنصر",
+    "unknownBarcode": "منتج غير معروف",
+    "itemsScanned": "{{count}} تم مسحه"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -82,6 +87,16 @@
     "unassigned": "غير محدد",
     "allPriorities": "كل الأولويات",
     "allAssignees": "كل المسؤولين",
+    "allStatuses": "كل الحالات",
+    "newest": "الأحدث",
+    "oldest": "الأقدم",
+    "year": "السنة",
+    "allYears": "كل السنوات",
+    "client": "العميل",
+    "location": "الموقع",
+    "convertTo": "تحويل إلى…",
+    "convertToInvoiceConfirm": "إنشاء فاتورة جديدة من هذه المهمة؟ ستبقى المهمة كما هي.",
+    "convertToQuotationConfirm": "إنشاء عرض سعر جديد من هذه المهمة؟ ستبقى المهمة كما هي.",
     "tasks": "مهام"
   },
   "products": {
