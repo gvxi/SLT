@@ -229,6 +229,10 @@
     "fullName": "الاسم الكامل",
     "saveProfile": "حفظ الملف الشخصي",
     "profileSaved": "تم حفظ الملف الشخصي",
-    "profileSaveError": "فشل في حفظ الملف الشخصي"
+    "profileSaveError": "فشل في حفظ الملف الشخصي",
+    "bottomNav": "شريط التنقل السفلي",
+    "bottomNavDesc": "اختر حتى 4 اختصارات تظهر في شريط التنقل.",
+    "bottomNavSaved": "تم حفظ التنقل",
+    "bottomNavSaveError": "فشل في حفظ التنقل"
   }
 }

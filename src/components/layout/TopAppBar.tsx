@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   AppBar,
   Toolbar,
@@ -62,13 +61,8 @@ export default function TopAppBar({ onMenuClick }: TopAppBarProps) {
         </IconButton>
 
         <Box sx={{ flex: 1, display: "flex", alignItems: "center" }}>
-          <Image
-            src="/images/logo.png"
-            alt="SLT"
-            width={32}
-            height={32}
-            style={{ objectFit: "contain" }}
-          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/logo.png" alt="SLT" style={{ height: 32, width: "auto", objectFit: "contain" }} />
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -117,5 +111,4 @@ export default function TopAppBar({ onMenuClick }: TopAppBarProps) {
       </Menu>
     </AppBar>
   );
-}
 }

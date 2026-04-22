@@ -3,10 +3,18 @@ import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/middleware";
 
+const NAV_KEYS = ["dashboard", "tasks", "products", "invoices", "quotations", "settings"] as const;
+type NavKey = (typeof NAV_KEYS)[number];
+
 const updateProfileSchema = z.object({
   full_name: z.string().min(1).optional(),
   avatar_url: z.string().url().nullable().optional(),
   lang_preference: z.enum(["en", "ar"]).optional(),
+  bottom_nav_config: z
+    .array(z.enum(NAV_KEYS))
+    .min(2)
+    .max(4)
+    .optional() as z.ZodOptional<z.ZodArray<z.ZodEnum<[NavKey, ...NavKey[]]>>>,
 });
 
 export async function GET(request: NextRequest) {

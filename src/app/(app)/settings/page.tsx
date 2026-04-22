@@ -9,12 +9,31 @@ import {
   Switch,
   CircularProgress,
   Divider,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
+import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { useTranslation } from "react-i18next";
 import { useUIStore } from "@/store/uiStore";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfiles";
+
+const NAV_OPTIONS = [
+  { key: "dashboard", icon: <DashboardOutlinedIcon sx={{ fontSize: 18 }} /> },
+  { key: "tasks", icon: <TaskAltOutlinedIcon sx={{ fontSize: 18 }} /> },
+  { key: "products", icon: <Inventory2OutlinedIcon sx={{ fontSize: 18 }} /> },
+  { key: "invoices", icon: <ReceiptOutlinedIcon sx={{ fontSize: 18 }} /> },
+  { key: "quotations", icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 18 }} /> },
+  { key: "settings", icon: <SettingsOutlinedIcon sx={{ fontSize: 18 }} /> },
+] as const;
+
+const DEFAULT_NAV = ["dashboard", "tasks", "products", "invoices"];
 
 function SectionLabel({ label }: { label: string }) {
   return (
@@ -35,10 +54,13 @@ export default function SettingsPage() {
 
   const [fullName, setFullName] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [navConfig, setNavConfig] = useState<string[]>(DEFAULT_NAV);
+  const [navSaveStatus, setNavSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
-  }, [profile?.full_name]);
+    if (profile?.bottom_nav_config?.length) setNavConfig(profile.bottom_nav_config);
+  }, [profile?.full_name, profile?.bottom_nav_config]);
 
   const handleSaveProfile = async () => {
     setSaveStatus("saving");
@@ -50,6 +72,29 @@ export default function SettingsPage() {
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
     }
+  };
+
+  const handleSaveNav = async () => {
+    setNavSaveStatus("saving");
+    try {
+      await updateProfile.mutateAsync({ bottom_nav_config: navConfig });
+      setNavSaveStatus("saved");
+      setTimeout(() => setNavSaveStatus("idle"), 2000);
+    } catch {
+      setNavSaveStatus("error");
+      setTimeout(() => setNavSaveStatus("idle"), 3000);
+    }
+  };
+
+  const toggleNavItem = (key: string) => {
+    setNavConfig((prev) => {
+      if (prev.includes(key)) {
+        if (prev.length <= 2) return prev;
+        return prev.filter((k) => k !== key);
+      }
+      if (prev.length >= 4) return prev;
+      return [...prev, key];
+    });
   };
 
   return (
@@ -186,6 +231,77 @@ export default function SettingsPage() {
                 {lang === "en" ? "English" : "العربية"}
               </Button>
             ))}
+          </Box>
+        </Box>
+      </Box>
+
+      <Divider sx={{ mb: 3 }} />
+
+      {/* Bottom Navigation */}
+      <Box>
+        <SectionLabel label={t("settings.bottomNav")} />
+        <Box
+          sx={{
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 1.5,
+            bgcolor: "background.paper",
+            p: 2.5,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          <Typography variant="caption" sx={{ fontSize: 12, color: "text.secondary" }}>
+            {t("settings.bottomNavDesc")}
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
+            {NAV_OPTIONS.map((opt) => (
+              <FormControlLabel
+                key={opt.key}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={navConfig.includes(opt.key)}
+                    onChange={() => toggleNavItem(opt.key)}
+                    disabled={
+                      (navConfig.includes(opt.key) && navConfig.length <= 2) ||
+                      (!navConfig.includes(opt.key) && navConfig.length >= 4)
+                    }
+                  />
+                }
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    {opt.icon}
+                    <Typography variant="body2" sx={{ fontSize: 13 }}>
+                      {t(`nav.${opt.key}`)}
+                    </Typography>
+                  </Box>
+                }
+                sx={{ ml: 0, py: 0.25 }}
+              />
+            ))}
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleSaveNav}
+              disabled={navSaveStatus === "saving"}
+              startIcon={navSaveStatus === "saving" ? <CircularProgress size={13} color="inherit" /> : undefined}
+            >
+              {t("settings.saveProfile")}
+            </Button>
+            {navSaveStatus === "saved" && (
+              <Typography variant="caption" sx={{ color: "success.main", fontSize: 12 }}>
+                {t("settings.bottomNavSaved")}
+              </Typography>
+            )}
+            {navSaveStatus === "error" && (
+              <Typography variant="caption" sx={{ color: "error.main", fontSize: 12 }}>
+                {t("settings.bottomNavSaveError")}
+              </Typography>
+            )}
           </Box>
         </Box>
       </Box>

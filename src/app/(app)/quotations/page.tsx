@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Box,
   Button,
@@ -52,6 +53,16 @@ export default function QuotationsPage() {
     setDrawerQuotationId(id);
     setDrawerOpen(true);
   };
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      openDrawer(null);
+      router.replace("/quotations");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     if (drawerOpen) {

@@ -1,8 +1,15 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
+import { useUIStore } from "@/store/uiStore";
 
 export default function SplashScreen() {
+  // Read themeMode directly from the Zustand store — same source as AppProviders —
+  // so this is always in sync regardless of ThemeProvider hydration timing.
+  const themeMode = useUIStore((s) => s.themeMode);
+  const isDark = themeMode === "dark";
+  const bgColor = isDark ? "#121212" : "#F5F5F5";
+
   return (
     <Box
       sx={{
@@ -11,21 +18,32 @@ export default function SplashScreen() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "background.default",
+        backgroundColor: bgColor,
         zIndex: 9999,
       }}
     >
-      <Typography
-        variant="h5"
+      {/* Logo container: always white so the PNG blends cleanly in both themes */}
+      <Box
         sx={{
-          fontWeight: 700,
-          letterSpacing: "-0.5px",
-          color: "text.primary",
-          opacity: 0.85,
+          width: 112,
+          height: 112,
+          borderRadius: "28px",
+          backgroundColor: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: isDark
+            ? "0 8px 32px rgba(0,0,0,0.5)"
+            : "0 4px 20px rgba(0,0,0,0.12)",
         }}
       >
-        SLT
-      </Typography>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/logo.png"
+          alt="SLT"
+          style={{ height: 80, width: 80, objectFit: "contain" }}
+        />
+      </Box>
     </Box>
   );
 }

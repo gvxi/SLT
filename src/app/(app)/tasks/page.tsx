@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Box, Typography, Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useTranslation } from "react-i18next";
@@ -11,10 +12,19 @@ import type { TaskStatus } from "@/types";
 
 export default function TasksPage() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [drawerTaskId, setDrawerTaskId] = useState<string | null>(null);
   const [createStatus, setCreateStatus] = useState<TaskStatus | null>(null);
 
   const isDrawerOpen = drawerTaskId !== null || createStatus !== null;
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setCreateStatus("backlog");
+      router.replace("/tasks");
+    }
+  }, [searchParams, router]);
 
   const handleClose = () => {
     setDrawerTaskId(null);

@@ -229,6 +229,10 @@
     "fullName": "Full Name",
     "saveProfile": "Save Profile",
     "profileSaved": "Profile saved",
-    "profileSaveError": "Failed to save profile"
+    "profileSaveError": "Failed to save profile",
+    "bottomNav": "Bottom Navigation",
+    "bottomNavDesc": "Choose up to 4 shortcuts shown in the mobile navigation bar.",
+    "bottomNavSaved": "Navigation saved",
+    "bottomNavSaveError": "Failed to save navigation"
   }
 }

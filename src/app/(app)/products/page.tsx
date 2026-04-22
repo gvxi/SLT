@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
   Button,
@@ -58,6 +58,17 @@ export default function ProductsPage() {
   const [filterStock, setFilterStock] = useState<StockStatus>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
+
+  const searchParams = useSearchParams();
+  const { replace: routerReplace } = useRouter();
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setEditProduct(null);
+      setFormOpen(true);
+      routerReplace("/products");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
 
   const { data: products = [], isLoading } = useProducts();
