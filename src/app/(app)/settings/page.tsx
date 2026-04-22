@@ -20,6 +20,7 @@ import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import { useTranslation } from "react-i18next";
 import { useUIStore } from "@/store/uiStore";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfiles";
@@ -30,6 +31,7 @@ const NAV_OPTIONS = [
   { key: "products", icon: <Inventory2OutlinedIcon sx={{ fontSize: 18 }} /> },
   { key: "invoices", icon: <ReceiptOutlinedIcon sx={{ fontSize: 18 }} /> },
   { key: "quotations", icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 18 }} /> },
+  { key: "customers", icon: <PeopleAltOutlinedIcon sx={{ fontSize: 18 }} /> },
   { key: "settings", icon: <SettingsOutlinedIcon sx={{ fontSize: 18 }} /> },
 ] as const;
 
@@ -92,7 +94,7 @@ export default function SettingsPage() {
         if (prev.length <= 2) return prev;
         return prev.filter((k) => k !== key);
       }
-      if (prev.length >= 4) return prev;
+      if (prev.length >= 5) return prev;
       return [...prev, key];
     });
   };

@@ -9,6 +9,10 @@ const createClientSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   address: z.string().optional(),
+  customer_type: z.enum(["customer", "company", "government"]).nullable().optional(),
+  notes: z.string().optional(),
+  lat: z.number().nullable().optional(),
+  lng: z.number().nullable().optional(),
 });
 
 export async function GET(request: NextRequest) {

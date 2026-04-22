@@ -23,11 +23,13 @@ import InventoryIcon from "@mui/icons-material/Inventory2";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import SettingsIcon from "@mui/icons-material/Settings";
+import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import NoteAddOutlinedIcon from "@mui/icons-material/NoteAddOutlined";
 import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
+import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import { useProfile } from "@/hooks/useProfiles";
 
 // MUI BottomNavigation clones all children and injects `showLabel`.
@@ -42,6 +44,7 @@ const ALL_NAV_ITEMS = {
   products: { icon: <InventoryIcon />, path: "/products" },
   invoices: { icon: <ReceiptIcon />, path: "/invoices" },
   quotations: { icon: <RequestQuoteIcon />, path: "/quotations" },
+  customers: { icon: <PeopleAltOutlinedIcon />, path: "/customers" },
   settings: { icon: <SettingsIcon />, path: "/settings" },
 } as const;
 
@@ -53,6 +56,7 @@ const ADD_ACTIONS = [
   { key: "product", icon: <AddBoxOutlinedIcon />, path: "/products?new=1" },
   { key: "invoice", icon: <ReceiptLongOutlinedIcon />, path: "/invoices?new=1" },
   { key: "quotation", icon: <RequestQuoteOutlinedIcon />, path: "/quotations?new=1" },
+  { key: "customer", icon: <PersonAddAltOutlinedIcon />, path: "/customers?new=1" },
 ] as const;
 
 export default function BottomNav() {

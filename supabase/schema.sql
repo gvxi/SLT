@@ -46,6 +46,10 @@ CREATE TABLE IF NOT EXISTS clients (
   email         TEXT,
   phone         TEXT,
   address       TEXT,
+  customer_type TEXT CHECK (customer_type IN ('customer', 'company', 'government')),
+  notes         TEXT,
+  lat           DOUBLE PRECISION,
+  lng           DOUBLE PRECISION,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );

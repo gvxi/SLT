@@ -5,6 +5,7 @@
     "products": "المنتجات",
     "invoices": "الفواتير",
     "quotations": "عروض الأسعار",
+    "customers": "العملاء",
     "settings": "الإعدادات"
   },
   "common": {
@@ -246,8 +247,35 @@
     "profileSaved": "تم حفظ الملف الشخصي",
     "profileSaveError": "فشل في حفظ الملف الشخصي",
     "bottomNav": "شريط التنقل السفلي",
-    "bottomNavDesc": "اختر حتى 4 اختصارات تظهر في شريط التنقل.",
+    "bottomNavDesc": "اختر حتى 5 اختصارات تظهر في شريط التنقل.",
     "bottomNavSaved": "تم حفظ التنقل",
     "bottomNavSaveError": "فشل في حفظ التنقل"
+  },
+  "customers": {
+    "title": "العملاء",
+    "new": "عميل جديد",
+    "editCustomer": "تعديل العميل",
+    "newCustomer": "عميل جديد",
+    "type": "النوع",
+    "type_customer": "فرد",
+    "type_company": "شركة",
+    "type_government": "جهة حكومية",
+    "nameEn": "الاسم (إنجليزي)",
+    "nameAr": "الاسم (عربي)",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "address": "العنوان",
+    "notes": "ملاحظات",
+    "location": "الموقع",
+    "useMyLocation": "استخدام موقعي",
+    "clearLocation": "مسح الموقع",
+    "lat": "خط العرض",
+    "lng": "خط الطول",
+    "mapHint": "اضغط على الخريطة أو اسحب الدبوس لتحديد الموقع",
+    "geoNotSupported": "تحديد الموقع غير مدعوم في متصفحك",
+    "geoError": "تعذر الحصول على موقعك. تحقق من الصلاحيات.",
+    "empty": "لا يوجد عملاء بعد. أضف أول عميل.",
+    "count": "{{count}} عميل",
+    "deleteConfirm": "حذف {{name}}؟ لا يمكن التراجع."
   }
 }

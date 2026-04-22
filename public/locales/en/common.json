@@ -5,6 +5,7 @@
     "products": "Products",
     "invoices": "Invoices",
     "quotations": "Quotations",
+    "customers": "Customers",
     "settings": "Settings"
   },
   "common": {
@@ -246,8 +247,35 @@
     "profileSaved": "Profile saved",
     "profileSaveError": "Failed to save profile",
     "bottomNav": "Bottom Navigation",
-    "bottomNavDesc": "Choose up to 4 shortcuts shown in the mobile navigation bar.",
+    "bottomNavDesc": "Choose up to 5 shortcuts shown in the mobile navigation bar.",
     "bottomNavSaved": "Navigation saved",
     "bottomNavSaveError": "Failed to save navigation"
+  },
+  "customers": {
+    "title": "Customers",
+    "new": "New Customer",
+    "editCustomer": "Edit Customer",
+    "newCustomer": "New Customer",
+    "type": "Type",
+    "type_customer": "Individual",
+    "type_company": "Company",
+    "type_government": "Government",
+    "nameEn": "Name (English)",
+    "nameAr": "Name (Arabic)",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "notes": "Notes",
+    "location": "Location",
+    "useMyLocation": "Use my location",
+    "clearLocation": "Clear location",
+    "lat": "Latitude",
+    "lng": "Longitude",
+    "mapHint": "Click map or drag pin to set location",
+    "geoNotSupported": "Geolocation is not supported by your browser",
+    "geoError": "Could not get your location. Check permissions.",
+    "empty": "No customers yet. Add your first one.",
+    "count": "{{count}} customer(s)",
+    "deleteConfirm": "Delete {{name}}? This cannot be undone."
   }
 }

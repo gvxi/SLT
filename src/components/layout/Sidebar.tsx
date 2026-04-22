@@ -20,6 +20,7 @@ import InventoryIcon from "@mui/icons-material/Inventory2";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import SettingsIcon from "@mui/icons-material/Settings";
+import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useUIStore } from "@/store/uiStore";
@@ -33,6 +34,7 @@ const navItems = [
   { key: "products", path: "/products", icon: <InventoryIcon /> },
   { key: "invoices", path: "/invoices", icon: <ReceiptIcon /> },
   { key: "quotations", path: "/quotations", icon: <RequestQuoteIcon /> },
+  { key: "customers", path: "/customers", icon: <PeopleAltOutlinedIcon /> },
   { key: "settings", path: "/settings", icon: <SettingsIcon /> },
 ];
 

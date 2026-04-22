@@ -8,6 +8,8 @@ export interface Profile {
   updated_at: string;
 }
 
+export type CustomerType = "customer" | "company" | "government";
+
 export interface Client {
   id: string;
   name_en: string;
@@ -15,6 +17,10 @@ export interface Client {
   email: string;
   phone: string;
   address: string;
+  customer_type: CustomerType | null;
+  notes: string | null;
+  lat: number | null;
+  lng: number | null;
   created_at: string;
   updated_at: string;
 }
