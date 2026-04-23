@@ -10,12 +10,30 @@ export default function OneSignalProvider() {
     if (!process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) return;
     if (initializedRef.current) return;
 
+    // Clear any existing service worker registrations first
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+        
+        // Also clear the cache
+        if ('caches' in window) {
+          caches.keys().then((cacheNames) => {
+            cacheNames.forEach((cacheName) => {
+              caches.delete(cacheName);
+            });
+          });
+        }
+      });
+    }
+
     initializedRef.current = true;
 
     OneSignal.init({
       appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
-      serviceWorkerParam: { scope: "/" },
-      serviceWorkerPath: "/OneSignalSDKWorker.js?v=20260423",
+      serviceWorkerParam: { scope: "/push/" },
+      serviceWorkerPath: "/push/onesignal/OneSignalSDKWorker.js?v=20260423",
       allowLocalhostAsSecureOrigin: true,
     }).then(() => {
       // Listen for subscription changes using the v2 SDK API

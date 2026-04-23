@@ -8,7 +8,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/locales") ||
-    pathname === "/favicon.ico"
+    pathname.startsWith("/OneSignal") ||
+    pathname.startsWith("/push/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/site.webmanifest" ||
+    pathname === "/manifest.json"
   ) {
     return NextResponse.next();
   }
