@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   title: "SLT - Business Management",
   description: "Task, product, invoice & quotation management",
   applicationName: "SLT",
-  manifest: "/site.webmanifest",
+  manifest: "/site.webmanifest?v=20260424",
   icons: {
     icon: [
       { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
@@ -57,10 +57,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="SLT" />
         
         {/* iOS splash screens - optional but recommended */}
-        <link rel="apple-touch-startup-image" href="/apple-touch-icon.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" />
-        <link rel="apple-touch-startup-image" href="/apple-touch-icon.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
-        <link rel="apple-touch-startup-image" href="/apple-touch-icon.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" />
-        <link rel="apple-touch-startup-image" href="/apple-touch-icon.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" />
+        <link rel="apple-touch-startup-image" href="/apple-touch-icon-new.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" />
+        <link rel="apple-touch-startup-image" href="/apple-touch-icon-new.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
+        <link rel="apple-touch-startup-image" href="/apple-touch-icon-new.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" />
+        <link rel="apple-touch-startup-image" href="/apple-touch-icon-new.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" />
         
         {/* Additional iOS meta tags for better PWA experience */}
         <meta name="format-detection" content="telephone=no" />

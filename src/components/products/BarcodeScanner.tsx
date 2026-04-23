@@ -74,6 +74,20 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [frozen, setFrozen] = useState<FrozenBarcode[] | null>(null);
+  const lastDetectionRef = useRef(0);
+
+  // ── Stop everything ──────────────────────────────────────────────────────────
+  const stopCamera = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    streamRef.current?.getTracks().forEach((tr) => tr.stop());
+    streamRef.current = null;
+    nativeDetectorRef.current = null;
+    if (zxingReaderRef.current) {
+      zxingReaderRef.current = null;
+    }
+    setReady(false);
+    setFrozen(null);
+  }, []);
 
   const playScanFeedback = useCallback(() => {
     try {
@@ -111,18 +125,19 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     }
   }, []);
 
-  // ── Stop everything ──────────────────────────────────────────────────────────
-  const stopCamera = useCallback(() => {
-    cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((tr) => tr.stop());
-    streamRef.current = null;
-    nativeDetectorRef.current = null;
-    if (zxingReaderRef.current) {
-      zxingReaderRef.current = null;
+  const debouncedDetect = useCallback((value: string) => {
+    const now = Date.now();
+    // Debounce detections - ignore if less than 500ms since last detection
+    if (now - lastDetectionRef.current < 500) {
+      return;
     }
-    setReady(false);
-    setFrozen(null);
-  }, []);
+    lastDetectionRef.current = now;
+    
+    playScanFeedback();
+    stopCamera();
+    onDetect(value);
+    onClose();
+  }, [onClose, onDetect, playScanFeedback, stopCamera]);
 
   // ── Native scan loop ─────────────────────────────────────────────────────────
   const nativeScan = useCallback(async () => {
@@ -135,10 +150,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
       const results: NativeBarcodeDetectorResult[] = await nativeDetectorRef.current.detect(videoRef.current);
 
       if (results.length === 1) {
-        playScanFeedback();
-        stopCamera();
-        onDetect(results[0].rawValue);
-        onClose();
+        debouncedDetect(results[0].rawValue);
         return;
       }
 
@@ -212,10 +224,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     try {
       reader.decodeFromStream(stream, videoRef.current, (result, err) => {
         if (result) {
-          playScanFeedback();
-          stopCamera();
-          onDetect(result.getText());
-          onClose();
+          debouncedDetect(result.getText());
         } else if (err && !(err instanceof NotFoundException)) {
           console.warn("[BarcodeScanner] ZXing error:", err);
         }
@@ -244,9 +253,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
 
   const handleSelectBarcode = (value: string) => {
     setFrozen(null);
-    playScanFeedback();
-    onDetect(value);
-    onClose();
+    debouncedDetect(value);
   };
 
   const handleRescan = () => {
