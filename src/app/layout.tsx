@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Cairo } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import AppProviders from "@/components/providers/AppProviders";
 
 const inter = Inter({
@@ -47,6 +48,7 @@ export default function RootLayout({
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <body className={`${inter.variable} ${cairo.variable}`} style={{ margin: 0 }}>
         <AppProviders>{children}</AppProviders>
+        <Analytics />
       </body>
     </html>
   );
