@@ -1,0 +1,7 @@
+name = "slt-onesignal-cron"
+main = "src/index.ts"
+compatibility_date = "2025-04-08"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[triggers]
+crons = ["0 9 * * *"]

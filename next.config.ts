@@ -3,6 +3,10 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 initOpenNextCloudflareForDev();
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+	turbopack: {
+		root: process.cwd(),
+	},
+};
 
 export default nextConfig;
