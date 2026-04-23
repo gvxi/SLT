@@ -11,6 +11,7 @@ import { createEmotionCache } from "@/theme/rtlCache";
 import i18n from "@/lib/i18n";
 import ToastContainer from "./ToastContainer";
 import OneSignalProvider from "./OneSignalProvider";
+import ServiceWorkerCleanup from "./ServiceWorkerCleanup";
 
 export default function AppProviders({ children }: { children: React.ReactNode }) {
   const { language, themeMode } = useUIStore();
@@ -46,6 +47,7 @@ export default function AppProviders({ children }: { children: React.ReactNode }
             {children}
             <ToastContainer />
             <OneSignalProvider />
+            <ServiceWorkerCleanup />
           </QueryClientProvider>
         </ThemeProvider>
       </CacheProvider>

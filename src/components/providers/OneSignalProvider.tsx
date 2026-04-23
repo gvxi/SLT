@@ -15,7 +15,7 @@ export default function OneSignalProvider() {
     OneSignal.init({
       appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
       serviceWorkerParam: { scope: "/" },
-      serviceWorkerPath: "/OneSignalSDKWorker.js",
+      serviceWorkerPath: "/OneSignalSDKWorker.js?v=20260423",
       allowLocalhostAsSecureOrigin: true,
     }).then(() => {
       // Listen for subscription changes using the v2 SDK API
