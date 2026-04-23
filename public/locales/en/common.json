@@ -265,6 +265,56 @@
     "deleted": "Deleted",
     "error": "Something went wrong"
   },
+  "alerts": {
+    "title": "Alerts",
+    "clearAll": "Clear all",
+    "dismiss": "Dismiss",
+    "noActive": "No active alerts",
+    "time": {
+      "justNow": "just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "types": {
+      "invoice_overdue": {
+        "title": "Invoice overdue",
+        "body": "An invoice is overdue. Please follow up with the client."
+      },
+      "invoice_due": {
+        "title": "Invoice due soon",
+        "body": "An invoice due date is approaching soon."
+      },
+      "quotation_expired": {
+        "title": "Quotation expired",
+        "body": "A quotation has expired and needs follow-up."
+      },
+      "quotation_expiring": {
+        "title": "Quotation expiring soon",
+        "body": "A quotation will expire soon."
+      },
+      "quotation_stale": {
+        "title": "Draft quotation needs action",
+        "body": "A draft quotation has been inactive for a while."
+      },
+      "product_out_of_stock": {
+        "title": "Product out of stock",
+        "body": "A product has reached zero stock."
+      },
+      "product_low_stock": {
+        "title": "Low stock warning",
+        "body": "A product stock is below the warning threshold."
+      },
+      "task_overdue": {
+        "title": "Task overdue",
+        "body": "A task is overdue."
+      },
+      "task_due": {
+        "title": "Task due soon",
+        "body": "A task due date is approaching soon."
+      }
+    }
+  },
   "customers": {
     "title": "Customers",
     "new": "New Customer",

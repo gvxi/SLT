@@ -5,9 +5,9 @@ const getDesignTokens = (mode: "light" | "dark", direction: Direction): ThemeOpt
   palette: {
     mode,
     primary: {
-      main: "#3F51B5",
-      light: "#7986CB",
-      dark: "#303F9F",
+      main: "#c80000",
+      light: "#e53935",
+      dark: "#8b0000",
       contrastText: "#FFFFFF",
     },
     secondary: {

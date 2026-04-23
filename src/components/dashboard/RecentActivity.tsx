@@ -27,19 +27,33 @@ interface Props {
   loading?: boolean;
 }
 
-function relativeTime(dateStr: string): string {
+function relativeTime(
+  dateStr: string,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("alerts.time.justNow");
+  if (mins < 60) return t("alerts.time.minutesAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return t("alerts.time.hoursAgo", { count: hrs });
   const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return t("alerts.time.daysAgo", { count: days });
 }
 
 export default function RecentActivity({ items, loading }: Props) {
   const { t } = useTranslation();
+
+  const getStatusLabel = (item: ActivityItem) => {
+    if (item.type === "invoice") {
+      return t(`invoices.${item.sub}`, {
+        defaultValue: item.sub.replaceAll("_", " "),
+      });
+    }
+    return t(`tasks.${item.sub}`, {
+      defaultValue: item.sub.replaceAll("_", " "),
+    });
+  };
 
   return (
     <Card variant="outlined">
@@ -77,11 +91,11 @@ export default function RecentActivity({ items, loading }: Props) {
                     {item.label}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11, textTransform: "capitalize" }}>
-                    {item.sub.replace("_", " ")}
+                    {getStatusLabel(item)}
                   </Typography>
                 </Box>
                 <Typography variant="caption" color="text.disabled" sx={{ ml: 1.5, whiteSpace: "nowrap", fontSize: 11 }}>
-                  {relativeTime(item.date)}
+                  {relativeTime(item.date, t)}
                 </Typography>
               </ListItem>
             ))}

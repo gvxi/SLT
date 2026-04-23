@@ -19,6 +19,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
+import { useTranslation } from "react-i18next";
 import {
   useAlerts,
   useDismissAlert,
@@ -34,14 +35,17 @@ const SEVERITY_ICON: Record<string, React.ReactNode> = {
 
 const SEVERITY_ORDER: Record<string, number> = { error: 0, warning: 1, info: 2 };
 
-function timeAgo(dateStr: string): string {
+function timeAgo(
+  dateStr: string,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
+  if (m < 1) return t("alerts.time.justNow");
+  if (m < 60) return t("alerts.time.minutesAgo", { count: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  if (h < 24) return t("alerts.time.hoursAgo", { count: h });
+  return t("alerts.time.daysAgo", { count: Math.floor(h / 24) });
 }
 
 interface SwipeableAlertItemProps {
@@ -51,9 +55,13 @@ interface SwipeableAlertItemProps {
 }
 
 function SwipeableAlertItem({ alert, onDismiss, onClick }: SwipeableAlertItemProps) {
+  const { t } = useTranslation();
   const [translateX, setTranslateX] = useState(0);
   const [dismissed, setDismissed] = useState(false);
   const touchStartX = useRef<number | null>(null);
+
+  const title = t(`alerts.types.${alert.type}.title`, { defaultValue: alert.title });
+  const body = t(`alerts.types.${alert.type}.body`, { defaultValue: alert.body });
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -114,20 +122,20 @@ function SwipeableAlertItem({ alert, onDismiss, onClick }: SwipeableAlertItemPro
             whiteSpace: "nowrap",
           }}
         >
-          {alert.title}
+          {title}
         </Typography>
         <Typography
           variant="caption"
           color="text.secondary"
           sx={{ display: "block", mt: 0.25, lineHeight: 1.3 }}
         >
-          {alert.body}
+          {body}
         </Typography>
         <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.25 }}>
-          {timeAgo(alert.created_at)}
+          {timeAgo(alert.created_at, t)}
         </Typography>
       </Box>
-      <Tooltip title="Dismiss">
+      <Tooltip title={t("alerts.dismiss")}>
         <IconButton
           size="small"
           sx={{ flexShrink: 0, mt: -0.5, mr: -0.5 }}
@@ -149,6 +157,7 @@ interface AlertsPopoverProps {
 }
 
 export default function AlertsPopover({ anchor, onClose }: AlertsPopoverProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { data, isLoading } = useAlerts(true);
   const dismiss = useDismissAlert();
@@ -195,7 +204,7 @@ export default function AlertsPopover({ anchor, onClose }: AlertsPopoverProps) {
         }}
       >
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          Alerts
+          {t("alerts.title")}
           {alerts.length > 0 && (
             <Typography
               component="span"
@@ -207,14 +216,14 @@ export default function AlertsPopover({ anchor, onClose }: AlertsPopoverProps) {
           )}
         </Typography>
         {alerts.length > 0 && (
-          <Tooltip title="Dismiss all">
+          <Tooltip title={t("alerts.clearAll")}>
             <Button
               size="small"
               startIcon={<DoneAllIcon sx={{ fontSize: 14 }} />}
               onClick={handleDismissAll}
               disabled={dismissAll.isPending}
             >
-              Clear all
+              {t("alerts.clearAll")}
             </Button>
           </Tooltip>
         )}
@@ -234,7 +243,7 @@ export default function AlertsPopover({ anchor, onClose }: AlertsPopoverProps) {
             color="text.secondary"
             sx={{ px: 2, py: 3, textAlign: "center" }}
           >
-            No active alerts
+            {t("alerts.noActive")}
           </Typography>
         ) : (
           <List disablePadding dense>
