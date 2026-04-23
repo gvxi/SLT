@@ -75,6 +75,42 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
   const [ready, setReady] = useState(false);
   const [frozen, setFrozen] = useState<FrozenBarcode[] | null>(null);
 
+  const playScanFeedback = useCallback(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const AudioContextClass =
+        window.AudioContext ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ((window as any).webkitAudioContext as typeof AudioContext | undefined);
+
+      if (AudioContextClass) {
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1046, ctx.currentTime);
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+        osc.onended = () => {
+          void ctx.close().catch(() => undefined);
+        };
+      }
+
+      if ("vibrate" in navigator) {
+        navigator.vibrate(40);
+      }
+    } catch {
+      // Keep scanning flow resilient even if audio/haptics are unavailable.
+    }
+  }, []);
+
   // ── Stop everything ──────────────────────────────────────────────────────────
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -99,6 +135,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
       const results: NativeBarcodeDetectorResult[] = await nativeDetectorRef.current.detect(videoRef.current);
 
       if (results.length === 1) {
+        playScanFeedback();
         stopCamera();
         onDetect(results[0].rawValue);
         onClose();
@@ -130,7 +167,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
       // keep scanning
     }
     rafRef.current = requestAnimationFrame(nativeScan);
-  }, [onClose, onDetect, stopCamera]);
+  }, [onClose, onDetect, playScanFeedback, stopCamera]);
 
   // ── Start camera ─────────────────────────────────────────────────────────────
   const startCamera = useCallback(async () => {
@@ -175,6 +212,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     try {
       reader.decodeFromStream(stream, videoRef.current, (result, err) => {
         if (result) {
+          playScanFeedback();
           stopCamera();
           onDetect(result.getText());
           onClose();
@@ -185,7 +223,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     } catch {
       setError(t("scanner.cameraError"));
     }
-  }, [onClose, onDetect, stopCamera, t]);
+  }, [onClose, onDetect, playScanFeedback, stopCamera, t]);
 
   // Start native scan loop once ready (native engine only)
   useEffect(() => {
@@ -206,6 +244,7 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
 
   const handleSelectBarcode = (value: string) => {
     setFrozen(null);
+    playScanFeedback();
     onDetect(value);
     onClose();
   };

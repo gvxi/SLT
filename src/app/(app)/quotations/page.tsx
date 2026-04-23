@@ -49,6 +49,7 @@ function calcTotal(q: Quotation): number {
 export default function QuotationsPage() {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
+  const dateLocale = isAr ? "ar-u-ca-gregory" : "en-GB";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -104,6 +105,15 @@ export default function QuotationsPage() {
     });
     return list;
   }, [quotations, search, sort]);
+
+  const formatDate = (value: string | null | undefined) => {
+    if (!value) return "—";
+    return new Date(value).toLocaleDateString(dateLocale, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   return (
     <Box>
@@ -218,7 +228,7 @@ export default function QuotationsPage() {
                 {(isAr && qt.client?.name_ar) ? qt.client.name_ar : qt.client?.name_en ?? "—"}
               </Typography>
               <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.75 }}>
-                <Typography variant="caption" sx={{ color: "text.disabled" }}>{qt.expiry_date}</Typography>
+                <Typography variant="caption" sx={{ color: "text.disabled" }}>{formatDate(qt.expiry_date)}</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: 13 }}>
                   <OmrSign size="0.8em" />{calcTotal(qt).toFixed(3)}
                 </Typography>
@@ -248,8 +258,8 @@ export default function QuotationsPage() {
                 >
                   <TableCell sx={{ fontFamily: "monospace", fontWeight: 500 }}>{qt.quotation_number}</TableCell>
                   <TableCell>{(isAr && qt.client?.name_ar) ? qt.client.name_ar : qt.client?.name_en ?? "—"}</TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{qt.issue_date}</TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{qt.expiry_date}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{formatDate(qt.issue_date)}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{formatDate(qt.expiry_date)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
                     <OmrSign size="0.8em" />{calcTotal(qt).toFixed(3)}
                   </TableCell>

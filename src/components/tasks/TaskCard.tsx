@@ -20,7 +20,8 @@ interface TaskCardProps {
 }
 
 export default function TaskCard({ task, onClick, isDragOverlay = false }: TaskCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === "ar" ? "ar-u-ca-gregory" : "en-GB";
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   });
@@ -67,7 +68,11 @@ export default function TaskCard({ task, onClick, isDragOverlay = false }: TaskC
         />
         {task.due_date && (
           <Typography variant="caption" color="text.secondary" sx={{ ml: "auto" }}>
-            {new Date(task.due_date).toLocaleDateString()}
+            {new Date(task.due_date).toLocaleDateString(dateLocale, {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
           </Typography>
         )}
         {task.assignee && (

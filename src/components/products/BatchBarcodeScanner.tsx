@@ -73,6 +73,42 @@ export default function BatchBarcodeScanner({ open, onClose, onConfirm }: Props)
   const { t, i18n } = useTranslation();
   const { data: products = [] } = useProducts();
 
+  const playScanFeedback = useCallback(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const AudioContextClass =
+        window.AudioContext ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ((window as any).webkitAudioContext as typeof AudioContext | undefined);
+
+      if (AudioContextClass) {
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1046, ctx.currentTime);
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+        osc.onended = () => {
+          void ctx.close().catch(() => undefined);
+        };
+      }
+
+      if ("vibrate" in navigator) {
+        navigator.vibrate(40);
+      }
+    } catch {
+      // Keep scanning flow resilient even if audio/haptics are unavailable.
+    }
+  }, []);
+
   // Keep refs to latest products / lang to avoid stale closures in scan callbacks
   const activeProductsRef = useRef(products.filter((p) => p.status === "active"));
   useEffect(() => {
@@ -116,6 +152,8 @@ export default function BatchBarcodeScanner({ open, onClose, onConfirm }: Props)
     if (now - last < SCAN_DEBOUNCE_MS) return;
     lastScanRef.current.set(barcode, now);
 
+    playScanFeedback();
+
     const found = activeProductsRef.current.find((p) => p.barcode === barcode);
 
     setScannedRows((prev) => {
@@ -144,7 +182,7 @@ export default function BatchBarcodeScanner({ open, onClose, onConfirm }: Props)
     });
 
     setLastAdded(barcode);
-  }, []);
+  }, [playScanFeedback]);
 
   // ── Native scan loop (keeps running between detections) ──────────────────────
   const nativeScan = useCallback(async () => {

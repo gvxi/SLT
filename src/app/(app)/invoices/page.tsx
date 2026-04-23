@@ -53,6 +53,7 @@ function calcTotal(inv: Invoice): number {
 export default function InvoicesPage() {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
+  const dateLocale = isAr ? "ar-u-ca-gregory" : "en-GB";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -115,6 +116,15 @@ export default function InvoicesPage() {
     if (!deleteTarget) return;
     await deleteInvoice.mutateAsync(deleteTarget.id);
     setDeleteTarget(null);
+  };
+
+  const formatDate = (value: string | null | undefined) => {
+    if (!value) return "—";
+    return new Date(value).toLocaleDateString(dateLocale, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   return (
@@ -228,7 +238,7 @@ export default function InvoicesPage() {
                 {(isAr && inv.client?.name_ar) ? inv.client.name_ar : inv.client?.name_en ?? "—"}
               </Typography>
               <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.75 }}>
-                <Typography variant="caption" sx={{ color: "text.disabled" }}>{inv.issue_date}</Typography>
+                <Typography variant="caption" sx={{ color: "text.disabled" }}>{formatDate(inv.issue_date)}</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: 13 }}>
                   <OmrSign size="0.8em" />{calcTotal(inv).toFixed(3)}
                 </Typography>
@@ -258,8 +268,8 @@ export default function InvoicesPage() {
                 >
                   <TableCell sx={{ fontFamily: "monospace", fontWeight: 500 }}>{inv.invoice_number}</TableCell>
                   <TableCell>{(isAr && inv.client?.name_ar) ? inv.client.name_ar : inv.client?.name_en ?? "—"}</TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{inv.issue_date}</TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{inv.due_date}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{formatDate(inv.issue_date)}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{formatDate(inv.due_date)}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
                     <OmrSign size="0.8em" />{calcTotal(inv).toFixed(3)}
                   </TableCell>

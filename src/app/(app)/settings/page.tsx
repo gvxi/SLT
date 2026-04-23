@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -26,8 +26,10 @@ import LanguageOutlinedIcon from "@mui/icons-material/LanguageOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUIStore } from "@/store/uiStore";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfiles";
+import { apiFetch } from "@/lib/api";
 import { toast } from "@/store/toastStore";
 
 const NAV_OPTIONS = [
@@ -139,6 +141,7 @@ function SettingRow({
 
 export default function SettingsPage() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { themeMode, toggleTheme, language, setLanguage, startPage, setStartPage } = useUIStore();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const updateProfile = useUpdateProfile();
@@ -147,6 +150,15 @@ export default function SettingsPage() {
   const [nameSaving, setNameSaving] = useState(false);
   const [navConfig, setNavConfig] = useState<string[]>(DEFAULT_NAV);
   const [navSaving, setNavSaving] = useState(false);
+  const [testAlertPending, setTestAlertPending] = useState(false);
+  const [testPushPending, setTestPushPending] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
@@ -198,6 +210,42 @@ export default function SettingsPage() {
       toast(t("settings.bottomNavSaveError"), "error");
     } finally {
       setNavSaving(false);
+    }
+  };
+
+  const handleSendTestAlert = () => {
+    if (testAlertPending) return;
+
+    setTestAlertPending(true);
+    toast(t("settings.testAlertScheduled"), "success");
+
+    window.setTimeout(async () => {
+      try {
+        await apiFetch("alerts/test", { method: "POST" });
+        await queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : t("settings.testAlertError"), "error");
+      } finally {
+        if (isMountedRef.current) {
+          setTestAlertPending(false);
+        }
+      }
+    }, 10_000);
+  };
+
+  const handleSendTestPush = async () => {
+    if (testPushPending) return;
+
+    setTestPushPending(true);
+    try {
+      await apiFetch("push/test", { method: "POST" });
+      toast(t("settings.testPushSent"), "success");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : t("settings.testPushError"), "error");
+    } finally {
+      if (isMountedRef.current) {
+        setTestPushPending(false);
+      }
     }
   };
 
@@ -340,6 +388,46 @@ export default function SettingsPage() {
           {t("common.save")}
         </Button>
       </Box>
+
+      {/* Notifications */}
+      <SectionTitle label={t("settings.notifications")} />
+      <SettingGroup>
+        <SettingRow
+          icon={<SettingsOutlinedIcon sx={{ fontSize: 18 }} />}
+          label={t("settings.testAlert")}
+          description={t("settings.testAlertDesc")}
+          control={
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleSendTestAlert}
+              disabled={testAlertPending}
+              startIcon={testAlertPending ? <CircularProgress size={12} color="inherit" /> : undefined}
+              sx={{ whiteSpace: "nowrap" }}
+            >
+              {t("settings.sendTestAlert")}
+            </Button>
+          }
+        />
+        <SettingRow
+          icon={<SettingsOutlinedIcon sx={{ fontSize: 18 }} />}
+          label={t("settings.testPush")}
+          description={t("settings.testPushDesc")}
+          noDivider
+          control={
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleSendTestPush}
+              disabled={testPushPending}
+              startIcon={testPushPending ? <CircularProgress size={12} color="inherit" /> : undefined}
+              sx={{ whiteSpace: "nowrap" }}
+            >
+              {t("settings.sendTestPush")}
+            </Button>
+          }
+        />
+      </SettingGroup>
     </Box>
   );
 }

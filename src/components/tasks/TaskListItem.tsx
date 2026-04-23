@@ -26,6 +26,7 @@ interface Props {
 export default function TaskListItem({ task, onClick }: Props) {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
+  const dateLocale = isAr ? "ar-u-ca-gregory" : "en-GB";
 
   const clientName = task.client
     ? (isAr && task.client.name_ar ? task.client.name_ar : task.client.name_en)
@@ -33,7 +34,7 @@ export default function TaskListItem({ task, onClick }: Props) {
   const clientPhone = task.client?.phone ?? null;
 
   const dueDateLabel = task.due_date
-    ? new Date(task.due_date).toLocaleDateString(isAr ? "ar-SA" : "en-GB", {
+    ? new Date(task.due_date).toLocaleDateString(dateLocale, {
         day: "2-digit",
         month: "short",
         year: "numeric",

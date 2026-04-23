@@ -243,6 +243,7 @@
     "title": "Settings",
     "profile": "Profile",
     "appearance": "Appearance",
+    "notifications": "Notifications",
     "language": "Language",
     "darkMode": "Dark Mode",
     "lightMode": "Light Mode",
@@ -257,7 +258,17 @@
     "startPage": "App Start",
     "startPageLabel": "Start Page",
     "startPageDesc": "Page that opens when you launch the app",
-    "saved": "Saved"
+    "saved": "Saved",
+    "testAlert": "Test alert",
+    "testAlertDesc": "Schedules a sample alert to appear after 10 seconds.",
+    "sendTestAlert": "Send test alert",
+    "testAlertScheduled": "Test alert scheduled for 10 seconds from now",
+    "testAlertError": "Failed to send test alert",
+    "testPush": "Test push",
+    "testPushDesc": "Sends a OneSignal push notification only to your subscribed device.",
+    "sendTestPush": "Send test push",
+    "testPushSent": "Test push sent to your subscribed device",
+    "testPushError": "Failed to send test push"
   },
   "toast": {
     "saved": "Saved",
@@ -312,6 +323,10 @@
       "task_due": {
         "title": "Task due soon",
         "body": "A task due date is approaching soon."
+      },
+      "test_alert": {
+        "title": "Test alert",
+        "body": "This is a delayed test alert from settings."
       }
     }
   },
