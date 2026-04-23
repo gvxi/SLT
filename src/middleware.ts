@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Public paths that never need auth
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
@@ -37,13 +36,11 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = pathname.startsWith("/auth");
 
   if (!session && !isAuthRoute) {
-    const loginUrl = new URL("/auth/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
   if (session && isAuthRoute) {
-    const dashboardUrl = new URL("/dashboard", request.url);
-    return NextResponse.redirect(dashboardUrl);
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;
