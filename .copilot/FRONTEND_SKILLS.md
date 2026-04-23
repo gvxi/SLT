@@ -39,7 +39,7 @@
 ### Bundle Optimization
 - **Code Splitting**: Dynamic imports for large components
 - **Tree Shaking**: ES modules with MARI optimization
-- **Image Optimization**: Next.js Image component with Cloudflare CDN
+- **Image Optimization**: Next.js Image component with platform CDN support
 
 ### Rendering Performance
 - **Memoization**: React.memo for expensive components

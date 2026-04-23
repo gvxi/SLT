@@ -6,15 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
-    "build:next": "next build",
-    "build:cf-pages": "opennextjs-cloudflare build",
     "start": "next start",
-    "lint": "next lint",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "cron:dev": "wrangler dev --config workers/onesignal-cron/wrangler.toml",
-    "cron:deploy": "wrangler deploy --config workers/onesignal-cron/wrangler.toml"
+    "lint": "next lint"
   },
   "repository": {
     "type": "git",
@@ -67,10 +60,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260422.1",
-    "@opennextjs/cloudflare": "^1.19.2",
     "@types/stylis": "^4.2.7",
-    "postgres": "^3.4.9",
-    "wrangler": "^4.84.0"
+    "postgres": "^3.4.9"
   }
 }
