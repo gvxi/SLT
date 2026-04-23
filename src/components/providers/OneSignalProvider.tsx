@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import OneSignal from "react-onesignal";
 
 export default function OneSignalProvider() {
+  const initializedRef = useRef(false);
+
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) return;
+    if (initializedRef.current) return;
+
+    initializedRef.current = true;
 
     OneSignal.init({
       appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
-      serviceWorkerParam: { scope: "/push/onesignal/" },
-      serviceWorkerPath: "/push/onesignal/OneSignalSDKWorker.js",
+      serviceWorkerParam: { scope: "/" },
+      serviceWorkerPath: "/OneSignalSDKWorker.js",
       allowLocalhostAsSecureOrigin: true,
     }).then(() => {
       // Listen for subscription changes using the v2 SDK API
@@ -26,7 +31,10 @@ export default function OneSignalProvider() {
           }).catch(console.error);
         }
       );
-    }).catch(console.error);
+    }).catch((error) => {
+      initializedRef.current = false;
+      console.error(error);
+    });
   }, []);
 
   return null;

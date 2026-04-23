@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Cairo } from "next/font/google";
 import AppProviders from "@/components/providers/AppProviders";
-import OneSignalInit from "@/components/OneSignalInit";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,7 +18,7 @@ export const metadata: Metadata = {
   title: "SLT - Business Management",
   description: "Task, product, invoice & quotation management",
   applicationName: "SLT",
-  manifest: "/manifest.json",
+  manifest: "/site.webmanifest?v=20260423",
   icons: {
     icon: [
       { url: "/favicon-96x96.png?v=20260423", sizes: "96x96", type: "image/png" },
@@ -46,11 +45,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-      </head>
       <body className={`${inter.variable} ${cairo.variable}`} style={{ margin: 0 }}>
-        <OneSignalInit />
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
