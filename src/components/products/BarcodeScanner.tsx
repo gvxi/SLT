@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { NotFoundException } from "@zxing/library";
 
 // ── Minimal BarcodeDetector type declarations ─────────────────────────────────
@@ -68,8 +68,11 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nativeDetectorRef = useRef<any>(null);
-  const zxingReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  // Stores the controls returned by ZXing decodeFromStream so we can stop() it
+  const zxingControlsRef = useRef<IScannerControls | null>(null);
   const engineRef = useRef<ScanEngine>("zxing");
+  // Guards against multiple detections firing after the first one
+  const detectedRef = useRef(false);
 
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -82,8 +85,10 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     streamRef.current?.getTracks().forEach((tr) => tr.stop());
     streamRef.current = null;
     nativeDetectorRef.current = null;
-    if (zxingReaderRef.current) {
-      zxingReaderRef.current = null;
+    if (zxingControlsRef.current) {
+      // stop() halts the ZXing internal decode loop
+      try { zxingControlsRef.current.stop(); } catch { /* ignore */ }
+      zxingControlsRef.current = null;
     }
     setReady(false);
     setFrozen(null);
@@ -126,11 +131,13 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
   }, []);
 
   const debouncedDetect = useCallback((value: string) => {
+    // Guard: ignore if already detected (prevents ZXing callback firing multiple times)
+    if (detectedRef.current) return;
     const now = Date.now();
-    // Debounce detections - ignore if less than 500ms since last detection
-    if (now - lastDetectionRef.current < 500) {
-      return;
-    }
+    // Also debounce by time as a secondary guard
+    if (now - lastDetectionRef.current < 500) return;
+    
+    detectedRef.current = true;
     lastDetectionRef.current = now;
     
     playScanFeedback();
@@ -179,13 +186,17 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
       // keep scanning
     }
     rafRef.current = requestAnimationFrame(nativeScan);
-  }, [onClose, onDetect, playScanFeedback, stopCamera]);
+    // Note: debouncedDetect and stopCamera are stable useCallbacks; omitting
+    // onClose/onDetect/playScanFeedback to prevent RAF loop re-creation on every render
+  }, [debouncedDetect, stopCamera]);
 
   // ── Start camera ─────────────────────────────────────────────────────────────
   const startCamera = useCallback(async () => {
     setError(null);
     setReady(false);
     setFrozen(null);
+    // Reset the detection guard so subsequent opens work
+    detectedRef.current = false;
 
     let stream: MediaStream;
     try {
@@ -214,7 +225,6 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     // Fallback: ZXing (works in Firefox, older browsers, etc.)
     engineRef.current = "zxing";
     const reader = new BrowserMultiFormatReader();
-    zxingReaderRef.current = reader;
 
     if (!videoRef.current) return;
     videoRef.current.srcObject = stream;
@@ -222,17 +232,19 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     setReady(true);
 
     try {
-      reader.decodeFromStream(stream, videoRef.current, (result, err) => {
+      // decodeFromStream returns controls; store them so we can stop() later
+      const controls = await reader.decodeFromStream(stream, videoRef.current, (result, err) => {
         if (result) {
           debouncedDetect(result.getText());
         } else if (err && !(err instanceof NotFoundException)) {
           console.warn("[BarcodeScanner] ZXing error:", err);
         }
       });
+      zxingControlsRef.current = controls;
     } catch {
       setError(t("scanner.cameraError"));
     }
-  }, [onClose, onDetect, playScanFeedback, stopCamera, t]);
+  }, [debouncedDetect, stopCamera, t]);
 
   // Start native scan loop once ready (native engine only)
   useEffect(() => {
@@ -241,15 +253,21 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
     }
   }, [ready, nativeScan]);
 
-  // Lifecycle: open/close
+  // Lifecycle: open/close — use a ref-based call to avoid startCamera in deps,
+  // which would cause the effect to re-run (and re-start the camera) on every render.
+  const startCameraRef = useRef(startCamera);
+  useEffect(() => { startCameraRef.current = startCamera; }, [startCamera]);
+
   useEffect(() => {
     if (open) {
-      startCamera();
+      detectedRef.current = false;
+      startCameraRef.current();
     } else {
       stopCamera();
     }
     return () => stopCamera();
-  }, [open, startCamera, stopCamera]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, stopCamera]);
 
   const handleSelectBarcode = (value: string) => {
     setFrozen(null);
