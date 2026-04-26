@@ -104,26 +104,35 @@ export default function BarcodeScanner({ open, onClose, onDetect }: Props) {
 
       if (AudioContextClass) {
         const ctx = new AudioContextClass();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
 
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(1046, ctx.currentTime);
-        gain.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+        // Two-pulse scanner beep (like a real barcode reader)
+        const playBeep = (startTime: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(1800, startTime);
+          // Sharp attack, short sustain, fast decay
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.linearRampToValueAtTime(0.12, startTime + 0.005);
+          gain.gain.setValueAtTime(0.10, startTime + 0.055);
+          gain.gain.linearRampToValueAtTime(0.001, startTime + 0.08);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.09);
+          return osc;
+        };
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.1);
-        osc.onended = () => {
-          void ctx.close().catch(() => undefined);
+        const osc1 = playBeep(ctx.currentTime);
+        playBeep(ctx.currentTime + 0.12); // second beep 120ms later
+        osc1.onended = () => {
+          // Close context after both beeps finish
+          setTimeout(() => void ctx.close().catch(() => undefined), 300);
         };
       }
 
       if ("vibrate" in navigator) {
-        navigator.vibrate(40);
+        navigator.vibrate([30, 60, 30]); // double-pulse haptic
       }
     } catch {
       // Keep scanning flow resilient even if audio/haptics are unavailable.

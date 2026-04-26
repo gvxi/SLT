@@ -42,6 +42,8 @@ import { useCreateQuotation } from "@/hooks/useQuotations";
 import DocumentForm, { type DocumentFormSubmitData, type TotalsSnapshot } from "./DocumentForm";
 import StatusChip from "./StatusChip";
 import OmrSign from "@/components/OmrSign";
+import DiscardChangesDialog from "./DiscardChangesDialog";
+import { useDirtyDrawer } from "@/hooks/useDirtyDrawer";
 import type { InvoiceStatus } from "@/types";
 
 const FORM_ID = "invoice-drawer-form";
@@ -83,6 +85,10 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
   const [totals, setTotals] = useState<TotalsSnapshot>({
     subtotal: 0, taxAmount: 0, discount: 0, upfrontPayment: 0, total: 0, balance: 0,
   });
+
+  const storageKey = invoiceId ? `invoice:${invoiceId}` : `invoice:new`;
+  const { isDirty, markDirty, markClean, guardedClose, showDiscardDialog, confirmDiscard, cancelDiscard } =
+    useDirtyDrawer(storageKey, onClose);
 
   const onTotalsChange = useCallback((t: TotalsSnapshot) => setTotals(t), []);
 
@@ -154,6 +160,7 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
           items: data.items,
         } as Parameters<typeof createInvoice.mutateAsync>[0]);
       }
+      markClean();
       onClose();
     } finally {
       setIsSaving(false);
@@ -219,7 +226,7 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
       <Drawer
         anchor={isMobile ? "bottom" : "right"}
         open={open}
-        onClose={onClose}
+        onClose={guardedClose}
         slotProps={{
           paper: {
             sx: {
@@ -428,8 +435,9 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
                 onSubmit={handleSubmit}
                 formId={FORM_ID}
                 hideActions
-              onTotalsChange={onTotalsChange}
-            />
+                onTotalsChange={onTotalsChange}
+                onDirty={markDirty}
+              />
             </>
           )}
         </Box>
@@ -469,7 +477,7 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
           {/* Actions */}
           {!viewMode && (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-            <Button size="small" variant="outlined" onClick={onClose} disabled={isSaving}>
+            <Button size="small" variant="outlined" onClick={guardedClose} disabled={isSaving}>
               {t("common.cancel")}
             </Button>
             <Button
@@ -541,6 +549,13 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
           invoice={invoice}
         />
       )}
+
+      {/* Discard-changes guard */}
+      <DiscardChangesDialog
+        open={showDiscardDialog}
+        onDiscard={confirmDiscard}
+        onKeep={cancelDiscard}
+      />
     </>
   );
 }

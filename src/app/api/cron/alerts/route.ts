@@ -172,23 +172,26 @@ async function handleCron(request: NextRequest) {
     let insertedCount = 0;
 
     if (newAlerts.length) {
-      const { data: existing } = await supabase
+      // Upsert on (entity_id, type): re-activates dismissed/read alerts when
+      // the underlying condition is still true, rather than inserting duplicates.
+      const toUpsert = newAlerts.map((a) => ({
+        ...a,
+        is_read: false,
+        dismissed_at: null,
+      }));
+
+      const { error: upsertError, data: upserted } = await supabase
         .from("alerts")
-        .select("entity_id, type")
-        .is("dismissed_at", null);
+        .upsert(toUpsert, {
+          onConflict: "entity_id,type",
+          ignoreDuplicates: false,
+        })
+        .select("id");
 
-      const existingKeys = new Set((existing ?? []).map((a) => `${a.entity_id}::${a.type}`));
-      const toInsert = newAlerts.filter(
-        (a) => !existingKeys.has(`${a.entity_id}::${a.type}`)
-      );
-
-      if (toInsert.length) {
-        const { error: insertError } = await supabase.from("alerts").insert(toInsert);
-        if (insertError) {
-          return NextResponse.json({ error: insertError.message }, { status: 500 });
-        }
-        insertedCount = toInsert.length;
+      if (upsertError) {
+        return NextResponse.json({ error: upsertError.message }, { status: 500 });
       }
+      insertedCount = upserted?.length ?? 0;
     }
 
     const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;

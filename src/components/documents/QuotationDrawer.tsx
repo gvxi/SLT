@@ -42,6 +42,8 @@ import DocumentForm, { type DocumentFormSubmitData, type TotalsSnapshot } from "
 import StatusChip from "./StatusChip";
 import PdfPreviewDialog from "./PdfPreviewDialog";
 import OmrSign from "@/components/OmrSign";
+import DiscardChangesDialog from "./DiscardChangesDialog";
+import { useDirtyDrawer } from "@/hooks/useDirtyDrawer";
 import { toast } from "@/store/toastStore";
 import type { QuotationStatus } from "@/types";
 
@@ -82,6 +84,10 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
   const [totals, setTotals] = useState<TotalsSnapshot>({
     subtotal: 0, taxAmount: 0, discount: 0, upfrontPayment: 0, total: 0, balance: 0,
   });
+
+  const storageKey = quotationId ? `quotation:${quotationId}` : `quotation:new`;
+  const { markDirty, markClean, guardedClose, showDiscardDialog, confirmDiscard, cancelDiscard } =
+    useDirtyDrawer(storageKey, onClose);
 
   const onTotalsChange = useCallback((t: TotalsSnapshot) => setTotals(t), []);
 
@@ -133,6 +139,7 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
         } as Parameters<typeof createQuotation.mutateAsync>[0]);
         toast(t("toast.created"), "success");
       }
+      markClean();
       onClose();
     } catch (e) {
       toast(e instanceof Error ? e.message : t("toast.error"), "error");
@@ -212,7 +219,7 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
       <Drawer
         anchor={isMobile ? "bottom" : "right"}
         open={open}
-        onClose={onClose}
+        onClose={guardedClose}
         slotProps={{
           paper: {
             sx: {
@@ -393,6 +400,7 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
                 formId={FORM_ID}
                 hideActions
                 onTotalsChange={onTotalsChange}
+                onDirty={markDirty}
               />
             </>
           )}
@@ -430,7 +438,7 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
 
           {!viewMode && (
           <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-            <Button size="small" variant="outlined" onClick={onClose} disabled={isSaving}>
+            <Button size="small" variant="outlined" onClick={guardedClose} disabled={isSaving}>
               {t("common.cancel")}
             </Button>
             <Button
@@ -503,6 +511,13 @@ export default function QuotationDrawer({ open, quotationId, onClose }: Props) {
           invoice={pdfDoc as Parameters<typeof PdfPreviewDialog>[0]["invoice"]}
         />
       )}
+
+      {/* Discard-changes guard */}
+      <DiscardChangesDialog
+        open={showDiscardDialog}
+        onDiscard={confirmDiscard}
+        onKeep={cancelDiscard}
+      />
     </>
   );
 }

@@ -22,6 +22,7 @@ import DoneAllIcon from "@mui/icons-material/DoneAll";
 import { useTranslation } from "react-i18next";
 import {
   useAlerts,
+  useMarkAlertRead,
   useDismissAlert,
   useDismissAllAlerts,
 } from "@/hooks/useAlerts";
@@ -51,10 +52,11 @@ function timeAgo(
 interface SwipeableAlertItemProps {
   alert: Alert;
   onDismiss: (id: string) => void;
+  onRead: (id: string) => void;
   onClick: (alert: Alert) => void;
 }
 
-function SwipeableAlertItem({ alert, onDismiss, onClick }: SwipeableAlertItemProps) {
+function SwipeableAlertItem({ alert, onDismiss, onRead, onClick }: SwipeableAlertItemProps) {
   const { t } = useTranslation();
   const [translateX, setTranslateX] = useState(0);
   const [dismissed, setDismissed] = useState(false);
@@ -84,8 +86,10 @@ function SwipeableAlertItem({ alert, onDismiss, onClick }: SwipeableAlertItemPro
   };
 
   const handleClick = useCallback(() => {
+    // Mark as read on click (changes bold → normal weight visually)
+    if (!alert.is_read) onRead(alert.id);
     onClick(alert);
-  }, [alert, onClick]);
+  }, [alert, onRead, onClick]);
 
   if (dismissed) return null;
 
@@ -100,6 +104,9 @@ function SwipeableAlertItem({ alert, onDismiss, onClick }: SwipeableAlertItemPro
         py: 0.75,
         cursor: "pointer",
         "&:hover": { bgcolor: "action.hover" },
+        // Unread: subtle left accent bar
+        borderLeft: alert.is_read ? "3px solid transparent" : "3px solid",
+        borderLeftColor: alert.is_read ? "transparent" : "primary.main",
         alignItems: "flex-start",
         gap: 1,
         display: "flex",
@@ -141,7 +148,8 @@ function SwipeableAlertItem({ alert, onDismiss, onClick }: SwipeableAlertItemPro
           sx={{ flexShrink: 0, mt: -0.5, mr: -0.5 }}
           onClick={(e) => {
             e.stopPropagation();
-            onDismiss(alert.id);
+            setDismissed(true);
+            setTimeout(() => onDismiss(alert.id), 150);
           }}
         >
           <CloseIcon sx={{ fontSize: 14 }} />
@@ -160,6 +168,7 @@ export default function AlertsPopover({ anchor, onClose }: AlertsPopoverProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { data, isLoading } = useAlerts(true);
+  const markRead = useMarkAlertRead();
   const dismiss = useDismissAlert();
   const dismissAll = useDismissAllAlerts();
 
@@ -167,16 +176,34 @@ export default function AlertsPopover({ anchor, onClose }: AlertsPopoverProps) {
   const alerts = [...(typedData?.data ?? [])].sort(
     (a, b) =>
       (SEVERITY_ORDER[a.severity] ?? 2) - (SEVERITY_ORDER[b.severity] ?? 2) ||
+      // Unread first within same severity
+      Number(a.is_read) - Number(b.is_read) ||
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
+  const unreadCount = alerts.filter((a) => !a.is_read).length;
+
+  // Click = mark read + navigate (does NOT dismiss — alert stays visible as "read")
   const handleItemClick = useCallback(
     (alert: Alert) => {
-      dismiss.mutate(alert.id);
       onClose();
       if (alert.link) router.push(alert.link);
     },
-    [dismiss, onClose, router]
+    [onClose, router]
+  );
+
+  const handleRead = useCallback(
+    (id: string) => {
+      markRead.mutate(id);
+    },
+    [markRead]
+  );
+
+  const handleDismiss = useCallback(
+    (id: string) => {
+      dismiss.mutate(id);
+    },
+    [dismiss]
   );
 
   const handleDismissAll = () => {
@@ -205,13 +232,23 @@ export default function AlertsPopover({ anchor, onClose }: AlertsPopoverProps) {
       >
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
           {t("alerts.title")}
-          {alerts.length > 0 && (
+          {unreadCount > 0 && (
             <Typography
               component="span"
               variant="caption"
-              sx={{ ml: 0.75, color: "text.secondary" }}
+              sx={{
+                ml: 0.75,
+                px: 0.75,
+                py: 0.1,
+                bgcolor: "error.main",
+                color: "#fff",
+                borderRadius: 5,
+                fontSize: 10,
+                fontWeight: 700,
+                lineHeight: 1.6,
+              }}
             >
-              ({alerts.length})
+              {unreadCount}
             </Typography>
           )}
         </Typography>
@@ -252,7 +289,8 @@ export default function AlertsPopover({ anchor, onClose }: AlertsPopoverProps) {
                 {i > 0 && <Divider component="li" sx={{ mx: 1.5 }} />}
                 <SwipeableAlertItem
                   alert={alert}
-                  onDismiss={(id) => dismiss.mutate(id)}
+                  onDismiss={handleDismiss}
+                  onRead={handleRead}
                   onClick={handleItemClick}
                 />
               </Box>

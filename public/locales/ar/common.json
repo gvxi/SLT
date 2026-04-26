@@ -11,7 +11,6 @@
   },
   "common": {
     "search": "بحث",
-    "save": "حفظ",
     "cancel": "إلغاء",
     "delete": "حذف",
     "edit": "تعديل",
@@ -125,7 +124,11 @@
     "doubleClickEdit": "انقر مرتين للتعديل",
     "confirmDelete": "هل أنت متأكد من حذف",
     "deleteConfirm": "هل أنت متأكد من حذف \"{{name}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
-    "price": "السعر"
+    "price": "السعر",
+    "saveAsProduct": "حفظ كمنتج",
+    "savedAsProduct": "تم الحفظ كمنتج",
+    "nameEn": "الاسم (إنجليزي)",
+    "salePrice": "سعر البيع"
   },
   "categories": {
     "title": "الفئات",
@@ -192,7 +195,9 @@
     "saveAsDraft": "حفظ كمسودة",
     "revertToDraft": "إعادة إلى مسودة",
     "convertToQuotation": "تحويل إلى عرض سعر",
-    "convertConfirm": "إنشاء عرض سعر جديد من الفاتورة {{number}}؟ ستبقى الفاتورة دون تغيير."
+    "convertConfirm": "إنشاء عرض سعر جديد من الفاتورة {{number}}؟ ستبقى الفاتورة دون تغيير.",
+    "stockWarning": "متوفر {{available}} فقط في المخزون",
+    "stockOf": "المخزون: {{count}}"
   },
   "pdfPreview": {
     "langEn": "EN",
@@ -203,7 +208,11 @@
     "rulesShow": "تضمين الشروط والأحكام",
     "rulesHide": "إخفاء الشروط والأحكام",
     "print": "طباعة",
-    "download": "تنزيل"
+    "download": "تنزيل",
+    "share": "مشاركة",
+    "shareSystem": "تنزيل ومشاركة",
+    "sendWhatsApp": "تنزيل وإرسال عبر واتساب",
+    "waMessage": "يرجى الاطلاع على المستند المرفق {{number}}"
   },
   "dashboard": {
     "openTasks": "المهام المفتوحة",
@@ -357,5 +366,11 @@
     "empty": "لا يوجد عملاء بعد. أضف أول عميل.",
     "count": "{{count}} عميل",
     "deleteConfirm": "حذف {{name}}؟ لا يمكن التراجع."
+  },
+  "drawer": {
+    "unsavedTitle": "تغييرات غير محفوظة",
+    "unsavedBody": "لديك تغييرات غير محفوظة. هل أنت متأكد من تجاهلها؟",
+    "keepEditing": "متابعة التعديل",
+    "discardChanges": "تجاهل التغييرات"
   }
 }

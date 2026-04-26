@@ -63,7 +63,7 @@ export default function TopAppBar({ onMenuClick }: TopAppBarProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [logsAnchor, setLogsAnchor] = useState<null | HTMLElement>(null);
   const [alertsAnchor, setAlertsAnchor] = useState<null | HTMLElement>(null);
-  const { data: logsData, isLoading: logsLoading } = useLogs({ limit: 10 });
+  const { data: logsData, isLoading: logsLoading, isError: logsError } = useLogs({ limit: 10 });
   const unreadCount = useUnreadCount();
 
   const handleOpenMenu = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
@@ -138,6 +138,10 @@ export default function TopAppBar({ onMenuClick }: TopAppBarProps) {
           <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
             <CircularProgress size={20} />
           </Box>
+        ) : logsError ? (
+          <Typography variant="body2" color="error" sx={{ px: 2, py: 2 }}>
+            Failed to load activity logs
+          </Typography>
         ) : !logsData?.data?.length ? (
           <Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>No activity yet</Typography>
         ) : (

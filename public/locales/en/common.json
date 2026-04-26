@@ -11,7 +11,6 @@
   },
   "common": {
     "search": "Search",
-    "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -125,7 +124,11 @@
     "doubleClickEdit": "Double-click to edit",
     "confirmDelete": "Are you sure you want to delete",
     "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-    "price": "Price"
+    "price": "Price",
+    "saveAsProduct": "Save as product",
+    "savedAsProduct": "Saved as product",
+    "nameEn": "Name (English)",
+    "salePrice": "Sale Price"
   },
   "categories": {
     "title": "Categories",
@@ -192,7 +195,9 @@
     "saveAsDraft": "Save as Draft",
     "revertToDraft": "Revert to Draft",
     "convertToQuotation": "Convert to Quotation",
-    "convertConfirm": "Create a new quotation from invoice {{number}}? The invoice will remain unchanged."
+    "convertConfirm": "Create a new quotation from invoice {{number}}? The invoice will remain unchanged.",
+    "stockWarning": "Only {{available}} in stock",
+    "stockOf": "Stock: {{count}}"
   },
   "pdfPreview": {
     "langEn": "EN",
@@ -203,7 +208,11 @@
     "rulesShow": "Include terms & conditions",
     "rulesHide": "Hide terms & conditions",
     "print": "Print",
-    "download": "Download"
+    "download": "Download",
+    "share": "Share",
+    "shareSystem": "Download & Share",
+    "sendWhatsApp": "Download & Send via WhatsApp",
+    "waMessage": "Please find attached document {{number}}"
   },
   "dashboard": {
     "openTasks": "Open Tasks",
@@ -358,5 +367,11 @@
     "empty": "No customers yet. Add your first one.",
     "count": "{{count}} customer(s)",
     "deleteConfirm": "Delete {{name}}? This cannot be undone."
+  },
+  "drawer": {
+    "unsavedTitle": "Unsaved Changes",
+    "unsavedBody": "You have unsaved changes. Are you sure you want to discard them?",
+    "keepEditing": "Keep Editing",
+    "discardChanges": "Discard Changes"
   }
 }

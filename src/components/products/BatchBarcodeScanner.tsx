@@ -17,6 +17,7 @@ import {
   Alert,
   Button,
   Divider,
+  TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
@@ -83,26 +84,33 @@ export default function BatchBarcodeScanner({ open, onClose, onConfirm }: Props)
 
       if (AudioContextClass) {
         const ctx = new AudioContextClass();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
 
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(1046, ctx.currentTime);
-        gain.gain.setValueAtTime(0.001, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+        // Two-pulse scanner beep (like a real barcode reader)
+        const playBeep = (startTime: number) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(1800, startTime);
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.linearRampToValueAtTime(0.12, startTime + 0.005);
+          gain.gain.setValueAtTime(0.10, startTime + 0.055);
+          gain.gain.linearRampToValueAtTime(0.001, startTime + 0.08);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.09);
+          return osc;
+        };
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.1);
-        osc.onended = () => {
-          void ctx.close().catch(() => undefined);
+        const osc1 = playBeep(ctx.currentTime);
+        playBeep(ctx.currentTime + 0.12);
+        osc1.onended = () => {
+          setTimeout(() => void ctx.close().catch(() => undefined), 300);
         };
       }
 
       if ("vibrate" in navigator) {
-        navigator.vibrate(40);
+        navigator.vibrate([30, 60, 30]);
       }
     } catch {
       // Keep scanning flow resilient even if audio/haptics are unavailable.
@@ -134,6 +142,8 @@ export default function BatchBarcodeScanner({ open, onClose, onConfirm }: Props)
   const [ready, setReady] = useState(false);
   const [scannedRows, setScannedRows] = useState<ScannedRow[]>([]);
   const [lastAdded, setLastAdded] = useState<string | null>(null);
+  // barcode → editing qty string (null = not editing)
+  const [editingQty, setEditingQty] = useState<Record<string, string>>({});
 
   // ── Stop camera ──────────────────────────────────────────────────────────────
   const stopCamera = useCallback(() => {
@@ -278,9 +288,24 @@ export default function BatchBarcodeScanner({ open, onClose, onConfirm }: Props)
   const updateQty = (barcode: string, delta: number) => {
     setScannedRows((prev) =>
       prev
-        .map((r) => r.barcode === barcode ? { ...r, qty: r.qty + delta } : r)
+        .map((r) => r.barcode === barcode ? { ...r, qty: Math.max(1, r.qty + delta) } : r)
         .filter((r) => r.qty > 0)
     );
+  };
+
+  const setQtyDirect = (barcode: string, val: string) => {
+    setEditingQty((prev) => ({ ...prev, [barcode]: val }));
+  };
+
+  const commitQty = (barcode: string) => {
+    const raw = editingQty[barcode];
+    if (raw !== undefined) {
+      const num = parseInt(raw, 10);
+      if (!isNaN(num) && num > 0) {
+        setScannedRows((prev) => prev.map((r) => r.barcode === barcode ? { ...r, qty: num } : r));
+      }
+      setEditingQty((prev) => { const n = { ...prev }; delete n[barcode]; return n; });
+    }
   };
 
   const removeRow = (barcode: string) => {
@@ -498,12 +523,21 @@ export default function BatchBarcodeScanner({ open, onClose, onConfirm }: Props)
                   >
                     <RemoveIcon sx={{ fontSize: 14 }} />
                   </IconButton>
-                  <Typography
-                    variant="body2"
-                    sx={{ minWidth: 24, textAlign: "center", fontSize: 13, fontWeight: 600 }}
-                  >
-                    {row.qty}
-                  </Typography>
+                  {/* Tap the number to type a quantity directly */}
+                  <TextField
+                    value={editingQty[row.barcode] ?? String(row.qty)}
+                    onChange={(e) => setQtyDirect(row.barcode, e.target.value)}
+                    onFocus={(e) => {
+                      setEditingQty((prev) => ({ ...prev, [row.barcode]: String(row.qty) }));
+                      e.target.select();
+                    }}
+                    onBlur={() => commitQty(row.barcode)}
+                    onKeyDown={(e) => { if (e.key === "Enter") commitQty(row.barcode); }}
+                    slotProps={{ htmlInput: { inputMode: "numeric" as const, style: { textAlign: "center" as const, fontSize: 13, fontWeight: 600, padding: "2px 0", width: 32 } } }}
+                    variant="standard"
+                    size="small"
+                    sx={{ width: 32, "& .MuiInput-underline:before": { borderBottom: "1px solid transparent" }, "& .MuiInput-underline:hover:not(.Mui-disabled):before": { borderBottom: "1px solid" } }}
+                  />
                   <IconButton
                     size="small"
                     onClick={() => updateQty(row.barcode, 1)}

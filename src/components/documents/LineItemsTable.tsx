@@ -22,6 +22,7 @@ import {
   DialogActions,
   Button,
   Divider,
+  Tooltip,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import AddIcon from "@mui/icons-material/Add";
@@ -30,6 +31,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useTranslation } from "react-i18next";
 import { useProducts, useCreateProduct } from "@/hooks/useProducts";
 import { toast } from "@/store/toastStore";
@@ -119,6 +121,9 @@ export default function LineItemsTable({ items, onChange }: Props) {
               const linked = item.product_id
                 ? activeProducts.find((p) => p.id === item.product_id)
                 : null;
+              // Stock validation: warn if qty exceeds available stock
+              const stockQty = linked?.stock_qty ?? null;
+              const overStock = stockQty !== null && item.qty > stockQty;
               return (
                 <TableRow key={i} sx={{ "&:last-child td": { borderBottom: "none" } }}>
                   {/* # */}
@@ -157,15 +162,28 @@ export default function LineItemsTable({ items, onChange }: Props) {
 
                   {/* Qty */}
                   <TableCell>
-                    <TextField
-                      type="number"
-                      value={item.qty}
-                      onChange={(e) => update(i, { qty: Math.max(0, Number(e.target.value)) })}
-                      size="small"
-                      variant="standard"
-                      slotProps={{ input: { disableUnderline: true, sx: { fontSize: 13 } } }}
-                      sx={{ width: 56, "& input": { textAlign: "right" } }}
-                    />
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <TextField
+                        type="number"
+                        value={item.qty}
+                        onChange={(e) => update(i, { qty: Math.max(0, Number(e.target.value)) })}
+                        size="small"
+                        variant="standard"
+                        slotProps={{ input: { disableUnderline: !overStock, sx: { fontSize: 13, color: overStock ? "warning.main" : undefined } } }}
+                        sx={{ width: 56, "& input": { textAlign: "right" } }}
+                        error={overStock}
+                      />
+                      {overStock && (
+                        <Tooltip title={t("invoices.stockWarning", { available: stockQty, defaultValue: `Only ${stockQty} in stock` })}>
+                          <WarningAmberIcon sx={{ fontSize: 14, color: "warning.main", flexShrink: 0 }} />
+                        </Tooltip>
+                      )}
+                    </Box>
+                    {overStock && (
+                      <Typography sx={{ fontSize: 10, color: "warning.main", lineHeight: 1.2, mt: 0.25 }}>
+                        {t("invoices.stockOf", { count: stockQty, defaultValue: `Stock: ${stockQty}` })}
+                      </Typography>
+                    )}
                   </TableCell>
 
                   {/* Unit price */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Button,
@@ -101,9 +101,11 @@ interface Props {
   hideActions?: boolean;
   /** Called whenever totals change so parent can display them externally */
   onTotalsChange?: (totals: TotalsSnapshot) => void;
+  /** Called whenever any field/item changes — lets parent track dirty state */
+  onDirty?: () => void;
 }
 
-export default function DocumentForm({ type, mode, initialData, onSubmit, onCancel, formId, hideActions, onTotalsChange }: Props) {
+export default function DocumentForm({ type, mode, initialData, onSubmit, onCancel, formId, hideActions, onTotalsChange, onDirty }: Props) {
   const { t } = useTranslation();
 
   const inv = type === "invoice" ? (initialData as Invoice | undefined) : undefined;
@@ -119,6 +121,12 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
       ? itemsFromInvoice(inv?.invoice_items)
       : itemsFromQuotation(quo?.quotation_items)
   );
+
+  // Wrap setLineItems to also fire onDirty
+  const handleLineItemsChange = useCallback((items: LineItemDraft[]) => {
+    setLineItems(items);
+    onDirty?.();
+  }, [onDirty]);
 
   const statuses = type === "invoice" ? INVOICE_STATUSES : QUOTATION_STATUSES;
 
@@ -138,6 +146,13 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
       status: initialData?.status ?? "draft",
     },
   });
+
+  // Fire onDirty whenever any RHF-controlled field changes
+  useEffect(() => {
+    const sub = watch(() => { onDirty?.(); });
+    return () => sub.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watch]);
 
   const watchedTaxPct = watch("tax_pct") ?? 0;
   const watchedDiscount = watch("discount") ?? 0;
@@ -314,7 +329,7 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
         <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
           <LineItemsTable
             items={lineItems}
-            onChange={setLineItems}
+            onChange={handleLineItemsChange}
           />
         </Box>
         {lineItems.length === 0 && (
