@@ -31,7 +31,13 @@
     "none": "None",
     "all": "All",
     "filters": "Filters",
-    "save": "Save"
+    "save": "Save",
+    "continue": "Continue",
+    "done": "Done",
+    "error": "Something went wrong",
+    "notFound": "Not found",
+    "unsavedChanges": "You have unsaved changes. Discard them?",
+    "view": "View"
   },
   "scanner": {
     "notSupported": "Barcode scanning is not supported in this browser. Use Chrome or Edge.",
@@ -129,7 +135,26 @@
     "saveAsProduct": "Save as product",
     "savedAsProduct": "Saved as product",
     "nameEn": "Name (English)",
-    "salePrice": "Sale Price"
+    "salePrice": "Sale Price",
+    "bulkActions": "Bulk Actions",
+    "bulkAddToStorage": "Add Selected to Storage",
+    "bulkActivate": "Activate Selected",
+    "bulkDeactivate": "Deactivate Selected",
+    "bulkSelectionRequired": "Select at least one product first.",
+    "bulkStatusUpdated": "Updated status for {{count}} product(s).",
+    "bulkStoragePrompt": "Assign {{count}} selected product(s) to storage:",
+    "bulkStorageAssigned": "Assigned {{count}} product(s) to storage.",
+    "selectedCount": "{{count}} selected",
+    "bulkSelectAll": "Select all",
+    "bulkUnselectAll": "Unselect all",
+    "bulkInvertSelection": "Invert selection",
+    "bulkCancelSelection": "Cancel",
+    "bulkDuplicate": "Duplicate Selected",
+    "bulkDelete": "Delete Selected",
+    "bulkExportPdf": "Export selected as PDF",
+    "bulkDeleteConfirm": "Delete {{count}} selected product(s)? This action cannot be undone.",
+    "bulkDeleteWarningTitle": "Large Delete Warning",
+    "bulkDeleteWarningBody": "You are about to delete {{count}} products. This action cannot be undone."
   },
   "categories": {
     "title": "Categories",
@@ -393,11 +418,23 @@
       "nameEn": "Name (English)",
       "nameAr": "Name (Arabic)",
       "icon": "Icon",
-      "description": "Description"
+      "description": "Description",
+      "qty": "Qty",
+      "qtyInStorage": "Qty in this storage",
+      "selectStorage": "Select storage",
+      "storage": "Storage"
     },
     "itemCount": "{{count}} item(s)",
+    "qtyCount": "{{count}} qty",
     "noItems": "No items in this storage",
     "noStorages": "No storages yet. Add your first one.",
+    "add": "Add Storage",
+    "created": "Storage created",
+    "deleted": "Storage deleted",
+    "edit": "Edit Storage",
+    "empty": "No storages yet. Add your first one.",
+    "updated": "Storage updated",
+    "noProducts": "No items in this storage",
     "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
     "deleteBlockedTitle": "Cannot Delete",
     "deleteBlocked": "This storage has items. Move or remove them before deleting.",
@@ -444,6 +481,17 @@
     "noItemsError": "Add at least one item to transfer.",
     "insufficientQty": "Insufficient qty for \"{{name}}\" in source storage.",
     "successCreated": "Transfer {{number}} created",
-    "pdfTitle": "Storage Transfer Report"
+    "pdfTitle": "Storage Transfer Report",
+    "created": "Transfer created",
+    "moveItems": "Move Items",
+    "submit": "Submit Transfer",
+    "fields": {
+      "from": "From Storage",
+      "to": "To Storage",
+      "notes": "Notes",
+      "product": "Product",
+      "qty": "Qty",
+      "selectProduct": "Search product…"
+    }
   }
 }

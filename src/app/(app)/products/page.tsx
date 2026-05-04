@@ -25,6 +25,12 @@ import {
   InputLabel,
   useMediaQuery,
   useTheme,
+  Paper,
+  Slide,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
 } from "@mui/material";
 import ProductMobileList from "@/components/products/ProductMobileList";
 import CollapsibleFilters from "@/components/shared/CollapsibleFilters";
@@ -33,14 +39,29 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import DensitySmallIcon from "@mui/icons-material/DensitySmall";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import WarehouseOutlinedIcon from "@mui/icons-material/WarehouseOutlined";
+import ToggleOnOutlinedIcon from "@mui/icons-material/ToggleOnOutlined";
+import ToggleOffOutlinedIcon from "@mui/icons-material/ToggleOffOutlined";
+import SelectAllIcon from "@mui/icons-material/SelectAll";
+import FlipOutlinedIcon from "@mui/icons-material/FlipOutlined";
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import Tooltip from "@mui/material/Tooltip";
 import { useTranslation } from "react-i18next";
-import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
+import { useProducts, useDeleteProduct, useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
+import { useStorages } from "@/hooks/useStorages";
 import ProductTable from "@/components/products/ProductTable";
 import ProductGrid from "@/components/products/ProductGrid";
 import ProductForm from "@/components/products/ProductForm";
 import ProductCategories from "@/components/products/ProductCategories";
 import ProductSummaryCards from "@/components/products/ProductSummaryCards";
+import { toast } from "@/store/toastStore";
+import { apiFetch } from "@/lib/api";
+import { downloadProductListPdf } from "@/lib/pdfExport";
 import type { Product } from "@/types";
 
 type ViewMode = "table" | "compact" | "grid";
@@ -62,6 +83,18 @@ export default function ProductsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [formViewMode, setFormViewMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [lastSelectionIndex, setLastSelectionIndex] = useState<number | null>(null);
+  const [batchDeleting, setBatchDeleting] = useState(false);
+  const [batchDuplicating, setBatchDuplicating] = useState(false);
+  const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
+  const [batchDeleteWarningOpen, setBatchDeleteWarningOpen] = useState(false);
+  const [bulkActionsAnchor, setBulkActionsAnchor] = useState<HTMLElement | null>(null);
+  const [batchStorageOpen, setBatchStorageOpen] = useState(false);
+  const [batchStorageId, setBatchStorageId] = useState("");
+  const [batchUpdatingStatus, setBatchUpdatingStatus] = useState(false);
+  const [batchAssigningStorage, setBatchAssigningStorage] = useState(false);
+  const [batchExportingPdf, setBatchExportingPdf] = useState(false);
 
   const searchParams = useSearchParams();
   const { replace: routerReplace } = useRouter();
@@ -77,7 +110,10 @@ export default function ProductsPage() {
 
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useProductCategories();
+  const { data: storages = [] } = useStorages();
   const deleteProduct = useDeleteProduct();
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
 
   // Effective view: force grid on mobile
   const effectiveView: ViewMode = isMobile ? "grid" : view;
@@ -134,6 +170,213 @@ export default function ProductsPage() {
     setDeleteTarget(null);
   };
 
+  const handleToggleSelect = (payload: {
+    id: string;
+    index: number;
+    checked: boolean;
+    shiftKey: boolean;
+    orderedIds: string[];
+  }) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+
+      if (payload.checked) {
+        if (payload.shiftKey && lastSelectionIndex !== null) {
+          const start = Math.min(lastSelectionIndex, payload.index);
+          const end = Math.max(lastSelectionIndex, payload.index);
+          for (let i = start; i <= end; i++) {
+            const id = payload.orderedIds[i];
+            if (id) next.add(id);
+          }
+        } else {
+          next.add(payload.id);
+        }
+      } else {
+        next.delete(payload.id);
+      }
+
+      return Array.from(next);
+    });
+    setLastSelectionIndex(payload.index);
+  };
+
+  const handleToggleSelectAll = (orderedIds: string[], checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        orderedIds.forEach((id) => next.add(id));
+      } else {
+        orderedIds.forEach((id) => next.delete(id));
+      }
+      return Array.from(next);
+    });
+  };
+
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((id) => products.some((p) => p.id === id)));
+  }, [products]);
+
+  const selectedProducts = useMemo(() => {
+    const map = new Map(products.map((p) => [p.id, p]));
+    return selectedIds.map((id) => map.get(id)).filter((p): p is Product => !!p);
+  }, [products, selectedIds]);
+
+  const filteredIds = useMemo(() => filtered.map((p) => p.id), [filtered]);
+  const allFilteredSelected =
+    filteredIds.length > 0 && filteredIds.every((id) => selectedIds.includes(id));
+
+  const clearSelection = () => {
+    setSelectedIds([]);
+    setLastSelectionIndex(null);
+  };
+
+  const storageName = (nameEn: string, nameAr: string | null) =>
+    (isAr && nameAr) ? nameAr : nameEn;
+
+  const handleBatchDeleteClick = () => {
+    if (selectedIds.length > 5) {
+      setBatchDeleteWarningOpen(true);
+      return;
+    }
+    setBatchDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmBatchDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setBatchDeleting(true);
+    try {
+      await Promise.all(selectedIds.map((id) => deleteProduct.mutateAsync(id)));
+      clearSelection();
+      setBatchDeleteConfirmOpen(false);
+      setBatchDeleteWarningOpen(false);
+    } finally {
+      setBatchDeleting(false);
+    }
+  };
+
+  const handleBatchDuplicate = async () => {
+    if (selectedProducts.length === 0) return;
+    setBatchDuplicating(true);
+    try {
+      const numericSkus = products
+        .map((p) => parseInt(p.sku.replace(/\D/g, ""), 10))
+        .filter((n) => !Number.isNaN(n) && n > 0);
+      let nextSku = (numericSkus.length ? Math.max(...numericSkus) : 0) + 1;
+
+      for (const p of selectedProducts) {
+        await createProduct.mutateAsync({
+          sku: String(nextSku).padStart(6, "0"),
+          barcode: null,
+          name_en: p.name_en,
+          name_ar: p.name_ar ?? "",
+          category: p.category ?? "",
+          unit_price: p.unit_price,
+          stock_qty: p.stock_qty,
+          warning_limit_stock: p.warning_limit_stock,
+          status: p.status,
+        });
+        nextSku += 1;
+      }
+
+      clearSelection();
+    } finally {
+      setBatchDuplicating(false);
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status: "active" | "inactive") => {
+    if (selectedIds.length === 0) {
+      toast(t("products.bulkSelectionRequired"), "error");
+      return;
+    }
+    setBatchUpdatingStatus(true);
+    try {
+      await Promise.all(selectedIds.map((id) => updateProduct.mutateAsync({ id, status })));
+      toast(t("products.bulkStatusUpdated", { count: selectedIds.length }), "success");
+      clearSelection();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
+    } finally {
+      setBatchUpdatingStatus(false);
+    }
+  };
+
+  const handleOpenBatchStorage = () => {
+    if (selectedIds.length === 0) {
+      toast(t("products.bulkSelectionRequired"), "error");
+      return;
+    }
+    setBulkActionsAnchor(null);
+    setBatchStorageId("");
+    setBatchStorageOpen(true);
+  };
+
+  const handleBatchAddToStorage = async () => {
+    if (!batchStorageId || selectedProducts.length === 0) return;
+    setBatchAssigningStorage(true);
+    try {
+      await Promise.all(
+        selectedProducts.map((product) =>
+          apiFetch("product-storages", {
+            method: "POST",
+            body: JSON.stringify({
+              product_id: product.id,
+              storage_id: batchStorageId,
+              qty: product.stock_qty,
+            }),
+          })
+        )
+      );
+      setBatchStorageOpen(false);
+      toast(t("products.bulkStorageAssigned", { count: selectedProducts.length }), "success");
+      clearSelection();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
+    } finally {
+      setBatchAssigningStorage(false);
+    }
+  };
+
+  const handleSelectAllToggle = () => {
+    handleToggleSelectAll(filteredIds, !allFilteredSelected);
+  };
+
+  const handleInvertSelection = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      filteredIds.forEach((id) => {
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+      });
+      return Array.from(next);
+    });
+  };
+
+  const handleToggleStatusQuick = async () => {
+    if (selectedProducts.length === 0) {
+      toast(t("products.bulkSelectionRequired"), "error");
+      return;
+    }
+    const allActive = selectedProducts.every((p) => p.status === "active");
+    await handleBulkStatusUpdate(allActive ? "inactive" : "active");
+  };
+
+  const handleExportSelectedPdf = async () => {
+    if (selectedProducts.length === 0) {
+      toast(t("products.bulkSelectionRequired"), "error");
+      return;
+    }
+    setBatchExportingPdf(true);
+    try {
+      await downloadProductListPdf(selectedProducts, isAr ? "ar" : "en");
+      clearSelection();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : t("toast.error"), "error");
+    } finally {
+      setBatchExportingPdf(false);
+    }
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -142,16 +385,62 @@ export default function ProductsPage() {
           {t("nav.products")}
         </Typography>
         {tab === 0 && (
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={() => { setEditProduct(null); setFormOpen(true); }}
-          >
-            {t("products.newProduct")}
-          </Button>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<MoreVertIcon />}
+              onClick={(e) => setBulkActionsAnchor(e.currentTarget)}
+            >
+              {t("products.bulkActions")}
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => { setEditProduct(null); setFormOpen(true); }}
+            >
+              {t("products.newProduct")}
+            </Button>
+          </Box>
         )}
       </Box>
+
+      <Menu
+        anchorEl={bulkActionsAnchor}
+        open={!!bulkActionsAnchor}
+        onClose={() => setBulkActionsAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem
+          onClick={handleOpenBatchStorage}
+          disabled={selectedIds.length === 0 || batchAssigningStorage || batchUpdatingStatus}
+        >
+          <ListItemIcon>
+            <WarehouseOutlinedIcon sx={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText>{t("products.bulkAddToStorage")}</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => { setBulkActionsAnchor(null); void handleBulkStatusUpdate("active"); }}
+          disabled={selectedIds.length === 0 || batchUpdatingStatus || batchAssigningStorage}
+        >
+          <ListItemIcon>
+            <ToggleOnOutlinedIcon sx={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText>{t("products.bulkActivate")}</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => { setBulkActionsAnchor(null); void handleBulkStatusUpdate("inactive"); }}
+          disabled={selectedIds.length === 0 || batchUpdatingStatus || batchAssigningStorage}
+        >
+          <ListItemIcon>
+            <ToggleOffOutlinedIcon sx={{ fontSize: 18 }} />
+          </ListItemIcon>
+          <ListItemText>{t("products.bulkDeactivate")}</ListItemText>
+        </MenuItem>
+      </Menu>
 
       {/* Tabs */}
       <Tabs
@@ -258,7 +547,15 @@ export default function ProductsPage() {
               ))}
             </Box>
           ) : isMobile ? (
-            <ProductMobileList products={filtered} onEdit={handleEdit} onDelete={setDeleteTarget} />
+            <ProductMobileList
+              products={filtered}
+              onView={handleView}
+              onEdit={handleEdit}
+              onDelete={setDeleteTarget}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onToggleSelectAll={handleToggleSelectAll}
+            />
           ) : effectiveView === "grid" ? (
             <ProductGrid products={filtered} onEdit={handleEdit} onDelete={setDeleteTarget} />
           ) : (
@@ -268,10 +565,126 @@ export default function ProductsPage() {
               onEdit={handleEdit}
               onDelete={setDeleteTarget}
               compact={effectiveView === "compact"}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onToggleSelectAll={handleToggleSelectAll}
             />
           )}
         </>
       )}
+
+      <Slide direction="up" in={selectedIds.length > 0} mountOnEnter unmountOnExit>
+        <Paper
+          elevation={6}
+          sx={{
+            position: "fixed",
+            bottom: 16,
+            left: { xs: 12, sm: 24 },
+            right: { xs: 12, sm: 24 },
+            zIndex: (theme) => theme.zIndex.drawer + 2,
+            px: 1.5,
+            py: 1,
+            borderRadius: 1.5,
+            border: "1px solid",
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1,
+            flexWrap: "wrap",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {t("products.selectedCount", { count: selectedIds.length })}
+            </Typography>
+            <Button
+              size="small"
+              variant="text"
+              startIcon={<CloseIcon sx={{ fontSize: 16 }} />}
+              onClick={clearSelection}
+            >
+              {t("products.bulkCancelSelection")}
+            </Button>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+            <Button
+              size="small"
+              variant="text"
+              startIcon={<SelectAllIcon sx={{ fontSize: 16 }} />}
+              onClick={handleSelectAllToggle}
+            >
+              {allFilteredSelected
+                ? t("products.bulkUnselectAll")
+                : t("products.bulkSelectAll")}
+            </Button>
+            <Button
+              size="small"
+              variant="text"
+              startIcon={<FlipOutlinedIcon sx={{ fontSize: 16 }} />}
+              onClick={handleInvertSelection}
+            >
+              {t("products.bulkInvertSelection")}
+            </Button>
+
+            <Tooltip title={t("products.bulkDelete")}>
+              <span>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={handleBatchDeleteClick}
+                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage || batchExportingPdf}
+                >
+                  <DeleteOutlineIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            <Tooltip title={t("products.bulkDuplicate")}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={handleBatchDuplicate}
+                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage || batchExportingPdf}
+                >
+                  <ContentCopyIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            <Tooltip
+              title={selectedProducts.every((p) => p.status === "active")
+                ? t("products.bulkDeactivate")
+                : t("products.bulkActivate")}
+            >
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => { void handleToggleStatusQuick(); }}
+                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage || batchExportingPdf}
+                >
+                  {selectedProducts.every((p) => p.status === "active")
+                    ? <ToggleOffOutlinedIcon sx={{ fontSize: 18 }} />
+                    : <ToggleOnOutlinedIcon sx={{ fontSize: 18 }} />}
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            <Tooltip title={t("products.bulkExportPdf")}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => { void handleExportSelectedPdf(); }}
+                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage || batchExportingPdf}
+                >
+                  <PictureAsPdfIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Box>
+        </Paper>
+      </Slide>
 
       {/* Form dialog */}
       <ProductForm
@@ -313,6 +726,108 @@ export default function ProductsPage() {
             onClick={handleConfirmDelete}
           >
             {t("common.delete")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={batchDeleteWarningOpen}
+        onClose={() => setBatchDeleteWarningOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600, fontSize: 15 }}>
+          {t("products.bulkDeleteWarningTitle")}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {t("products.bulkDeleteWarningBody", { count: selectedIds.length })}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="text" onClick={() => setBatchDeleteWarningOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={() => {
+              setBatchDeleteWarningOpen(false);
+              setBatchDeleteConfirmOpen(true);
+            }}
+          >
+            {t("common.continue")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={batchDeleteConfirmOpen}
+        onClose={() => setBatchDeleteConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600, fontSize: 15 }}>
+          {t("common.confirmDelete")}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {t("products.bulkDeleteConfirm", { count: selectedIds.length })}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="text" onClick={() => setBatchDeleteConfirmOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={batchDeleting}
+            onClick={handleConfirmBatchDelete}
+          >
+            {t("common.delete")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={batchStorageOpen}
+        onClose={() => setBatchStorageOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600, fontSize: 15 }}>
+          {t("products.bulkAddToStorage")}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+            {t("products.bulkStoragePrompt", { count: selectedIds.length })}
+          </Typography>
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t("storages.fields.storage")}</InputLabel>
+            <Select
+              label={t("storages.fields.storage")}
+              value={batchStorageId}
+              onChange={(e) => setBatchStorageId(e.target.value)}
+            >
+              {storages.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {storageName(s.name_en, s.name_ar)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="text" onClick={() => setBatchStorageOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            variant="contained"
+            disabled={!batchStorageId || batchAssigningStorage}
+            onClick={handleBatchAddToStorage}
+          >
+            {t("common.save")}
           </Button>
         </DialogActions>
       </Dialog>

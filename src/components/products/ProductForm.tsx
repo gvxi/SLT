@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import CasinoIcon from "@mui/icons-material/Casino";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
@@ -32,7 +33,7 @@ import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
 import { useStorages } from "@/hooks/useStorages";
 import { apiFetch } from "@/lib/api";
-import type { Product, Storage } from "@/types";
+import type { Product, ProductStorage, Storage } from "@/types";
 
 const schema = z.object({
   sku: z.string().min(1),
@@ -64,7 +65,8 @@ function generateEAN13(): string {
 }
 
 export default function ProductForm({ open, product, onClose, allProducts = [], initialViewMode }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language === "ar";
   const isEdit = !!product;
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -72,23 +74,52 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
   const { data: storages = [] } = useStorages();
   const [scannerOpen, setScannerOpen] = useState(false);
   const [viewMode, setViewMode] = useState(initialViewMode ?? false);
-  const [selectedStorage, setSelectedStorage] = useState<Storage | null>(null);
+  const [selectedStorageId, setSelectedStorageId] = useState<string | null>(null);
+  const selectedStorage = useMemo(
+    () => storages.find((s) => s.id === selectedStorageId) ?? null,
+    [storages, selectedStorageId]
+  );
+  const storageName = useCallback((storage: Storage) => {
+    return isAr && storage.name_ar ? storage.name_ar : storage.name_en;
+  }, [isAr]);
 
   useEffect(() => {
-    if (open) {
-      setViewMode(initialViewMode ?? false);
-      // Auto-select storage
-      if (product?.product_storages?.length) {
-        const first = product.product_storages[0];
-        const match = storages.find((s) => s.id === first.storage_id);
-        setSelectedStorage(match ?? null);
-      } else if (storages.length === 1) {
-        setSelectedStorage(storages[0]);
-      } else {
-        setSelectedStorage(null);
+    if (!open) return;
+
+    setViewMode(initialViewMode ?? false);
+
+    let cancelled = false;
+    const resolveInitialStorage = async () => {
+      if (product?.id) {
+        try {
+          const res = await apiFetch(`product-storages?product_id=${encodeURIComponent(product.id)}`);
+          if (res.ok) {
+            const mappings = (await res.json()) as ProductStorage[];
+            const preferred = mappings.find((m) => m.qty === product.stock_qty) ?? mappings[0];
+            if (!cancelled) {
+              setSelectedStorageId(preferred?.storage_id ?? null);
+            }
+            return;
+          }
+        } catch {
+          // If loading mapping fails, fallback to defaults below.
+        }
+        if (!cancelled) {
+          setSelectedStorageId(null);
+        }
+        return;
       }
-    }
-  }, [open, initialViewMode, product, storages]);
+
+      if (!cancelled) {
+        setSelectedStorageId(storages.length === 1 ? storages[0].id : null);
+      }
+    };
+
+    void resolveInitialStorage();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, initialViewMode, product?.id, product?.stock_qty, storages]);
 
   const nextSku = useMemo(() => {
     const nums = allProducts
@@ -179,14 +210,19 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
         savedProductId = created.id;
       }
       // Upsert storage mapping if a storage is selected
-      if (selectedStorage && savedProductId) {
+      if (selectedStorageId && savedProductId) {
         await apiFetch(`product-storages`, {
           method: "POST",
           body: JSON.stringify({
             product_id: savedProductId,
-            storage_id: selectedStorage.id,
+            storage_id: selectedStorageId,
             qty: data.stock_qty,
+            replace_for_product: true,
           }),
+        });
+      } else if (isEdit && savedProductId) {
+        await apiFetch(`product-storages?product_id=${encodeURIComponent(savedProductId)}`, {
+          method: "DELETE",
         });
       }
       onClose();
@@ -197,7 +233,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
 
   return (
     <Drawer
-      anchor="right"
+      anchor={isAr ? "left" : "right"}
       open={open}
       onClose={onClose}
       slotProps={{ paper: { sx: { width: { xs: "100%", sm: 480 } } } }}
@@ -220,16 +256,17 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
             : t("common.create")} — {t("nav.products")}
         </Typography>
         <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-          {isEdit && viewMode && (
-            <Button
+          {isEdit && (
+            <IconButton
               size="small"
-              variant="outlined"
-              startIcon={<EditOutlinedIcon sx={{ fontSize: 15 }} />}
-              onClick={() => setViewMode(false)}
-              sx={{ fontSize: 12, textTransform: "none", px: 1.25 }}
+              onClick={() => setViewMode((prev) => !prev)}
+              sx={{ color: "text.secondary" }}
+              title={viewMode ? t("common.edit") : t("common.view")}
             >
-              {t("common.edit")}
-            </Button>
+              {viewMode
+                ? <EditOutlinedIcon sx={{ fontSize: 18 }} />
+                : <VisibilityOutlinedIcon sx={{ fontSize: 18 }} />}
+            </IconButton>
           )}
           <IconButton size="small" onClick={onClose} edge="end">
             <CloseIcon sx={{ fontSize: 18 }} />
@@ -438,9 +475,10 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
             <Autocomplete
               size="small"
               options={storages}
-              getOptionLabel={(s) => s.name_en}
+              getOptionLabel={storageName}
               value={selectedStorage}
-              onChange={(_, val) => setSelectedStorage(val)}
+              onChange={(_, val) => setSelectedStorageId(val?.id ?? null)}
+              disabled={viewMode}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -451,7 +489,7 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
               isOptionEqualToValue={(opt, val) => opt.id === val.id}
               fullWidth
             />
-            {!selectedStorage && storages.length > 0 && (
+            {!selectedStorageId && storages.length > 0 && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.75 }}>
                 <WarningAmberIcon sx={{ fontSize: 14, color: "warning.main" }} />
                 <Typography variant="caption" sx={{ color: "warning.main", fontSize: 11 }}>

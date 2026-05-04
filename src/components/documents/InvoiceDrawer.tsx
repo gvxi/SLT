@@ -62,7 +62,8 @@ interface Props {
 }
 
 export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language === "ar";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -224,7 +225,7 @@ export default function InvoiceDrawer({ open, invoiceId, onClose }: Props) {
   return (
     <>
       <Drawer
-        anchor={isMobile ? "bottom" : "right"}
+        anchor={isMobile ? "bottom" : isAr ? "left" : "right"}
         open={open}
         onClose={guardedClose}
         slotProps={{

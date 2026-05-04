@@ -177,8 +177,10 @@ export interface Storage {
   created_by: string | null;
   created_at: string;
   updated_at: string;
-  /** Total items count across all products in this storage (joined) */
+  /** Distinct products with qty > 0 in this storage */
   item_count?: number;
+  /** Sum of qty across all products in this storage */
+  qty_count?: number;
 }
 
 export interface ProductStorage {

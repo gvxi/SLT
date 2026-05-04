@@ -56,7 +56,8 @@ interface Props {
 }
 
 export default function ClientDrawer({ open, onClose, clientId }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language === "ar";
   const isEditing = !!clientId;
 
   const { data: client, isLoading } = useClient(clientId ?? "");
@@ -150,7 +151,7 @@ export default function ClientDrawer({ open, onClose, clientId }: Props) {
   return (
     <>
       <Drawer
-        anchor="right"
+        anchor={isAr ? "left" : "right"}
         open={open}
         onClose={onClose}
         slotProps={{

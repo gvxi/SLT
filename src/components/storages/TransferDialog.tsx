@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Drawer,
   Box,
   Button,
   TextField,
@@ -18,23 +15,31 @@ import {
   TableRow,
   TableCell,
   Alert,
-  Autocomplete,
   CircularProgress,
+  Menu,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import SearchIcon from "@mui/icons-material/Search";
+import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import { useTranslation } from "react-i18next";
 import { useStorages } from "@/hooks/useStorages";
 import { useCreateTransfer } from "@/hooks/useStorageTransfers";
 import { useProducts } from "@/hooks/useProducts";
 import { toast } from "@/store/toastStore";
-import type { Product, StorageTransfer } from "@/types";
+import type { Product, StorageTransfer, LineItemDraft } from "@/types";
 import TransferPdfPreviewDialog from "@/components/storages/TransferPdfPreviewDialog";
+import ProductPickerDialog from "@/components/documents/ProductPickerDialog";
+import BatchBarcodeScanner from "@/components/products/BatchBarcodeScanner";
 
 interface TransferItem {
-  product: Product | null;
+  product: Product;
   qty: number;
 }
 
@@ -45,7 +50,8 @@ interface Props {
 }
 
 export default function TransferDialog({ open, defaultFromStorageId, onClose }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language === "ar";
   const { data: storages = [] } = useStorages();
   const { data: products = [] } = useProducts();
   const createTransfer = useCreateTransfer();
@@ -53,36 +59,80 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
   const [fromId, setFromId] = useState(defaultFromStorageId ?? "");
   const [toId, setToId] = useState("");
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<TransferItem[]>([{ product: null, qty: 1 }]);
+  const [items, setItems] = useState<TransferItem[]>([]);
   const [createdTransfer, setCreatedTransfer] = useState<StorageTransfer | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  const activeProducts = useMemo(
+    () => products.filter((p) => p.status === "active"),
+    [products],
+  );
 
   useEffect(() => {
     if (open) {
       setFromId(defaultFromStorageId ?? "");
       setToId("");
       setNotes("");
-      setItems([{ product: null, qty: 1 }]);
+      setItems([]);
       setCreatedTransfer(null);
+      setMenuAnchor(null);
+      setPickerOpen(false);
+      setScannerOpen(false);
     }
   }, [open, defaultFromStorageId]);
-
-  const addRow = () => setItems((prev) => [...prev, { product: null, qty: 1 }]);
 
   const removeRow = (i: number) => setItems((prev) => prev.filter((_, idx) => idx !== i));
 
   const updateItem = (i: number, patch: Partial<TransferItem>) =>
     setItems((prev) => prev.map((item, idx) => (idx === i ? { ...item, ...patch } : item)));
 
+  const appendFromLineItems = (newItems: LineItemDraft[]) => {
+    setItems((prev) => {
+      const next = [...prev];
+      newItems.forEach((item) => {
+        if (!item.product_id || item.qty <= 0) return;
+        const product = activeProducts.find((p) => p.id === item.product_id);
+        if (!product) return;
+        const existingIndex = next.findIndex((row) => row.product.id === product.id);
+        if (existingIndex >= 0) {
+          next[existingIndex] = {
+            ...next[existingIndex],
+            qty: next[existingIndex].qty + item.qty,
+          };
+        } else {
+          next.push({ product, qty: item.qty });
+        }
+      });
+      return next;
+    });
+  };
+
+  const handlePickerConfirm = (pickedItems: LineItemDraft[]) => {
+    appendFromLineItems(pickedItems);
+  };
+
+  const handleScannerConfirm = (scannedItems: LineItemDraft[]) => {
+    appendFromLineItems(scannedItems);
+    setScannerOpen(false);
+  };
+
   const toStorages = storages.filter((s) => s.id !== fromId);
   const fromStorages = storages.filter((s) => s.id !== toId);
+
+  const storageName = (nameEn: string, nameAr: string | null) =>
+    (isAr && nameAr) ? nameAr : nameEn;
+  const productName = (product: Product) =>
+    (isAr && product.name_ar) ? product.name_ar : product.name_en;
 
   const isValid =
     !!fromId &&
     !!toId &&
     fromId !== toId &&
     items.length > 0 &&
-    items.every((it) => it.product && it.qty > 0);
+    items.every((it) => it.qty > 0);
 
   const handleSubmit = async () => {
     if (!isValid) return;
@@ -92,7 +142,7 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
         to_storage_id: toId,
         notes: notes || null,
         items: items.map((it, idx) => ({
-          product_id: it.product!.id,
+          product_id: it.product.id,
           qty: it.qty,
           sort_order: idx,
         })),
@@ -111,20 +161,18 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
         storage_transfer_items: items.map((it, idx) => ({
           id: `tmp-${idx}`,
           transfer_id: result.id,
-          product_id: it.product!.id,
+          product_id: it.product.id,
           qty: it.qty,
           sort_order: idx,
           created_at: result.created_at,
-          product: it.product
-            ? {
-                id: it.product.id,
-                sku: it.product.sku,
-                name_en: it.product.name_en,
-                name_ar: it.product.name_ar,
-                category: it.product.category,
-                unit_price: it.product.unit_price,
-              }
-            : undefined,
+          product: {
+            id: it.product.id,
+            sku: it.product.sku,
+            name_en: it.product.name_en,
+            name_ar: it.product.name_ar,
+            category: it.product.category,
+            unit_price: it.product.unit_price,
+          },
         })),
       });
       toast(t("transfers.created"), "success");
@@ -134,13 +182,31 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle
+    <>
+      <Drawer
+        anchor={i18n.language === "ar" ? "left" : "right"}
+        open={open}
+        onClose={onClose}
+        slotProps={{
+          paper: {
+            sx: {
+              width: { xs: "100%", sm: 680 },
+              maxWidth: "100%",
+              display: "flex",
+              flexDirection: "column",
+            },
+          },
+        }}
+      >
+      <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          pb: 1,
+          px: 2,
+          py: 1.25,
+          borderBottom: "1px solid",
+          borderColor: "divider",
         }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -149,9 +215,9 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
         <IconButton onClick={onClose} size="small">
           <CloseIcon fontSize="small" />
         </IconButton>
-      </DialogTitle>
+      </Box>
 
-      <DialogContent sx={{ pt: 1 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 1.5 }}>
         {createTransfer.error && (
           <Alert severity="error" sx={{ mb: 2, fontSize: 13 }}>
             {createTransfer.error instanceof Error
@@ -176,7 +242,7 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
           >
             {fromStorages.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.name_en}
+                {storageName(s.name_en, s.name_ar)}
               </MenuItem>
             ))}
           </TextField>
@@ -190,13 +256,23 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
           >
             {toStorages.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.name_en}
+                {storageName(s.name_en, s.name_ar)}
               </MenuItem>
             ))}
           </TextField>
         </Box>
 
-        {/* Items table */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
+            {t("transfers.items")}
+          </Typography>
+          <Chip
+            size="small"
+            color={items.length > 0 ? "primary" : "default"}
+            label={t("invoices.countSelected", { count: items.length })}
+          />
+        </Box>
+
         <Table size="small" sx={{ mb: 2 }}>
           <TableHead>
             <TableRow>
@@ -211,18 +287,14 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
             {items.map((item, i) => (
               <TableRow key={i}>
                 <TableCell>
-                  <Autocomplete
-                    size="small"
-                    options={products}
-                    getOptionLabel={(p) => `${p.sku} – ${p.name_en}`}
-                    value={item.product}
-                    onChange={(_, val) => updateItem(i, { product: val })}
-                    renderInput={(params) => (
-                      <TextField {...params} placeholder={t("transfers.fields.selectProduct")} />
-                    )}
-                    isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                    fullWidth
-                  />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500 }}>
+                      {productName(item.product)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      {item.product.sku}
+                    </Typography>
+                  </Box>
                 </TableCell>
                 <TableCell align="right">
                   <TextField
@@ -251,9 +323,38 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
           </TableBody>
         </Table>
 
-        <Button size="small" startIcon={<AddIcon />} onClick={addRow} sx={{ mb: 2 }}>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={(e) => setMenuAnchor(e.currentTarget)}
+          endIcon={<ArrowDropDownIcon />}
+          sx={{ mb: 2 }}
+        >
           {t("transfers.addItem")}
         </Button>
+
+        <Menu
+          anchorEl={menuAnchor}
+          open={!!menuAnchor}
+          onClose={() => setMenuAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          slotProps={{ paper: { sx: { minWidth: 190 } } }}
+        >
+          <MenuItem onClick={() => { setPickerOpen(true); setMenuAnchor(null); }} dense>
+            <ListItemIcon><SearchIcon sx={{ fontSize: 17 }} /></ListItemIcon>
+            <ListItemText slotProps={{ primary: { sx: { fontSize: 13 } } }}>
+              {t("invoices.addBySearch")}
+            </ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => { setScannerOpen(true); setMenuAnchor(null); }} dense>
+            <ListItemIcon><QrCodeScannerIcon sx={{ fontSize: 17 }} /></ListItemIcon>
+            <ListItemText slotProps={{ primary: { sx: { fontSize: 13 } } }}>
+              {t("invoices.addByScan")}
+            </ListItemText>
+          </MenuItem>
+          <Divider sx={{ my: 0.5 }} />
+        </Menu>
 
         <TextField
           label={t("transfers.fields.notes")}
@@ -264,9 +365,20 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
           multiline
           minRows={2}
         />
-      </DialogContent>
+      </Box>
 
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 1,
+          px: 2,
+          py: 1.75,
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <Button variant="outlined" onClick={onClose} disabled={createTransfer.isPending}>
           {t("common.cancel")}
         </Button>
@@ -299,7 +411,20 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
             {t("transfers.submit")}
           </Button>
         )}
-      </DialogActions>
+      </Box>
+      </Drawer>
+
+      <ProductPickerDialog
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onConfirm={handlePickerConfirm}
+      />
+
+      <BatchBarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onConfirm={handleScannerConfirm}
+      />
 
       {createdTransfer && (
         <TransferPdfPreviewDialog
@@ -308,6 +433,6 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
           transfer={createdTransfer}
         />
       )}
-    </Dialog>
+    </>
   );
 }

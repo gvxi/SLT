@@ -119,11 +119,17 @@ export default function StoragesPage() {
                       {s.description}
                     </Typography>
                   )}
-                  <Box sx={{ mt: 1 }}>
+                  <Box sx={{ mt: 1, display: "flex", gap: 0.75, flexWrap: "wrap" }}>
                     <Chip
                       label={t("storages.itemCount", { count: s.item_count ?? 0 })}
                       size="small"
                       color={hasItems ? "default" : "warning"}
+                      variant="outlined"
+                      sx={{ fontSize: 11 }}
+                    />
+                    <Chip
+                      label={t("storages.qtyCount", { count: s.qty_count ?? 0 })}
+                      size="small"
                       variant="outlined"
                       sx={{ fontSize: 11 }}
                     />

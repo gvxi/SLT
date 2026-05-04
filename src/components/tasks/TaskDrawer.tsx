@@ -75,7 +75,8 @@ export default function TaskDrawer({
   taskId,
   initialStatus = "backlog",
 }: TaskDrawerProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language === "ar";
   const router = useRouter();
   const isEditing = !!taskId;
 
@@ -236,7 +237,7 @@ export default function TaskDrawer({
   return (
     <>
       <Drawer
-        anchor="right"
+        anchor={isAr ? "left" : "right"}
         open={open}
         onClose={onClose}
         slotProps={{

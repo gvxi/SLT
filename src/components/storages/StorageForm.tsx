@@ -37,7 +37,8 @@ interface Props {
 }
 
 export default function StorageForm({ open, storage, onClose }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language === "ar";
   const isEdit = !!storage;
   const createStorage = useCreateStorage();
   const updateStorage = useUpdateStorage(storage?.id ?? "");
@@ -98,7 +99,7 @@ export default function StorageForm({ open, storage, onClose }: Props) {
 
   return (
     <Drawer
-      anchor="right"
+      anchor={isAr ? "left" : "right"}
       open={open}
       onClose={handleClose}
       slotProps={{ paper: { sx: { width: { xs: "100%", sm: 480 } } } }}

@@ -31,7 +31,13 @@
     "none": "لا شيء",
     "all": "الكل",
     "filters": "الفلاتر",
-    "save": "حفظ"
+    "save": "حفظ",
+    "continue": "متابعة",
+    "done": "تم",
+    "error": "حدث خطأ ما",
+    "notFound": "غير موجود",
+    "unsavedChanges": "لديك تغييرات غير محفوظة. هل تريد تجاهلها؟",
+    "view": "عرض"
   },
   "scanner": {
     "notSupported": "مسح الباركود غير مدعوم في هذا المتصفح. استخدم Chrome أو Edge.",
@@ -129,7 +135,26 @@
     "saveAsProduct": "حفظ كمنتج",
     "savedAsProduct": "تم الحفظ كمنتج",
     "nameEn": "الاسم (إنجليزي)",
-    "salePrice": "سعر البيع"
+    "salePrice": "سعر البيع",
+    "bulkActions": "إجراءات جماعية",
+    "bulkAddToStorage": "إضافة المحدد إلى المستودع",
+    "bulkActivate": "تفعيل المحدد",
+    "bulkDeactivate": "تعطيل المحدد",
+    "bulkSelectionRequired": "يرجى تحديد منتج واحد على الأقل أولاً.",
+    "bulkStatusUpdated": "تم تحديث حالة {{count}} منتج(ات).",
+    "bulkStoragePrompt": "تعيين {{count}} منتج(ات) محددة إلى مستودع:",
+    "bulkStorageAssigned": "تم تعيين {{count}} منتج(ات) إلى المستودع.",
+    "selectedCount": "تم تحديد {{count}}",
+    "bulkSelectAll": "تحديد الكل",
+    "bulkUnselectAll": "إلغاء تحديد الكل",
+    "bulkInvertSelection": "عكس التحديد",
+    "bulkCancelSelection": "إلغاء",
+    "bulkDuplicate": "تكرار المحدد",
+    "bulkDelete": "حذف المحدد",
+    "bulkExportPdf": "تصدير المحدد PDF",
+    "bulkDeleteConfirm": "حذف {{count}} منتج(ات) محددة؟ لا يمكن التراجع عن هذا الإجراء.",
+    "bulkDeleteWarningTitle": "تحذير حذف كبير",
+    "bulkDeleteWarningBody": "أنت على وشك حذف {{count}} منتجًا. لا يمكن التراجع عن هذا الإجراء."
   },
   "categories": {
     "title": "الفئات",
@@ -391,11 +416,23 @@
       "nameEn": "الاسم (إنجليزي)",
       "nameAr": "الاسم (عربي)",
       "icon": "الأيقونة",
-      "description": "الوصف"
+      "description": "الوصف",
+      "qty": "الكمية",
+      "qtyInStorage": "الكمية في هذا المستودع",
+      "selectStorage": "اختر مستودعاً",
+      "storage": "المستودع"
     },
     "itemCount": "{{count}} عنصر",
+    "qtyCount": "إجمالي الكمية: {{count}}",
     "noItems": "لا توجد منتجات في هذا المستودع",
     "noStorages": "لا توجد مستودعات بعد. أضف الأول.",
+    "add": "إضافة مستودع",
+    "created": "تم إنشاء المستودع",
+    "deleted": "تم حذف المستودع",
+    "edit": "تعديل المستودع",
+    "empty": "لا توجد مستودعات بعد. أضف الأول.",
+    "updated": "تم تحديث المستودع",
+    "noProducts": "لا توجد منتجات في هذا المستودع",
     "deleteConfirm": "حذف \"{{name}}\"؟ لا يمكن التراجع.",
     "deleteBlockedTitle": "لا يمكن الحذف",
     "deleteBlocked": "يحتوي هذا المستودع على منتجات. انقل المنتجات أو احذفها أولاً.",
@@ -442,6 +479,17 @@
     "noItemsError": "أضف عنصراً واحداً على الأقل.",
     "insufficientQty": "الكمية في المستودع المصدر غير كافية لـ \"{{name}}\".",
     "successCreated": "تم إنشاء التحويل {{number}}",
-    "pdfTitle": "تقرير تحويل المستودع"
+    "pdfTitle": "تقرير تحويل المستودع",
+    "created": "تم إنشاء التحويل",
+    "moveItems": "نقل المنتجات",
+    "submit": "إتمام التحويل",
+    "fields": {
+      "from": "من المستودع",
+      "to": "إلى المستودع",
+      "notes": "ملاحظات",
+      "product": "المنتج",
+      "qty": "الكمية",
+      "selectProduct": "ابحث عن منتج…"
+    }
   }
 }

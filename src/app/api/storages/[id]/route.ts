@@ -29,7 +29,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const storage = {
     ...data,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    item_count: (data.product_storages as any[]).reduce((sum: number, ps: { qty: number }) => sum + (ps.qty ?? 0), 0),
+    item_count: (data.product_storages as any[]).filter((ps: { qty: number }) => (ps.qty ?? 0) > 0).length,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    qty_count: (data.product_storages as any[]).reduce((sum: number, ps: { qty: number }) => sum + (ps.qty ?? 0), 0),
     product_storages: undefined,
   };
 

@@ -16,6 +16,7 @@ import {
   Tooltip,
   useMediaQuery,
   useTheme,
+  Checkbox,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -33,6 +34,15 @@ interface Props {
   onDelete: (product: Product) => void;
   onView?: (product: Product) => void;
   compact?: boolean;
+  selectedIds?: string[];
+  onToggleSelect?: (payload: {
+    id: string;
+    index: number;
+    checked: boolean;
+    shiftKey: boolean;
+    orderedIds: string[];
+  }) => void;
+  onToggleSelectAll?: (orderedIds: string[], checked: boolean) => void;
 }
 
 interface InlineEditState {
@@ -41,7 +51,16 @@ interface InlineEditState {
   value: string;
 }
 
-export default function ProductTable({ products, onEdit, onDelete, onView, compact = false }: Props) {
+export default function ProductTable({
+  products,
+  onEdit,
+  onDelete,
+  onView,
+  compact = false,
+  selectedIds = [],
+  onToggleSelect,
+  onToggleSelectAll,
+}: Props) {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
   const updateProduct = useUpdateProduct();
@@ -71,6 +90,10 @@ export default function ProductTable({ products, onEdit, onDelete, onView, compa
   });
 
   const paginated = sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const orderedIds = paginated.map((p) => p.id);
+  const selectedInView = orderedIds.filter((id) => selectedIds.includes(id)).length;
+  const allInViewSelected = orderedIds.length > 0 && selectedInView === orderedIds.length;
+  const someInViewSelected = selectedInView > 0 && !allInViewSelected;
 
   const startEdit = useCallback((id: string, field: "unit_price" | "stock_qty", value: number) => {
     setEditing({ id, field, value: String(value) });
@@ -98,6 +121,14 @@ export default function ProductTable({ products, onEdit, onDelete, onView, compa
       <Table size="small" sx={{ tableLayout: "fixed", minWidth: isMobile ? 340 : "auto" }}>
         <TableHead>
           <TableRow sx={{ "& th": { fontWeight: 600, fontSize: fontSize, py: cellPy } }}>
+            <TableCell padding="checkbox" sx={{ width: 38 }}>
+              <Checkbox
+                size="small"
+                checked={allInViewSelected}
+                indeterminate={someInViewSelected}
+                onChange={(e) => onToggleSelectAll?.(orderedIds, e.target.checked)}
+              />
+            </TableCell>
             <TableCell sx={{ width: isMobile ? 80 : compact ? 90 : 100 }}>
               <TableSortLabel
                 active={sortField === "sku"}
@@ -158,13 +189,28 @@ export default function ProductTable({ products, onEdit, onDelete, onView, compa
           </TableRow>
         </TableHead>
         <TableBody>
-          {paginated.map((row) => (
+          {paginated.map((row, index) => (
             <TableRow
               key={row.id}
               hover
               sx={{ "& td": { fontSize, py: cellPy }, cursor: onView ? "pointer" : "default" }}
               onClick={() => onView?.(row)}
             >
+              <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  size="small"
+                  checked={selectedIds.includes(row.id)}
+                  onChange={(e) => {
+                    onToggleSelect?.({
+                      id: row.id,
+                      index,
+                      checked: e.target.checked,
+                      shiftKey: !!(e.nativeEvent as MouseEvent).shiftKey,
+                      orderedIds,
+                    });
+                  }}
+                />
+              </TableCell>
               {/* SKU */}
               <TableCell
                 sx={{
@@ -319,7 +365,7 @@ export default function ProductTable({ products, onEdit, onDelete, onView, compa
           ))}
           {paginated.length === 0 && (
             <TableRow>
-              <TableCell colSpan={8} align="center" sx={{ py: 6, color: "text.disabled" }}>
+              <TableCell colSpan={9} align="center" sx={{ py: 6, color: "text.disabled" }}>
                 {t("common.noData")}
               </TableCell>
             </TableRow>
