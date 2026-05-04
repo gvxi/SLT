@@ -25,7 +25,7 @@ This file is the minimal always-on guidance for coding agents in this repository
 - Keep app routes and API routes in `src/app/**`.
 - Keep auth checks in API routes via `requireAuth` from `src/lib/supabase/middleware.ts`.
 - Use `apiFetch` for client-side calls to app APIs.
-- Keep translation strings in locale JSON files; avoid hardcoded UI text.
+- Keep translation strings in locale JSON files; avoid hardcoded UI text. Use `react-i18next`.
 - The Next request interceptor file uses the new convention: `src/proxy.ts`.
 
 ## Known Pitfalls
@@ -56,28 +56,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ---
 
-## Development Commands
-
-```bash
-# Install dependencies
-npm install
-
-# Run dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Type check
-npx tsc --noEmit
-```
-
----
-
 ## Key Constraints for the Agent
 
 1. **TypeScript only** — never create `.js` or `.jsx` files. All files must use `.ts` or `.tsx`. Enable `strict: true` in `tsconfig.json`. No use of `any` type unless absolutely unavoidable and explicitly commented.
-2. **Never hardcode text** — always use `t('key')` from `next-i18next`.
+2. **Never hardcode text** — always use `t('key')` from `react-i18next`.
 2. **All MUI components** must respect the active theme (light/dark) and direction (RTL/LTR).
 3. **Supabase queries** go inside custom hooks (`/hooks`), never directly in page components.
 4. **Forms** use React Hook Form + Zod schemas co-located with the form component.

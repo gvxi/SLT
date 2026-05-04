@@ -44,12 +44,12 @@ GitHub Copilot will reference these files to:
 ## Key Project Constraints for Copilot
 
 ### Technology Stack
-- **Framework**: Next.js 14+ with App Router
+- **Framework**: Next.js 16 with App Router
 - **UI Library**: MUI v6 (Material-UI)
 - **Styling**: MUI `sx` prop (no Tailwind CSS)
 - **Language**: TypeScript with strict mode
 - **State Management**: Zustand + React Query
-- **i18n**: next-i18next with Arabic/English support
+- **i18n**: `react-i18next` with Arabic/English support
 
 ### Design Constraints
 - **No hardcoded text** - always use `t('key')` from translations
