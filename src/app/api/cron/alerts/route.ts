@@ -169,6 +169,27 @@ async function handleCron(request: NextRequest) {
       }
     }
 
+    // ── Storages (empty) ─────────────────────────────────────────────────────────
+    const { data: storages } = await supabase
+      .from("storages")
+      .select("id, name_en, product_storages(qty)");
+
+    for (const storage of storages ?? []) {
+      const totalQty = (storage.product_storages as { qty: number }[] ?? [])
+        .reduce((sum, ps) => sum + (ps.qty ?? 0), 0);
+      if (totalQty === 0) {
+        newAlerts.push({
+          type: "storage_empty",
+          severity: "warning",
+          title: `${storage.name_en} is empty`,
+          body: `${storage.name_en} has no items. Add products or remove the storage.`,
+          entity_type: "storage",
+          entity_id: storage.id,
+          link: `/storages/${storage.id}`,
+        });
+      }
+    }
+
     let insertedCount = 0;
 
     if (newAlerts.length) {

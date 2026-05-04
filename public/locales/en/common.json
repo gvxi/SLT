@@ -3,6 +3,7 @@
     "dashboard": "Dashboard",
     "tasks": "Tasks",
     "products": "Products",
+    "storages": "Storages",
     "invoices": "Invoices",
     "quotations": "Quotations",
     "customers": "Customers",
@@ -204,6 +205,7 @@
     "langAr": "AR",
     "invoice": "Invoice",
     "quotation": "Quotation",
+    "transfer": "Transfer",
     "rules": "Rules",
     "rulesShow": "Include terms & conditions",
     "rulesHide": "Hide terms & conditions",
@@ -277,7 +279,12 @@
     "testPushDesc": "Sends a OneSignal push notification only to your subscribed device.",
     "sendTestPush": "Send test push",
     "testPushSent": "Test push sent to your subscribed device",
-    "testPushError": "Failed to send test push"
+    "testPushError": "Failed to send test push",
+    "storages": {
+      "title": "Storages",
+      "subtitle": "Manage warehouse and storage locations",
+      "manage": "Manage Storages"
+    }
   },
   "toast": {
     "saved": "Saved",
@@ -336,6 +343,10 @@
       "test_alert": {
         "title": "Test alert",
         "body": "This is a delayed test alert from settings."
+      },
+      "storage_empty": {
+        "title": "Storage is empty",
+        "body": "{{name}} has no items. Add products or remove the storage."
       }
     }
   },
@@ -373,5 +384,66 @@
     "unsavedBody": "You have unsaved changes. Are you sure you want to discard them?",
     "keepEditing": "Keep Editing",
     "discardChanges": "Discard Changes"
+  },
+  "storages": {
+    "title": "Storages",
+    "newStorage": "New Storage",
+    "editStorage": "Edit Storage",
+    "fields": {
+      "nameEn": "Name (English)",
+      "nameAr": "Name (Arabic)",
+      "icon": "Icon",
+      "description": "Description"
+    },
+    "itemCount": "{{count}} item(s)",
+    "noItems": "No items in this storage",
+    "noStorages": "No storages yet. Add your first one.",
+    "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
+    "deleteBlockedTitle": "Cannot Delete",
+    "deleteBlocked": "This storage has items. Move or remove them before deleting.",
+    "noStorageWarning": "No storage assigned",
+    "autoSelectInfo": "Auto-selected (only storage)",
+    "moveItems": "Move Items",
+    "viewItems": "View Items",
+    "icons": {
+      "Warehouse": "Warehouse",
+      "Store": "Store",
+      "Business": "Business",
+      "HomeWork": "Home Office",
+      "LocalShipping": "Shipping",
+      "Inventory": "Inventory",
+      "Storefront": "Storefront",
+      "Factory": "Factory",
+      "Garage": "Garage",
+      "Archive": "Archive",
+      "ShoppingCart": "Shopping Cart",
+      "LocalGroceryStore": "Grocery Store",
+      "Apartment": "Apartment",
+      "Domain": "Domain",
+      "SupportAgent": "Support"
+    }
+  },
+  "transfers": {
+    "title": "Transfers",
+    "newTransfer": "New Transfer",
+    "transferNumber": "Transfer #",
+    "from": "From Storage",
+    "to": "To Storage",
+    "notes": "Notes",
+    "items": "Items",
+    "qty": "Qty",
+    "date": "Date",
+    "addItem": "Add Item",
+    "searchProduct": "Search product…",
+    "submitTransfer": "Submit Transfer",
+    "confirmTransfer": "Confirm Transfer",
+    "confirmBody": "Move {{count}} item(s) from {{from}} to {{to}}?",
+    "createdBy": "Created by",
+    "viewPdf": "View PDF",
+    "sameStoageError": "Source and destination must be different.",
+    "noItemsError": "Add at least one item to transfer.",
+    "insufficientQty": "Insufficient qty for \"{{name}}\" in source storage.",
+    "successCreated": "Transfer {{number}} created",
+    "pdfTitle": "Storage Transfer Report"
   }
 }

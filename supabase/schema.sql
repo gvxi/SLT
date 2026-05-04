@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   role          TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
   lang_preference TEXT NOT NULL DEFAULT 'en' CHECK (lang_preference IN ('en', 'ar')),
   bottom_nav_config JSONB,
-  start_page    TEXT CHECK (start_page IN ('dashboard','tasks','products','invoices','quotations','customers','settings')),
+  start_page    TEXT CHECK (start_page IN ('dashboard','tasks','products','storages','invoices','quotations','customers','settings')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -213,3 +213,69 @@ CREATE TABLE IF NOT EXISTS quotation_items (
 );
 
 CREATE INDEX IF NOT EXISTS quotation_items_quotation_id_idx ON quotation_items(quotation_id);
+
+-- ============================================================
+-- 10. storages
+-- ============================================================
+CREATE TABLE IF NOT EXISTS storages (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name_en     TEXT NOT NULL,
+  name_ar     TEXT,
+  icon        TEXT NOT NULL DEFAULT 'Warehouse',
+  description TEXT,
+  created_by  UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TRIGGER storages_updated_at
+  BEFORE UPDATE ON storages
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE INDEX IF NOT EXISTS storages_created_by_idx ON storages(created_by);
+
+-- ============================================================
+-- 11. product_storages (per-location quantity)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS product_storages (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  storage_id UUID NOT NULL REFERENCES storages(id) ON DELETE RESTRICT,
+  qty        INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (product_id, storage_id)
+);
+
+CREATE INDEX IF NOT EXISTS product_storages_product_id_idx ON product_storages(product_id);
+CREATE INDEX IF NOT EXISTS product_storages_storage_id_idx ON product_storages(storage_id);
+
+-- ============================================================
+-- 12. storage_transfers
+-- ============================================================
+CREATE TABLE IF NOT EXISTS storage_transfers (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  transfer_number TEXT UNIQUE,
+  from_storage_id UUID NOT NULL REFERENCES storages(id) ON DELETE RESTRICT,
+  to_storage_id   UUID NOT NULL REFERENCES storages(id) ON DELETE RESTRICT,
+  notes           TEXT,
+  created_by      UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT storage_transfers_diff_storages CHECK (from_storage_id <> to_storage_id)
+);
+
+CREATE INDEX IF NOT EXISTS storage_transfers_from_idx       ON storage_transfers(from_storage_id);
+CREATE INDEX IF NOT EXISTS storage_transfers_to_idx         ON storage_transfers(to_storage_id);
+CREATE INDEX IF NOT EXISTS storage_transfers_created_by_idx ON storage_transfers(created_by);
+
+-- ============================================================
+-- 13. storage_transfer_items
+-- ============================================================
+CREATE TABLE IF NOT EXISTS storage_transfer_items (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  transfer_id UUID NOT NULL REFERENCES storage_transfers(id) ON DELETE CASCADE,
+  product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  qty         INTEGER NOT NULL CHECK (qty > 0),
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS storage_transfer_items_transfer_id_idx ON storage_transfer_items(transfer_id);

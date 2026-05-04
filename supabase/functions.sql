@@ -119,3 +119,51 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ============================================================
+-- Auto-number sequence table for storage transfers
+-- ============================================================
+CREATE TABLE IF NOT EXISTS transfer_number_seq (
+  year    INTEGER NOT NULL,
+  counter INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (year)
+);
+
+-- ============================================================
+-- generate_transfer_number()
+-- Returns 'TRF-YYYY-NNNN', auto-incrementing per calendar year
+-- ============================================================
+CREATE OR REPLACE FUNCTION generate_transfer_number()
+RETURNS TEXT AS $$
+DECLARE
+  current_year INTEGER;
+  next_counter  INTEGER;
+BEGIN
+  current_year := EXTRACT(YEAR FROM now())::INTEGER;
+
+  INSERT INTO transfer_number_seq (year, counter)
+  VALUES (current_year, 1)
+  ON CONFLICT (year) DO UPDATE
+    SET counter = transfer_number_seq.counter + 1
+  RETURNING counter INTO next_counter;
+
+  RETURN 'TRF-' || current_year::TEXT || '-' || LPAD(next_counter::TEXT, 4, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- Trigger: auto-set transfer_number on INSERT if null
+-- ============================================================
+CREATE OR REPLACE FUNCTION set_transfer_number()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.transfer_number IS NULL THEN
+    NEW.transfer_number := generate_transfer_number();
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER storage_transfers_set_number
+  BEFORE INSERT ON storage_transfers
+  FOR EACH ROW EXECUTE FUNCTION set_transfer_number();

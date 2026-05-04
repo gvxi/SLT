@@ -39,9 +39,10 @@ export interface Product {
   created_by: string;
   created_at: string;
   updated_at: string;
+  product_storages?: ProductStorage[];
 }
 
-export type TaskStatus = "backlog" | "in_progress" | "review" | "done";
+export type TaskStatus = "backlog"| "in_progress" | "review" | "done";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
 export interface TaskItem {
@@ -161,4 +162,68 @@ export interface LineItemDraft {
   description: string;
   qty: number;
   unit_price: number;
+}
+
+// ============================================================
+// Storage / Warehouse management
+// ============================================================
+
+export interface Storage {
+  id: string;
+  name_en: string;
+  name_ar: string | null;
+  icon: string;
+  description: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  /** Total items count across all products in this storage (joined) */
+  item_count?: number;
+}
+
+export interface ProductStorage {
+  id: string;
+  product_id: string;
+  storage_id: string;
+  qty: number;
+  product?: {
+    id: string;
+    sku: string;
+    name_en: string;
+    name_ar: string | null;
+    category: string;
+    unit_price: number;
+  } | null;
+  storage?: Storage | null;
+}
+
+export interface StorageTransfer {
+  id: string;
+  transfer_number: string;
+  from_storage_id: string;
+  to_storage_id: string;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  from_storage?: Pick<Storage, "id" | "name_en" | "name_ar" | "icon"> | null;
+  to_storage?: Pick<Storage, "id" | "name_en" | "name_ar" | "icon"> | null;
+  storage_transfer_items?: StorageTransferItem[];
+  creator?: { id: string; full_name: string } | null;
+}
+
+export interface StorageTransferItem {
+  id: string;
+  transfer_id: string;
+  product_id: string;
+  qty: number;
+  sort_order: number;
+  created_at: string;
+  product?: {
+    id: string;
+    sku: string;
+    name_en: string;
+    name_ar: string | null;
+    category: string;
+    unit_price: number;
+  } | null;
 }
