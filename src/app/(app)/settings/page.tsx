@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -25,6 +26,8 @@ import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import LanguageOutlinedIcon from "@mui/icons-material/LanguageOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import WarehouseOutlinedIcon from "@mui/icons-material/WarehouseOutlined";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUIStore } from "@/store/uiStore";
@@ -36,6 +39,7 @@ const NAV_OPTIONS = [
   { key: "dashboard", icon: <DashboardOutlinedIcon sx={{ fontSize: 16 }} /> },
   { key: "tasks", icon: <TaskAltOutlinedIcon sx={{ fontSize: 16 }} /> },
   { key: "products", icon: <Inventory2OutlinedIcon sx={{ fontSize: 16 }} /> },
+  { key: "storages", icon: <WarehouseOutlinedIcon sx={{ fontSize: 16 }} /> },
   { key: "invoices", icon: <ReceiptOutlinedIcon sx={{ fontSize: 16 }} /> },
   { key: "quotations", icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 16 }} /> },
   { key: "customers", icon: <PeopleAltOutlinedIcon sx={{ fontSize: 16 }} /> },
@@ -46,6 +50,7 @@ const START_PAGE_OPTIONS = [
   { key: "dashboard", icon: <DashboardOutlinedIcon sx={{ fontSize: 15 }} /> },
   { key: "tasks", icon: <TaskAltOutlinedIcon sx={{ fontSize: 15 }} /> },
   { key: "products", icon: <Inventory2OutlinedIcon sx={{ fontSize: 15 }} /> },
+  { key: "storages", icon: <WarehouseOutlinedIcon sx={{ fontSize: 15 }} /> },
   { key: "invoices", icon: <ReceiptOutlinedIcon sx={{ fontSize: 15 }} /> },
   { key: "quotations", icon: <RequestQuoteOutlinedIcon sx={{ fontSize: 15 }} /> },
   { key: "customers", icon: <PeopleAltOutlinedIcon sx={{ fontSize: 15 }} /> },
@@ -141,6 +146,7 @@ function SettingRow({
 
 export default function SettingsPage() {
   const { t } = useTranslation();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { themeMode, toggleTheme, language, setLanguage, startPage, setStartPage } = useUIStore();
   const { data: profile, isLoading: profileLoading } = useProfile();
@@ -388,6 +394,28 @@ export default function SettingsPage() {
           {t("common.save")}
         </Button>
       </Box>
+
+      {/* Storages */}
+      <SectionTitle label={t("settings.storages.title")} />
+      <SettingGroup>
+        <SettingRow
+          icon={<WarehouseOutlinedIcon sx={{ fontSize: 18 }} />}
+          label={t("settings.storages.manage")}
+          description={t("settings.storages.subtitle")}
+          noDivider
+          control={
+            <Button
+              size="small"
+              variant="outlined"
+              endIcon={<ChevronRightIcon />}
+              onClick={() => router.push("/storages")}
+              sx={{ whiteSpace: "nowrap" }}
+            >
+              {t("common.edit")}
+            </Button>
+          }
+        />
+      </SettingGroup>
 
       {/* Notifications */}
       <SectionTitle label={t("settings.notifications")} />

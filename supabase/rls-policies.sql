@@ -6,15 +6,19 @@
 -- ============================================================
 -- Enable RLS on all tables
 -- ============================================================
-ALTER TABLE profiles        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE clients         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE products        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tasks           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE task_checklists ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoices        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoice_items   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE quotations      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE quotation_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks                  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_checklists        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoices               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoice_items          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quotations             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quotation_items        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE storages               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_storages       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE storage_transfers      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE storage_transfer_items ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
 -- profiles
@@ -317,5 +321,77 @@ CREATE POLICY "quotation_items_delete_quotation_access"
       WHERE quotations.id = quotation_id
         AND (quotations.created_by = auth.uid()
           OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'))
+    )
+  );
+
+-- ============================================================
+-- storages: all authenticated read; creator or admin write
+-- ============================================================
+CREATE POLICY "storages_select_authenticated"
+  ON storages FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "storages_insert_authenticated"
+  ON storages FOR INSERT TO authenticated
+  WITH CHECK (created_by = auth.uid());
+
+CREATE POLICY "storages_update_own_or_admin"
+  ON storages FOR UPDATE TO authenticated
+  USING (
+    created_by = auth.uid()
+    OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  )
+  WITH CHECK (
+    created_by = auth.uid()
+    OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+CREATE POLICY "storages_delete_own_or_admin"
+  ON storages FOR DELETE TO authenticated
+  USING (
+    created_by = auth.uid()
+    OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+-- ============================================================
+-- product_storages: shared global resource (like clients)
+-- ============================================================
+CREATE POLICY "product_storages_select_authenticated"
+  ON product_storages FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "product_storages_insert_authenticated"
+  ON product_storages FOR INSERT TO authenticated WITH CHECK (true);
+
+CREATE POLICY "product_storages_update_authenticated"
+  ON product_storages FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "product_storages_delete_authenticated"
+  ON product_storages FOR DELETE TO authenticated USING (true);
+
+-- ============================================================
+-- storage_transfers: all authenticated read; creator inserts (immutable)
+-- ============================================================
+CREATE POLICY "storage_transfers_select_authenticated"
+  ON storage_transfers FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "storage_transfers_insert_authenticated"
+  ON storage_transfers FOR INSERT TO authenticated
+  WITH CHECK (created_by = auth.uid());
+
+-- ============================================================
+-- storage_transfer_items: all authenticated read; inherits transfer access
+-- ============================================================
+CREATE POLICY "storage_transfer_items_select_authenticated"
+  ON storage_transfer_items FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "storage_transfer_items_insert_transfer_access"
+  ON storage_transfer_items FOR INSERT TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM storage_transfers
+      WHERE storage_transfers.id = transfer_id
+        AND (
+          storage_transfers.created_by = auth.uid()
+          OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+        )
     )
   );

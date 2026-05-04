@@ -3,6 +3,7 @@
     "dashboard": "لوحة التحكم",
     "tasks": "المهام",
     "products": "المنتجات",
+    "storages": "المستودعات",
     "invoices": "الفواتير",
     "quotations": "عروض الأسعار",
     "customers": "العملاء",
@@ -277,7 +278,12 @@
     "testPushDesc": "يرسل إشعار OneSignal إلى جهازك المشترك فقط.",
     "sendTestPush": "إرسال إشعار دفع تجريبي",
     "testPushSent": "تم إرسال إشعار الدفع التجريبي إلى جهازك المشترك",
-    "testPushError": "فشل في إرسال إشعار الدفع التجريبي"
+    "testPushError": "فشل في إرسال إشعار الدفع التجريبي",
+    "storages": {
+      "title": "المستودعات",
+      "subtitle": "إدارة مواقع المستودعات والمخازن",
+      "manage": "إدارة المستودعات"
+    }
   },
   "toast": {
     "saved": "تم الحفظ",
@@ -336,6 +342,10 @@
       "test_alert": {
         "title": "تنبيه تجريبي",
         "body": "هذا تنبيه تجريبي مؤجل من صفحة الإعدادات."
+      },
+      "storage_empty": {
+        "title": "المستودع فارغ",
+        "body": "{{name}} لا يحتوي على أي منتجات. أضف منتجات أو احذف المستودع."
       }
     }
   },
@@ -372,5 +382,66 @@
     "unsavedBody": "لديك تغييرات غير محفوظة. هل أنت متأكد من تجاهلها؟",
     "keepEditing": "متابعة التعديل",
     "discardChanges": "تجاهل التغييرات"
+  },
+  "storages": {
+    "title": "المستودعات",
+    "newStorage": "مستودع جديد",
+    "editStorage": "تعديل المستودع",
+    "fields": {
+      "nameEn": "الاسم (إنجليزي)",
+      "nameAr": "الاسم (عربي)",
+      "icon": "الأيقونة",
+      "description": "الوصف"
+    },
+    "itemCount": "{{count}} عنصر",
+    "noItems": "لا توجد منتجات في هذا المستودع",
+    "noStorages": "لا توجد مستودعات بعد. أضف الأول.",
+    "deleteConfirm": "حذف \"{{name}}\"؟ لا يمكن التراجع.",
+    "deleteBlockedTitle": "لا يمكن الحذف",
+    "deleteBlocked": "يحتوي هذا المستودع على منتجات. انقل المنتجات أو احذفها أولاً.",
+    "noStorageWarning": "لم يُحدَّد مستودع",
+    "autoSelectInfo": "تم الاختيار تلقائياً (المستودع الوحيد)",
+    "moveItems": "نقل المنتجات",
+    "viewItems": "عرض المنتجات",
+    "icons": {
+      "Warehouse": "مستودع",
+      "Store": "متجر",
+      "Business": "مؤسسة",
+      "HomeWork": "مكتب منزلي",
+      "LocalShipping": "شحن",
+      "Inventory": "مخزون",
+      "Storefront": "واجهة متجر",
+      "Factory": "مصنع",
+      "Garage": "كراج",
+      "Archive": "أرشيف",
+      "ShoppingCart": "عربة تسوق",
+      "LocalGroceryStore": "بقالة",
+      "Apartment": "شقة",
+      "Domain": "نطاق",
+      "SupportAgent": "دعم"
+    }
+  },
+  "transfers": {
+    "title": "التحويلات",
+    "newTransfer": "تحويل جديد",
+    "transferNumber": "رقم التحويل",
+    "from": "من المستودع",
+    "to": "إلى المستودع",
+    "notes": "ملاحظات",
+    "items": "العناصر",
+    "qty": "الكمية",
+    "date": "التاريخ",
+    "addItem": "إضافة عنصر",
+    "searchProduct": "ابحث عن منتج…",
+    "submitTransfer": "إتمام التحويل",
+    "confirmTransfer": "تأكيد التحويل",
+    "confirmBody": "نقل {{count}} عنصر من {{from}} إلى {{to}}؟",
+    "createdBy": "أنشأه",
+    "viewPdf": "عرض PDF",
+    "sameStoageError": "يجب أن يكون المصدر والوجهة مختلفَين.",
+    "noItemsError": "أضف عنصراً واحداً على الأقل.",
+    "insufficientQty": "الكمية في المستودع المصدر غير كافية لـ \"{{name}}\".",
+    "successCreated": "تم إنشاء التحويل {{number}}",
+    "pdfTitle": "تقرير تحويل المستودع"
   }
 }

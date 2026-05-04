@@ -17,6 +17,7 @@ import {
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import InventoryIcon from "@mui/icons-material/Inventory2";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -33,6 +34,7 @@ const navItems = [
   { key: "dashboard", path: "/dashboard", icon: <DashboardIcon /> },
   { key: "tasks", path: "/tasks", icon: <TaskAltIcon /> },
   { key: "products", path: "/products", icon: <InventoryIcon /> },
+  { key: "storages", path: "/storages", icon: <WarehouseIcon /> },
   { key: "invoices", path: "/invoices", icon: <ReceiptIcon /> },
   { key: "quotations", path: "/quotations", icon: <RequestQuoteIcon /> },
   { key: "customers", path: "/customers", icon: <PeopleAltOutlinedIcon /> },

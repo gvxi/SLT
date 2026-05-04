@@ -18,17 +18,21 @@ import {
   IconButton,
   Divider,
   InputAdornment,
+  Autocomplete,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import CasinoIcon from "@mui/icons-material/Casino";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import BarcodeScanner from "./BarcodeScanner";
 import { useTranslation } from "react-i18next";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
-import type { Product } from "@/types";
+import { useStorages } from "@/hooks/useStorages";
+import { apiFetch } from "@/lib/api";
+import type { Product, Storage } from "@/types";
 
 const schema = z.object({
   sku: z.string().min(1),
@@ -65,12 +69,26 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const { data: categories = [] } = useProductCategories();
+  const { data: storages = [] } = useStorages();
   const [scannerOpen, setScannerOpen] = useState(false);
   const [viewMode, setViewMode] = useState(initialViewMode ?? false);
+  const [selectedStorage, setSelectedStorage] = useState<Storage | null>(null);
 
   useEffect(() => {
-    if (open) setViewMode(initialViewMode ?? false);
-  }, [open, initialViewMode]);
+    if (open) {
+      setViewMode(initialViewMode ?? false);
+      // Auto-select storage
+      if (product?.product_storages?.length) {
+        const first = product.product_storages[0];
+        const match = storages.find((s) => s.id === first.storage_id);
+        setSelectedStorage(match ?? null);
+      } else if (storages.length === 1) {
+        setSelectedStorage(storages[0]);
+      } else {
+        setSelectedStorage(null);
+      }
+    }
+  }, [open, initialViewMode, product, storages]);
 
   const nextSku = useMemo(() => {
     const nums = allProducts
@@ -152,10 +170,24 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
   const onSubmit = async (data: FormData) => {
     try {
       const payload = { ...data, barcode: data.barcode || null };
+      let savedProductId: string;
       if (isEdit && product) {
         await updateProduct.mutateAsync({ id: product.id, ...payload });
+        savedProductId = product.id;
       } else {
-        await createProduct.mutateAsync(payload);
+        const created = await createProduct.mutateAsync(payload);
+        savedProductId = created.id;
+      }
+      // Upsert storage mapping if a storage is selected
+      if (selectedStorage && savedProductId) {
+        await apiFetch(`product-storages`, {
+          method: "POST",
+          body: JSON.stringify({
+            product_id: savedProductId,
+            storage_id: selectedStorage.id,
+            qty: data.stock_qty,
+          }),
+        });
       }
       onClose();
     } catch {
@@ -396,6 +428,37 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
                 />
               )}
             />
+          </Grid>
+
+          {/* Storage */}
+          <Grid size={{ xs: 12 }}>
+            <Divider />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Autocomplete
+              size="small"
+              options={storages}
+              getOptionLabel={(s) => s.name_en}
+              value={selectedStorage}
+              onChange={(_, val) => setSelectedStorage(val)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t("storages.fields.storage")}
+                  placeholder={t("storages.fields.selectStorage")}
+                />
+              )}
+              isOptionEqualToValue={(opt, val) => opt.id === val.id}
+              fullWidth
+            />
+            {!selectedStorage && storages.length > 0 && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.75 }}>
+                <WarningAmberIcon sx={{ fontSize: 14, color: "warning.main" }} />
+                <Typography variant="caption" sx={{ color: "warning.main", fontSize: 11 }}>
+                  {t("storages.noStorageWarning")}
+                </Typography>
+              </Box>
+            )}
           </Grid>
         </Grid>
       </Box>
