@@ -18,6 +18,11 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
   DialogActions,
   Select,
   MenuItem,
@@ -61,8 +66,12 @@ import ProductCategories from "@/components/products/ProductCategories";
 import ProductSummaryCards from "@/components/products/ProductSummaryCards";
 import { toast } from "@/store/toastStore";
 import { apiFetch } from "@/lib/api";
-import { downloadProductListPdf } from "@/lib/pdfExport";
-import type { Product } from "@/types";
+import ProductListPdfPreviewDialog from "@/components/documents/ProductListPdfPreviewDialog";
+import RestockDialog from "@/components/products/RestockDialog";
+import RestockPdfPreviewDialog from "@/components/products/RestockPdfPreviewDialog";
+import RestockReportsSection from "@/components/products/RestockReportsSection";
+import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
+import type { Product, RestockReport } from "@/types";
 
 type ViewMode = "table" | "compact" | "grid";
 type StockStatus = "all" | "in_stock" | "near_out" | "out_of_stock";
@@ -94,7 +103,10 @@ export default function ProductsPage() {
   const [batchStorageId, setBatchStorageId] = useState("");
   const [batchUpdatingStatus, setBatchUpdatingStatus] = useState(false);
   const [batchAssigningStorage, setBatchAssigningStorage] = useState(false);
-  const [batchExportingPdf, setBatchExportingPdf] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewProducts, setPdfPreviewProducts] = useState<Product[]>([]);
+  const [restockOpen, setRestockOpen] = useState(false);
+  const [restockPdfReport, setRestockPdfReport] = useState<RestockReport | null>(null);
 
   const searchParams = useSearchParams();
   const { replace: routerReplace } = useRouter();
@@ -361,20 +373,13 @@ export default function ProductsPage() {
     await handleBulkStatusUpdate(allActive ? "inactive" : "active");
   };
 
-  const handleExportSelectedPdf = async () => {
+  const handleExportSelectedPdf = () => {
     if (selectedProducts.length === 0) {
       toast(t("products.bulkSelectionRequired"), "error");
       return;
     }
-    setBatchExportingPdf(true);
-    try {
-      await downloadProductListPdf(selectedProducts, isAr ? "ar" : "en");
-      clearSelection();
-    } catch (e) {
-      toast(e instanceof Error ? e.message : t("toast.error"), "error");
-    } finally {
-      setBatchExportingPdf(false);
-    }
+    setPdfPreviewProducts(selectedProducts);
+    setPdfPreviewOpen(true);
   };
 
   return (
@@ -386,14 +391,24 @@ export default function ProductsPage() {
         </Typography>
         {tab === 0 && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<MoreVertIcon />}
-              onClick={(e) => setBulkActionsAnchor(e.currentTarget)}
-            >
-              {t("products.bulkActions")}
-            </Button>
+            <Tooltip title={t("products.restock")}>
+              <IconButton
+                size="small"
+                onClick={() => setRestockOpen(true)}
+                sx={{ border: 1, borderColor: "divider" }}
+              >
+                <SystemUpdateAltIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t("products.bulkActions")}>
+              <IconButton
+                size="small"
+                onClick={(e) => setBulkActionsAnchor(e.currentTarget)}
+                sx={{ border: 1, borderColor: "divider" }}
+              >
+                <MoreVertIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
             <Button
               variant="contained"
               size="small"
@@ -450,10 +465,13 @@ export default function ProductsPage() {
       >
         <Tab label={t("nav.products")} sx={{ textTransform: "none", fontSize: 13, minHeight: 40 }} />
         <Tab label={t("categories.title")} sx={{ textTransform: "none", fontSize: 13, minHeight: 40 }} />
+        <Tab label={t("products.tabReports")} sx={{ textTransform: "none", fontSize: 13, minHeight: 40 }} />
       </Tabs>
 
       {tab === 1 ? (
         <ProductCategories />
+      ) : tab === 2 ? (
+        <RestockReportsSection onViewPdf={(r) => setRestockPdfReport(r)} />
       ) : (
         <>
           {/* Summary cards */}
@@ -634,7 +652,7 @@ export default function ProductsPage() {
                   size="small"
                   color="error"
                   onClick={handleBatchDeleteClick}
-                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage || batchExportingPdf}
+                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage}
                 >
                   <DeleteOutlineIcon sx={{ fontSize: 18 }} />
                 </IconButton>
@@ -646,7 +664,7 @@ export default function ProductsPage() {
                 <IconButton
                   size="small"
                   onClick={handleBatchDuplicate}
-                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage || batchExportingPdf}
+                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage}
                 >
                   <ContentCopyIcon sx={{ fontSize: 18 }} />
                 </IconButton>
@@ -662,7 +680,7 @@ export default function ProductsPage() {
                 <IconButton
                   size="small"
                   onClick={() => { void handleToggleStatusQuick(); }}
-                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage || batchExportingPdf}
+                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage}
                 >
                   {selectedProducts.every((p) => p.status === "active")
                     ? <ToggleOffOutlinedIcon sx={{ fontSize: 18 }} />
@@ -675,8 +693,8 @@ export default function ProductsPage() {
               <span>
                 <IconButton
                   size="small"
-                  onClick={() => { void handleExportSelectedPdf(); }}
-                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage || batchExportingPdf}
+                  onClick={handleExportSelectedPdf}
+                  disabled={batchDuplicating || batchDeleting || batchUpdatingStatus || batchAssigningStorage}
                 >
                   <PictureAsPdfIcon sx={{ fontSize: 18 }} />
                 </IconButton>
@@ -831,6 +849,25 @@ export default function ProductsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ProductListPdfPreviewDialog
+        open={pdfPreviewOpen}
+        onClose={() => setPdfPreviewOpen(false)}
+        products={pdfPreviewProducts}
+      />
+
+      <RestockDialog
+        open={restockOpen}
+        onClose={() => setRestockOpen(false)}
+      />
+
+      {restockPdfReport && (
+        <RestockPdfPreviewDialog
+          open={!!restockPdfReport}
+          onClose={() => setRestockPdfReport(null)}
+          report={restockPdfReport}
+        />
+      )}
     </Box>
   );
 }

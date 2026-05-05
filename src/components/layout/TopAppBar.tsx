@@ -31,10 +31,13 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import AddCircleOutlinedIcon from "@mui/icons-material/AddCircleOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import { useLogout } from "@/hooks/useAuth";
 import { useLogs } from "@/hooks/useLogs";
 import { useUnreadCount } from "@/hooks/useAlerts";
 import AlertsPopover from "@/components/layout/AlertsPopover";
+import { useUIStore } from "@/store/uiStore";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -57,9 +60,10 @@ interface TopAppBarProps {
 }
 
 export default function TopAppBar({ onMenuClick }: TopAppBarProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const logout = useLogout();
+  const { themeMode, toggleTheme, language, setLanguage } = useUIStore();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [logsAnchor, setLogsAnchor] = useState<null | HTMLElement>(null);
   const [alertsAnchor, setAlertsAnchor] = useState<null | HTMLElement>(null);
@@ -178,6 +182,34 @@ export default function TopAppBar({ onMenuClick }: TopAppBarProps) {
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
+        {/* Language + theme quick toggles */}
+        <Box sx={{ px: 2, py: 0.75, display: "flex", alignItems: "center", gap: 1 }}>
+          <Button
+            size="small"
+            variant={language === "en" ? "contained" : "outlined"}
+            onClick={() => { setLanguage("en"); i18n.changeLanguage("en"); }}
+            sx={{ minWidth: 36, px: 1, py: 0.25, fontSize: 12 }}
+          >
+            EN
+          </Button>
+          <Button
+            size="small"
+            variant={language === "ar" ? "contained" : "outlined"}
+            onClick={() => { setLanguage("ar"); i18n.changeLanguage("ar"); }}
+            sx={{ minWidth: 36, px: 1, py: 0.25, fontSize: 12 }}
+          >
+            AR
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <IconButton size="small" onClick={toggleTheme} sx={{ color: "text.primary" }}>
+            {themeMode === "dark" ? (
+              <LightModeOutlinedIcon sx={{ fontSize: 18 }} />
+            ) : (
+              <DarkModeOutlinedIcon sx={{ fontSize: 18 }} />
+            )}
+          </IconButton>
+        </Box>
+        <Divider sx={{ my: 0.5 }} />
         <MenuItem
           onClick={() => { handleCloseMenu(); router.push("/settings"); }}
           sx={{ fontSize: 14 }}

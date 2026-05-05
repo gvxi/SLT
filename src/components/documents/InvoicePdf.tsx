@@ -1,16 +1,8 @@
 import React from "react";
-import { Document, Page, View, Text, Image, StyleSheet, Font } from "@react-pdf/renderer";
+import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import type { Invoice } from "@/types";
 import { TERMS_EN, TERMS_AR } from "@/lib/termsAndConditions";
-
-// ─── Font ─────────────────────────────────────────────────────────────────────
-Font.register({
-  family: "Cairo",
-  fonts: [
-    { src: "/fonts/Cairo-Regular.ttf", fontWeight: 400, fontStyle: "normal" },
-    { src: "/fonts/Cairo-Bold.ttf",    fontWeight: 700, fontStyle: "normal" },
-  ],
-});
+import "@/components/documents/pdfFonts";
 
 // ─── Company constants ────────────────────────────────────────────────────────
 const CO = {

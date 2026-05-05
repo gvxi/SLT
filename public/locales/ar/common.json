@@ -37,7 +37,12 @@
     "error": "حدث خطأ ما",
     "notFound": "غير موجود",
     "unsavedChanges": "لديك تغييرات غير محفوظة. هل تريد تجاهلها؟",
-    "view": "عرض"
+    "view": "عرض",
+    "notes": "ملاحظات",
+    "date": "التاريخ",
+    "exportPdf": "تصدير PDF",
+    "remove": "إزالة",
+    "createdBy": "أنشأه"
   },
   "scanner": {
     "notSupported": "مسح الباركود غير مدعوم في هذا المتصفح. استخدم Chrome أو Edge.",
@@ -154,7 +159,10 @@
     "bulkExportPdf": "تصدير المحدد PDF",
     "bulkDeleteConfirm": "حذف {{count}} منتج(ات) محددة؟ لا يمكن التراجع عن هذا الإجراء.",
     "bulkDeleteWarningTitle": "تحذير حذف كبير",
-    "bulkDeleteWarningBody": "أنت على وشك حذف {{count}} منتجًا. لا يمكن التراجع عن هذا الإجراء."
+    "bulkDeleteWarningBody": "أنت على وشك حذف {{count}} منتجًا. لا يمكن التراجع عن هذا الإجراء.",
+    "restock": "إعادة التخزين",
+    "tabReports": "التقارير",
+    "noRestockReports": "لا توجد تقارير إعادة تخزين بعد. انقر على إعادة التخزين لإنشاء تقرير."
   },
   "categories": {
     "title": "الفئات",
@@ -280,6 +288,11 @@
     "appearance": "المظهر",
     "notifications": "الإشعارات",
     "language": "اللغة",
+    "scale": "حجم العناصر",
+    "scaleDesc": "تكبير العناصر والخطوط والأيقونات",
+    "scaleNormal": "عادي",
+    "scaleLarge": "كبير",
+    "scaleLarger": "أكبر",
     "darkMode": "الوضع الداكن",
     "lightMode": "الوضع الفاتح",
     "fullName": "الاسم الكامل",
@@ -433,6 +446,9 @@
     "empty": "لا توجد مستودعات بعد. أضف الأول.",
     "updated": "تم تحديث المستودع",
     "noProducts": "لا توجد منتجات في هذا المستودع",
+    "noTransfers": "لا توجد تحويلات لهذا المستودع بعد.",
+    "tabProducts": "المنتجات",
+    "tabTransfers": "التحويلات",
     "deleteConfirm": "حذف \"{{name}}\"؟ لا يمكن التراجع.",
     "deleteBlockedTitle": "لا يمكن الحذف",
     "deleteBlocked": "يحتوي هذا المستودع على منتجات. انقل المنتجات أو احذفها أولاً.",
@@ -457,6 +473,25 @@
       "Domain": "نطاق",
       "SupportAgent": "دعم"
     }
+  },
+  "restock": {
+    "title": "تقرير إعادة التخزين",
+    "reportNumber": "رقم التقرير",
+    "qtyBefore": "قبل",
+    "qtyAfter": "بعد",
+    "delta": "الفرق",
+    "unknownProduct": "منتج غير معروف",
+    "unknownWarning": "أزل العناصر غير المعروفة (الباركود غير المعروف) قبل الإرسال.",
+    "submit": "إرسال تقرير إعادة التخزين",
+    "addProducts": "إضافة منتجات",
+    "scanBarcodes": "مسح الباركود",
+    "viewPdf": "عرض PDF",
+    "itemsCount": "العناصر",
+    "created": "تم إنشاء تقرير الاستيداد",
+    "qty": "الكمية",
+    "scanOrType": "امسح الباركود أو اكتب الرمز ثم اضغط Enter",
+    "barcodePlaceholder": "باركود / رمز المنتج…",
+    "add": "إضافة"
   },
   "transfers": {
     "title": "التحويلات",

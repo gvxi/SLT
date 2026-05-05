@@ -13,6 +13,17 @@ export function useTransfers() {
   });
 }
 
+export function useStorageTransfers(storageId: string | undefined) {
+  return useQuery<StorageTransfer[]>({
+    queryKey: [...transferKeys.lists(), { storageId }],
+    queryFn: async () => {
+      const res = await apiFetch(`transfers?storage_id=${storageId}`);
+      return res.json() as Promise<StorageTransfer[]>;
+    },
+    enabled: !!storageId,
+  });
+}
+
 export function useTransfer(id: string | undefined) {
   return useQuery<StorageTransfer>({
     queryKey: transferKeys.detail(id ?? ""),

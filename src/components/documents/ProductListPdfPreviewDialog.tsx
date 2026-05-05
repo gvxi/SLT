@@ -17,37 +17,36 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import PrintIcon from "@mui/icons-material/Print";
 import DownloadIcon from "@mui/icons-material/FileDownload";
+import ShareIcon from "@mui/icons-material/Share";
 import { useTranslation } from "react-i18next";
-import type { StorageTransfer } from "@/types";
+import type { Product } from "@/types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  transfer: StorageTransfer;
+  products: Product[];
 }
 
-export default function TransferPdfPreviewDialog({ open, onClose, transfer }: Props) {
+export default function ProductListPdfPreviewDialog({ open, onClose, products }: Props) {
   const { t, i18n } = useTranslation();
-  const [lang, setLang] = useState<"en" | "ar">(
-    (i18n.language?.startsWith("ar") ? "ar" : "en") as "en" | "ar"
-  );
+
+  const [lang, setLang] = useState<"en" | "ar">((i18n.language?.startsWith("ar") ? "ar" : "en") as "en" | "ar");
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
   const prevUrlRef = useRef<string | null>(null);
   const blobRef = useRef<Blob | null>(null);
 
   const generate = useCallback(async () => {
     setLoading(true);
     try {
-      const [{ pdf }, ReactLib, { StorageTransferPdfDocument }] = await Promise.all([
+      const [{ pdf }, ReactLib, { ProductListPdfDocument }] = await Promise.all([
         import("@react-pdf/renderer"),
         import("react"),
-        import("@/components/documents/StorageTransferPdf"),
+        import("@/components/documents/ProductListPdf"),
       ]);
-      const el = ReactLib.createElement(StorageTransferPdfDocument, {
-        transfer,
-        language: lang,
-      });
+      const el = ReactLib.createElement(ProductListPdfDocument, { products, language: lang });
       const blob = await pdf(el).toBlob();
       blobRef.current = blob;
       const url = URL.createObjectURL(blob);
@@ -55,15 +54,15 @@ export default function TransferPdfPreviewDialog({ open, onClose, transfer }: Pr
       prevUrlRef.current = url;
       setBlobUrl(url);
     } catch (e) {
-      console.error("Transfer PDF generation failed", e);
+      console.error("PDF generation failed", e);
     } finally {
       setLoading(false);
     }
-  }, [transfer, lang]);
+  }, [products, lang]);
 
   useEffect(() => {
     if (open) {
-      generate();
+      void generate();
     } else {
       if (prevUrlRef.current) {
         URL.revokeObjectURL(prevUrlRef.current);
@@ -74,7 +73,7 @@ export default function TransferPdfPreviewDialog({ open, onClose, transfer }: Pr
     }
   }, [open, generate]);
 
-  const fileName = `${transfer.transfer_number}.pdf`;
+  const fileName = `products-list-${new Date().toISOString().slice(0, 10)}.pdf`;
 
   const handlePrint = () => {
     if (!blobUrl) return;
@@ -90,6 +89,29 @@ export default function TransferPdfPreviewDialog({ open, onClose, transfer }: Pr
     a.download = fileName;
     a.click();
   }, [blobUrl, fileName]);
+
+  const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
+
+  const handleShare = useCallback(async () => {
+    setSharing(true);
+    try {
+      const blob = blobRef.current;
+      if (canNativeShare && blob) {
+        const file = new File([blob], fileName, { type: "application/pdf" });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ title: fileName, files: [file] });
+          return;
+        }
+      }
+      handleDownload();
+    } catch (e) {
+      if (e instanceof Error && e.name !== "AbortError") {
+        handleDownload();
+      }
+    } finally {
+      setSharing(false);
+    }
+  }, [canNativeShare, fileName, handleDownload]);
 
   return (
     <Dialog
@@ -109,7 +131,7 @@ export default function TransferPdfPreviewDialog({ open, onClose, transfer }: Pr
             <CloseIcon sx={{ fontSize: 18 }} />
           </IconButton>
           <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary", flex: 1 }}>
-            {transfer.transfer_number}
+            {t("products.pdfTitle", { count: products.length, defaultValue: `Products List (${products.length})` })}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -158,7 +180,7 @@ export default function TransferPdfPreviewDialog({ open, onClose, transfer }: Pr
           size="small"
           exclusive
           value={lang}
-          onChange={(_, v) => { if (v) setLang(v); }}
+          onChange={(_, v) => { if (v) setLang(v as "en" | "ar"); }}
           sx={{ "& .MuiToggleButton-root": { px: 1.5, py: 0.4, fontSize: 12, textTransform: "none" } }}
         >
           <ToggleButton value="en">{t("pdfPreview.langEn")}</ToggleButton>
@@ -177,6 +199,18 @@ export default function TransferPdfPreviewDialog({ open, onClose, transfer }: Pr
           sx={{ fontSize: 12, textTransform: "none", py: 0.5 }}
         >
           {t("pdfPreview.print")}
+        </Button>
+
+        {/* Share */}
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={sharing ? <CircularProgress size={12} color="inherit" /> : <ShareIcon sx={{ fontSize: 15 }} />}
+          onClick={() => { void handleShare(); }}
+          disabled={!blobUrl || loading}
+          sx={{ fontSize: 12, textTransform: "none", py: 0.5 }}
+        >
+          {t("pdfPreview.share")}
         </Button>
 
         {/* Download */}

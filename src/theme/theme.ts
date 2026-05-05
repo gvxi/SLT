@@ -43,6 +43,6 @@ const getDesignTokens = (mode: "light" | "dark", direction: Direction): ThemeOpt
   },
 });
 
-export function createAppTheme(mode: "light" | "dark", direction: Direction) {
+export function createAppTheme(mode: "light" | "dark", direction: Direction, _scale = 1) {
   return createTheme(getDesignTokens(mode, direction));
 }

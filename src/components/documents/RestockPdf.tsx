@@ -1,6 +1,6 @@
 import React from "react";
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
-import type { StorageTransfer } from "@/types";
+import type { RestockReport } from "@/types";
 import "@/components/documents/pdfFonts";
 
 const CO = {
@@ -21,7 +21,6 @@ function fmtDate(s: string | null | undefined): string {
   ].join("/");
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const S = StyleSheet.create({
   page: {
     fontFamily: "Cairo",
@@ -52,24 +51,6 @@ const S = StyleSheet.create({
   metaDateValue: { fontSize: 10, fontWeight: 700 },
   divider: { borderBottomWidth: 1.5, borderBottomColor: "#dddddd", marginBottom: 14 },
   docTitle: { fontSize: 16, fontWeight: 700, textAlign: "center", marginBottom: 16 },
-  storageRow: {
-    flexDirection: "row",
-    gap: 16,
-    marginBottom: 16,
-  },
-  storageCard: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: "#fbfbff",
-    borderWidth: 1,
-    borderColor: "#efeff5",
-  },
-  cardLabel: { fontSize: 8, color: "#777777", marginBottom: 4, fontWeight: 700, textTransform: "uppercase" },
-  cardValue: { fontSize: 11, fontWeight: 700 },
-  cardValueAr: { fontSize: 10, color: "#444444", textAlign: "right", marginTop: 2 },
-  arrowBlock: { justifyContent: "center", alignItems: "center", paddingVertical: 10 },
-  arrowText: { fontSize: 18, color: "#888888" },
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#f5f5f5",
@@ -91,8 +72,18 @@ const S = StyleSheet.create({
   colSku:    { width: 70, fontSize: 8 },
   colName:   { flex: 1, fontSize: 8 },
   colNameAr: { flex: 1, fontSize: 8, textAlign: "right" },
-  colQty:    { width: 50, fontSize: 8, textAlign: "right" },
+  colQty:    { width: 46, fontSize: 8, textAlign: "right" },
+  colDelta:  { width: 52, fontSize: 8, textAlign: "right" },
   thText:    { fontSize: 8, fontWeight: 700, color: "#555555" },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingTop: 8,
+    paddingHorizontal: 6,
+    gap: 12,
+  },
+  totalLabel: { fontSize: 9, fontWeight: 700, color: "#555555" },
+  totalValue: { fontSize: 9, fontWeight: 700 },
   notes: {
     marginTop: 18,
     padding: 10,
@@ -115,57 +106,47 @@ const S = StyleSheet.create({
     paddingTop: 6,
   },
   footerText: { fontSize: 7.5, color: "#999999" },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    paddingTop: 8,
-    paddingHorizontal: 6,
-    gap: 12,
-  },
-  totalLabel: { fontSize: 9, fontWeight: 700, color: "#555555" },
-  totalValue: { fontSize: 9, fontWeight: 700 },
 });
 
-// ─── Document Component ───────────────────────────────────────────────────────
 interface Props {
-  transfer: StorageTransfer;
+  report: RestockReport;
   language: "en" | "ar";
 }
 
-export function StorageTransferPdfDocument({ transfer, language }: Props) {
+export function RestockPdfDocument({ report, language }: Props) {
   const isAr = language === "ar";
-  const items = transfer.storage_transfer_items ?? [];
-  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+  const items = (report.restock_report_items ?? []).filter(Boolean);
+  const totalAdded = items.reduce((s, i) => s + (i.qty_after - i.qty_before), 0);
 
   const labels = isAr
     ? {
-        title: "تقرير نقل المخزون",
-        transfer: "رقم النقل",
+        title: "تقرير إعادة التخزين",
+        reportNum: "رقم التقرير",
         date: "التاريخ",
-        from: "من المخزن",
-        to: "إلى المخزن",
         no: "#",
         sku: "الرمز",
         product: "المنتج",
-        qty: "الكمية",
+        before: "قبل",
+        after: "بعد",
+        delta: "الفرق",
         notes: "ملاحظات",
-        total: "إجمالي الكميات",
+        totalAdded: "إجمالي الإضافة",
         createdBy: "بواسطة",
         page: "صفحة",
         of: "من",
       }
     : {
-        title: "Storage Transfer Report",
-        transfer: "Transfer #",
+        title: "Restock Report",
+        reportNum: "Report #",
         date: "Date",
-        from: "From Storage",
-        to: "To Storage",
         no: "#",
         sku: "SKU",
         product: "Product",
-        qty: "Qty",
+        before: "Before",
+        after: "After",
+        delta: "Delta",
         notes: "Notes",
-        total: "Total Qty",
+        totalAdded: "Total Added",
         createdBy: "Created by",
         page: "Page",
         of: "of",
@@ -176,11 +157,9 @@ export function StorageTransferPdfDocument({ transfer, language }: Props) {
   return (
     <Document>
       <Page size="A4" style={[S.page, pageDir]}>
-
-        {/* ── Header: Logo + Company + Meta ── */}
+        {/* ── Header ── */}
         <View style={S.headerRow}>
           <Image style={S.logoImg} src="/images/logo.png" />
-
           <View style={S.vendor}>
             {isAr ? (
               <>
@@ -196,12 +175,11 @@ export function StorageTransferPdfDocument({ transfer, language }: Props) {
               </>
             )}
           </View>
-
           <View style={S.metaBlock}>
-            <Text style={S.metaLabel}>{labels.transfer}</Text>
-            <Text style={S.metaValue}>{transfer.transfer_number}</Text>
+            <Text style={S.metaLabel}>{labels.reportNum}</Text>
+            <Text style={S.metaValue}>{report.report_number}</Text>
             <Text style={S.metaDateLabel}>{labels.date}</Text>
-            <Text style={S.metaDateValue}>{fmtDate(transfer.created_at)}</Text>
+            <Text style={S.metaDateValue}>{fmtDate(report.created_at)}</Text>
           </View>
         </View>
 
@@ -210,72 +188,50 @@ export function StorageTransferPdfDocument({ transfer, language }: Props) {
         {/* ── Title ── */}
         <Text style={S.docTitle}>{labels.title}</Text>
 
-        {/* ── From / To ── */}
-        <View style={S.storageRow}>
-          <View style={S.storageCard}>
-            <Text style={S.cardLabel}>{labels.from}</Text>
-            <Text style={S.cardValue}>
-              {transfer.from_storage?.name_en ?? transfer.from_storage_id}
-            </Text>
-            {transfer.from_storage?.name_ar && (
-              <Text style={S.cardValueAr}>{transfer.from_storage.name_ar}</Text>
-            )}
-          </View>
-
-          <View style={S.arrowBlock}>
-            <Text style={S.arrowText}>→</Text>
-          </View>
-
-          <View style={S.storageCard}>
-            <Text style={S.cardLabel}>{labels.to}</Text>
-            <Text style={S.cardValue}>
-              {transfer.to_storage?.name_en ?? transfer.to_storage_id}
-            </Text>
-            {transfer.to_storage?.name_ar && (
-              <Text style={S.cardValueAr}>{transfer.to_storage.name_ar}</Text>
-            )}
-          </View>
-        </View>
-
         {/* ── Items Table ── */}
         <View style={S.tableHeader}>
           <Text style={[S.colIdx, S.thText]}>{labels.no}</Text>
           <Text style={[S.colSku, S.thText]}>{labels.sku}</Text>
           <Text style={[S.colName, S.thText]}>{labels.product}</Text>
-          {isAr && <Text style={[S.colNameAr, S.thText]}>{labels.product}</Text>}
-          <Text style={[S.colQty, S.thText]}>{labels.qty}</Text>
+          {isAr ? <Text style={[S.colNameAr, S.thText]}>{labels.product}</Text> : null}
+          <Text style={[S.colQty, S.thText]}>{labels.before}</Text>
+          <Text style={[S.colQty, S.thText]}>{labels.after}</Text>
+          <Text style={[S.colDelta, S.thText]}>{labels.delta}</Text>
         </View>
 
-        {items.map((item, idx) => (
-          <View key={item.id} style={S.tableRow} wrap={false}>
-            <Text style={S.colIdx}>{idx + 1}</Text>
-            <Text style={S.colSku}>{item.product?.sku ?? "—"}</Text>
-            <Text style={S.colName}>{item.product?.name_en ?? item.product_id}</Text>
-            {isAr && (
-              <Text style={S.colNameAr}>{item.product?.name_ar ?? ""}</Text>
-            )}
-            <Text style={S.colQty}>{item.qty}</Text>
-          </View>
-        ))}
+        {items.map((item, idx) => {
+          const delta = item.qty_after - item.qty_before;
+          return (
+            <View key={item.id} style={S.tableRow} wrap={false}>
+              <Text style={S.colIdx}>{String(idx + 1)}</Text>
+              <Text style={S.colSku}>{item.product?.sku ?? "—"}</Text>
+              <Text style={S.colName}>{item.product?.name_en ?? item.product_id}</Text>
+              {isAr ? <Text style={S.colNameAr}>{item.product?.name_ar ?? ""}</Text> : null}
+              <Text style={S.colQty}>{String(item.qty_before)}</Text>
+              <Text style={S.colQty}>{String(item.qty_after)}</Text>
+              <Text style={S.colDelta}>{delta >= 0 ? `+${delta}` : String(delta)}</Text>
+            </View>
+          );
+        })}
 
         {/* ── Total ── */}
         <View style={S.totalRow}>
-          <Text style={S.totalLabel}>{labels.total}:</Text>
-          <Text style={S.totalValue}>{totalQty}</Text>
+          <Text style={S.totalLabel}>{labels.totalAdded}:</Text>
+          <Text style={S.totalValue}>{`+${totalAdded}`}</Text>
         </View>
 
         {/* ── Notes ── */}
-        {transfer.notes && (
+        {report.notes ? (
           <View style={S.notes}>
             <Text style={S.notesLabel}>{labels.notes}</Text>
-            <Text style={S.notesText}>{transfer.notes}</Text>
+            <Text style={S.notesText}>{report.notes}</Text>
           </View>
-        )}
+        ) : null}
 
         {/* ── Footer ── */}
-        <View style={S.footer} fixed>
+        <View style={S.footer}>
           <Text style={S.footerText}>
-            {labels.createdBy}: {transfer.creator?.full_name ?? transfer.created_by ?? "—"}
+            {labels.createdBy}: {report.creator?.full_name ?? ""}
           </Text>
           <Text
             style={S.footerText}

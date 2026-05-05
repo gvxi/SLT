@@ -229,3 +229,34 @@ export interface StorageTransferItem {
     unit_price: number;
   } | null;
 }
+
+// ============================================================
+// Restock Reports
+// ============================================================
+
+export interface RestockReportItem {
+  id: string;
+  report_id: string;
+  product_id: string;
+  qty_before: number;
+  qty_after: number;
+  sort_order: number;
+  product?: {
+    id: string;
+    sku: string;
+    name_en: string;
+    name_ar: string | null;
+    category: string;
+    unit_price: number;
+  } | null;
+}
+
+export interface RestockReport {
+  id: string;
+  report_number: string;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  restock_report_items?: RestockReportItem[];
+  creator?: { id: string; full_name: string } | null;
+}

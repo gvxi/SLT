@@ -418,6 +418,7 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onConfirm={handlePickerConfirm}
+        storageId={fromId || undefined}
       />
 
       <BatchBarcodeScanner

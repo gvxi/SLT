@@ -37,7 +37,12 @@
     "error": "Something went wrong",
     "notFound": "Not found",
     "unsavedChanges": "You have unsaved changes. Discard them?",
-    "view": "View"
+    "view": "View",
+    "notes": "Notes",
+    "date": "Date",
+    "exportPdf": "Export PDF",
+    "remove": "Remove",
+    "createdBy": "Created by"
   },
   "scanner": {
     "notSupported": "Barcode scanning is not supported in this browser. Use Chrome or Edge.",
@@ -154,7 +159,10 @@
     "bulkExportPdf": "Export selected as PDF",
     "bulkDeleteConfirm": "Delete {{count}} selected product(s)? This action cannot be undone.",
     "bulkDeleteWarningTitle": "Large Delete Warning",
-    "bulkDeleteWarningBody": "You are about to delete {{count}} products. This action cannot be undone."
+    "bulkDeleteWarningBody": "You are about to delete {{count}} products. This action cannot be undone.",
+    "restock": "Restock",
+    "tabReports": "Reports",
+    "noRestockReports": "No restock reports yet. Click Restock to create one."
   },
   "categories": {
     "title": "Categories",
@@ -281,6 +289,11 @@
     "appearance": "Appearance",
     "notifications": "Notifications",
     "language": "Language",
+    "scale": "Text Size",
+    "scaleDesc": "Increase elements, fonts, and icons size",
+    "scaleNormal": "Normal",
+    "scaleLarge": "Large",
+    "scaleLarger": "Larger",
     "darkMode": "Dark Mode",
     "lightMode": "Light Mode",
     "fullName": "Full Name",
@@ -435,6 +448,9 @@
     "empty": "No storages yet. Add your first one.",
     "updated": "Storage updated",
     "noProducts": "No items in this storage",
+    "noTransfers": "No transfers for this storage yet.",
+    "tabProducts": "Products",
+    "tabTransfers": "Transfers",
     "deleteConfirm": "Delete \"{{name}}\"? This cannot be undone.",
     "deleteBlockedTitle": "Cannot Delete",
     "deleteBlocked": "This storage has items. Move or remove them before deleting.",
@@ -459,6 +475,25 @@
       "Domain": "Domain",
       "SupportAgent": "Support"
     }
+  },
+  "restock": {
+    "title": "Restock Report",
+    "reportNumber": "Report #",
+    "qtyBefore": "Before",
+    "qtyAfter": "After",
+    "delta": "Change",
+    "unknownProduct": "Unknown Product",
+    "unknownWarning": "Remove unknown items (unrecognized barcodes) before submitting.",
+    "submit": "Submit Restock",
+    "addProducts": "Add Products",
+    "scanBarcodes": "Scan Barcodes",
+    "viewPdf": "View PDF",
+    "itemsCount": "Items",
+    "created": "Restock report created",
+    "qty": "QTY",
+    "scanOrType": "Scan barcode or type SKU, then press Enter",
+    "barcodePlaceholder": "Barcode / SKU…",
+    "add": "Add"
   },
   "transfers": {
     "title": "Transfers",

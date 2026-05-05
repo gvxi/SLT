@@ -21,19 +21,31 @@ export async function GET(request: NextRequest) {
   const { error } = await requireAuth(request);
   if (error) return error;
 
+  const storageId = request.nextUrl.searchParams.get("storage_id");
+
   const supabase = createServerSupabaseClient();
 
-  const { data, error: dbError } = await supabase
+  let query = supabase
     .from("storage_transfers")
     .select(
       `
       id, transfer_number, from_storage_id, to_storage_id, notes, created_by, created_at,
       from_storage:storages!storage_transfers_from_storage_id_fkey(id, name_en, name_ar, icon),
       to_storage:storages!storage_transfers_to_storage_id_fkey(id, name_en, name_ar, icon),
-      storage_transfer_items(id, product_id, qty, sort_order)
+      creator:profiles!storage_transfers_created_by_fkey(id, full_name),
+      storage_transfer_items(
+        id, product_id, qty, sort_order,
+        product:products(id, sku, name_en, name_ar, category, unit_price)
+      )
     `
     )
     .order("created_at", { ascending: false });
+
+  if (storageId) {
+    query = query.or(`from_storage_id.eq.${storageId},to_storage_id.eq.${storageId}`);
+  }
+
+  const { data, error: dbError } = await query;
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
@@ -112,11 +124,20 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (src) {
-      await supabase
-        .from("product_storages")
-        .update({ qty: src.qty - item.qty })
-        .eq("product_id", item.product_id)
-        .eq("storage_id", from_storage_id);
+      const newQty = src.qty - item.qty;
+      if (newQty <= 0) {
+        await supabase
+          .from("product_storages")
+          .delete()
+          .eq("product_id", item.product_id)
+          .eq("storage_id", from_storage_id);
+      } else {
+        await supabase
+          .from("product_storages")
+          .update({ qty: newQty })
+          .eq("product_id", item.product_id)
+          .eq("storage_id", from_storage_id);
+      }
     }
 
     // Upsert into destination

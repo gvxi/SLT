@@ -23,19 +23,26 @@ import {
   Select,
   MenuItem,
   TableSortLabel,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/EditOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import SearchIcon from "@mui/icons-material/Search";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { useStorage, useStorageProducts } from "@/hooks/useStorages";
+import { useStorageTransfers } from "@/hooks/useStorageTransfers";
 import { StorageIconDisplay } from "@/components/storages/StorageIconPicker";
 import StorageForm from "@/components/storages/StorageForm";
 import TransferDialog from "@/components/storages/TransferDialog";
+import TransferPdfPreviewDialog from "@/components/storages/TransferPdfPreviewDialog";
 import CollapsibleFilters from "@/components/shared/CollapsibleFilters";
-import type { ProductStorage } from "@/types";
+import type { ProductStorage, StorageTransfer } from "@/types";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -69,9 +76,13 @@ export default function StorageDetailPage({ params }: Props) {
   const { data: storage, isLoading: storageLoading } = useStorage(id);
   const { data: products = [], isLoading: productsLoading } = useStorageProducts(id);
 
+  const [activeTab, setActiveTab] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [pdfTransfer, setPdfTransfer] = useState<StorageTransfer | null>(null);
   const [search, setSearch] = useState("");
+
+  const { data: transfers = [], isLoading: transfersLoading } = useStorageTransfers(id);
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [filterStock, setFilterStock] = useState<StockStatus>("all");
@@ -235,7 +246,19 @@ export default function StorageDetailPage({ params }: Props) {
         </Typography>
       )}
 
-      {/* Products table */}
+      {/* Tabs */}
+      <Tabs
+        value={activeTab}
+        onChange={(_, v) => setActiveTab(v as number)}
+        sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}
+      >
+        <Tab icon={<InventoryIcon sx={{ fontSize: 16 }} />} iconPosition="start" label={t("storages.tabProducts")} sx={{ minHeight: 40, textTransform: "none", fontSize: 13 }} />
+        <Tab icon={<CompareArrowsIcon sx={{ fontSize: 16 }} />} iconPosition="start" label={t("storages.tabTransfers")} sx={{ minHeight: 40, textTransform: "none", fontSize: 13 }} />
+      </Tabs>
+
+      {/* Products tab */}
+      {activeTab === 0 && (
+        <>
       {productsLoading ? (
         <CircularProgress size={24} />
       ) : rows.length === 0 ? (
@@ -408,6 +431,68 @@ export default function StorageDetailPage({ params }: Props) {
           )}
         </>
       )}
+      </>
+      )}
+
+      {/* Transfers tab */}
+      {activeTab === 1 && (
+        <Box>
+          {transfersLoading ? (
+            <CircularProgress size={24} />
+          ) : transfers.length === 0 ? (
+            <Alert severity="info">{t("storages.noTransfers")}</Alert>
+          ) : (
+            <Paper variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.transferNumber")}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.date")}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.from")}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.to")}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }} align="right">{t("transfers.items")}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.createdBy")}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }} align="center">{t("transfers.viewPdf")}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {transfers.map((tr) => (
+                    <TableRow key={tr.id} hover>
+                      <TableCell sx={{ fontSize: 12, fontWeight: 500 }}>{tr.transfer_number}</TableCell>
+                      <TableCell sx={{ fontSize: 12 }}>
+                        {tr.created_at ? new Date(tr.created_at).toLocaleDateString() : "—"}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 12 }}>
+                        {isAr && tr.from_storage?.name_ar
+                          ? tr.from_storage.name_ar
+                          : tr.from_storage?.name_en ?? "—"}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 12 }}>
+                        {isAr && tr.to_storage?.name_ar
+                          ? tr.to_storage.name_ar
+                          : tr.to_storage?.name_en ?? "—"}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 12 }} align="right">
+                        {tr.storage_transfer_items?.length ?? 0}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 12 }}>
+                        {tr.creator?.full_name ?? "—"}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title={t("transfers.viewPdf")}>
+                          <IconButton size="small" onClick={() => setPdfTransfer(tr)}>
+                            <PictureAsPdfIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          )}
+        </Box>
+      )}
 
       <StorageForm open={editOpen} storage={storage} onClose={() => setEditOpen(false)} />
       <TransferDialog
@@ -415,6 +500,13 @@ export default function StorageDetailPage({ params }: Props) {
         defaultFromStorageId={id}
         onClose={() => setTransferOpen(false)}
       />
+      {pdfTransfer && (
+        <TransferPdfPreviewDialog
+          open={!!pdfTransfer}
+          onClose={() => setPdfTransfer(null)}
+          transfer={pdfTransfer}
+        />
+      )}
     </Box>
   );
 }

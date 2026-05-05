@@ -16,29 +16,54 @@ import {
   Button,
   IconButton,
   Typography,
+  Collapse,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import CloseIcon from "@mui/icons-material/Close";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTranslation } from "react-i18next";
 import { useProducts } from "@/hooks/useProducts";
+import { useStorages, useStorageProducts } from "@/hooks/useStorages";
 import type { LineItemDraft } from "@/types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onConfirm: (items: LineItemDraft[]) => void;
+  /** When set: only products from this storage are shown; no storage filter UI rendered */
+  storageId?: string;
 }
 
-export default function ProductPickerDialog({ open, onClose, onConfirm }: Props) {
+export default function ProductPickerDialog({ open, onClose, onConfirm, storageId }: Props) {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
   const { data: products = [] } = useProducts();
+  const { data: storages = [] } = useStorages();
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
+  const [filterStorage, setFilterStorage] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [qty, setQty] = useState<Record<string, number>>({});
+
+  // Effective storage for product filtering: locked prop OR user-selected pill
+  const effectiveStorageId = storageId ?? filterStorage ?? undefined;
+  const { data: storageProducts = [] } = useStorageProducts(effectiveStorageId);
+
+  const storageProductIds = useMemo(
+    () =>
+      effectiveStorageId
+        ? new Set(
+            storageProducts
+              .filter((sp) => (sp.qty ?? 0) > 0)
+              .map((sp) => sp.product?.id)
+              .filter(Boolean) as string[]
+          )
+        : null,
+    [effectiveStorageId, storageProducts],
+  );
 
   const activeProducts = useMemo(
     () => products.filter((p) => p.status === "active"),
@@ -53,6 +78,7 @@ export default function ProductPickerDialog({ open, onClose, onConfirm }: Props)
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return activeProducts.filter((p) => {
+      const matchStorage = !storageProductIds || storageProductIds.has(p.id);
       const matchCat = !category || p.category === category;
       const matchSearch =
         !q ||
@@ -60,9 +86,9 @@ export default function ProductPickerDialog({ open, onClose, onConfirm }: Props)
         (p.name_ar ?? "").includes(q) ||
         p.sku.toLowerCase().includes(q) ||
         (p.barcode ?? "").toLowerCase().includes(q);
-      return matchCat && matchSearch;
+      return matchStorage && matchCat && matchSearch;
     });
-  }, [activeProducts, search, category]);
+  }, [activeProducts, storageProductIds, search, category]);
 
   const selectedCount = useMemo(
     () => Object.values(qty).filter((v) => v > 0).length,
@@ -91,6 +117,8 @@ export default function ProductPickerDialog({ open, onClose, onConfirm }: Props)
   const reset = () => {
     setSearch("");
     setCategory(null);
+    setFilterStorage(null);
+    setFiltersOpen(false);
     setQty({});
     onClose();
   };
@@ -120,45 +148,126 @@ export default function ProductPickerDialog({ open, onClose, onConfirm }: Props)
         </IconButton>
       </DialogTitle>
 
-      {/* Search + category filters */}
-      <Box sx={{ px: 2, pb: 1.5, pt: 1 }}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder={t("invoices.searchProducts")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-        {categories.length > 0 && (
-          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mt: 1.25 }}>
-            <Chip
-              label={t("invoices.allCategories")}
+      {/* Search + filters */}
+      <Box sx={{ px: 2, pb: 1, pt: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder={t("invoices.searchProducts")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+          {/* Filter toggle — only show when there are filters available */}
+          {(categories.length > 0 || (!storageId && storages.length > 0)) && (
+            <IconButton
               size="small"
-              variant={category === null ? "filled" : "outlined"}
-              color={category === null ? "primary" : "default"}
-              onClick={() => setCategory(null)}
-              sx={{ cursor: "pointer" }}
-            />
-            {categories.map((cat) => (
+              onClick={() => setFiltersOpen((v) => !v)}
+              color={filtersOpen ? "primary" : "default"}
+              sx={{ flexShrink: 0, border: "1px solid", borderColor: "divider", borderRadius: 1 }}
+            >
+              <FilterListIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          )}
+        </Box>
+
+        <Collapse in={filtersOpen}>
+          <Box sx={{ pt: 1.25, display: "flex", flexDirection: "column", gap: 1 }}>
+            {/* Category pills */}
+            {categories.length > 0 && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
+                  {t("products.category")}
+                </Typography>
+                <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+                  <Chip
+                    label={t("invoices.allCategories")}
+                    size="small"
+                    variant={category === null ? "filled" : "outlined"}
+                    color={category === null ? "primary" : "default"}
+                    onClick={() => setCategory(null)}
+                    sx={{ cursor: "pointer" }}
+                  />
+                  {categories.map((cat) => (
+                    <Chip
+                      key={cat}
+                      label={cat}
+                      size="small"
+                      variant={category === cat ? "filled" : "outlined"}
+                      color={category === cat ? "primary" : "default"}
+                      onClick={() => setCategory(cat === category ? null : cat)}
+                      sx={{ cursor: "pointer" }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* Storage pills — only when not locked by prop */}
+            {!storageId && storages.length > 0 && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>
+                  {t("storages.fields.storage")}
+                </Typography>
+                <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+                  <Chip
+                    label={t("common.all")}
+                    size="small"
+                    variant={filterStorage === null ? "filled" : "outlined"}
+                    color={filterStorage === null ? "primary" : "default"}
+                    onClick={() => setFilterStorage(null)}
+                    sx={{ cursor: "pointer" }}
+                  />
+                  {storages.map((s) => (
+                    <Chip
+                      key={s.id}
+                      label={(isAr && s.name_ar) ? s.name_ar : s.name_en}
+                      size="small"
+                      variant={filterStorage === s.id ? "filled" : "outlined"}
+                      color={filterStorage === s.id ? "secondary" : "default"}
+                      onClick={() => setFilterStorage(s.id === filterStorage ? null : s.id)}
+                      sx={{ cursor: "pointer" }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </Collapse>
+
+        {/* Active filter summary chips (when filters are collapsed but active) */}
+        {!filtersOpen && (category || filterStorage) && (
+          <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 0.75 }}>
+            {category && (
               <Chip
-                key={cat}
-                label={cat}
+                label={category}
                 size="small"
-                variant={category === cat ? "filled" : "outlined"}
-                color={category === cat ? "primary" : "default"}
-                onClick={() => setCategory(cat === category ? null : cat)}
-                sx={{ cursor: "pointer" }}
+                color="primary"
+                onDelete={() => setCategory(null)}
+                sx={{ height: 20, fontSize: 11 }}
               />
-            ))}
+            )}
+            {filterStorage && (
+              <Chip
+                label={(() => {
+                  const s = storages.find((x) => x.id === filterStorage);
+                  return s ? ((isAr && s.name_ar) ? s.name_ar : s.name_en) : filterStorage;
+                })()}
+                size="small"
+                color="secondary"
+                onDelete={() => setFilterStorage(null)}
+                sx={{ height: 20, fontSize: 11 }}
+              />
+            )}
           </Box>
         )}
       </Box>

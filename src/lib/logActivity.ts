@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type EntityType = "task" | "invoice" | "quotation" | "product" | "client" | "storage" | "transfer";
+export type EntityType = "task" | "invoice" | "quotation" | "product" | "client" | "storage" | "transfer" | "restock_report";
 export type ActionType = "created" | "updated" | "deleted";
 
 interface LogParams {

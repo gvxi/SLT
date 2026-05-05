@@ -23,6 +23,7 @@ import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
+import FormatSizeOutlinedIcon from "@mui/icons-material/FormatSizeOutlined";
 import LanguageOutlinedIcon from "@mui/icons-material/LanguageOutlined";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
@@ -148,7 +149,7 @@ export default function SettingsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { themeMode, toggleTheme, language, setLanguage, startPage, setStartPage } = useUIStore();
+  const { themeMode, toggleTheme, language, setLanguage, scale, setScale, startPage, setStartPage } = useUIStore();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const updateProfile = useUpdateProfile();
 
@@ -308,7 +309,6 @@ export default function SettingsPage() {
         <SettingRow
           icon={<LanguageOutlinedIcon sx={{ fontSize: 18 }} />}
           label={t("settings.language")}
-          noDivider
           control={
             <Box sx={{ display: "flex", gap: 0.75 }}>
               {(["en", "ar"] as const).map((lang) => (
@@ -326,6 +326,33 @@ export default function SettingsPage() {
                   }}
                 >
                   {lang === "en" ? "EN" : "AR"}
+                </Button>
+              ))}
+            </Box>
+          }
+        />
+        <SettingRow
+          icon={<FormatSizeOutlinedIcon sx={{ fontSize: 18 }} />}
+          label={t("settings.scale")}
+          description={t("settings.scaleDesc")}
+          noDivider
+          control={
+            <Box sx={{ display: "flex", gap: 0.75 }}>
+              {([1, 1.125, 1.25] as const).map((s) => (
+                <Button
+                  key={s}
+                  size="small"
+                  variant={scale === s ? "contained" : "outlined"}
+                  onClick={() => setScale(s)}
+                  sx={{
+                    minWidth: 52,
+                    fontSize: 12,
+                    py: 0.4,
+                    borderColor: "divider",
+                    ...(scale !== s && { color: "text.secondary" }),
+                  }}
+                >
+                  {s === 1 ? t("settings.scaleNormal") : s === 1.125 ? t("settings.scaleLarge") : t("settings.scaleLarger")}
                 </Button>
               ))}
             </Box>

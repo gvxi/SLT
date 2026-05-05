@@ -59,3 +59,10 @@ export const transferKeys = {
   details: () => [...transferKeys.all, "detail"] as const,
   detail: (id: string) => [...transferKeys.details(), id] as const,
 };
+
+export const restockKeys = {
+  all: ["restock"] as const,
+  lists: () => [...restockKeys.all, "list"] as const,
+  details: () => [...restockKeys.all, "detail"] as const,
+  detail: (id: string) => [...restockKeys.details(), id] as const,
+};

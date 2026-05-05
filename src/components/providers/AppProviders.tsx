@@ -13,7 +13,7 @@ import ToastContainer from "./ToastContainer";
 import OneSignalProvider from "./OneSignalProvider";
 
 export default function AppProviders({ children }: { children: React.ReactNode }) {
-  const { language, themeMode } = useUIStore();
+  const { language, themeMode, scale } = useUIStore();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -29,13 +29,17 @@ export default function AppProviders({ children }: { children: React.ReactNode }
   const direction = language === "ar" ? "rtl" : "ltr";
 
   const emotionCache = useMemo(() => createEmotionCache(direction), [direction]);
-  const theme = useMemo(() => createAppTheme(themeMode, direction), [themeMode, direction]);
+  const theme = useMemo(() => createAppTheme(themeMode, direction, scale), [themeMode, direction, scale]);
 
   useEffect(() => {
     document.dir = direction;
     document.documentElement.lang = language;
     i18n.changeLanguage(language);
   }, [language, direction]);
+
+  useEffect(() => {
+    document.body.style.zoom = String(scale);
+  }, [scale]);
 
   return (
     <I18nextProvider i18n={i18n}>
