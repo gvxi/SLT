@@ -31,7 +31,12 @@
     "none": "None",
     "all": "All",
     "filters": "Filters",
-    "save": "Save"
+    "save": "Save",
+    "view": "View",
+    "done": "Done",
+    "error": "An error occurred",
+    "notFound": "Not found",
+    "unsavedChanges": "You have unsaved changes. Discard?"
   },
   "scanner": {
     "notSupported": "Barcode scanning is not supported in this browser. Use Chrome or Edge.",
@@ -389,11 +394,20 @@
     "title": "Storages",
     "newStorage": "New Storage",
     "editStorage": "Edit Storage",
+    "add": "New Storage",
+    "edit": "Edit Storage",
+    "created": "Storage created",
+    "updated": "Storage updated",
+    "deleted": "Storage deleted",
+    "empty": "No storages yet. Add your first one.",
+    "noProducts": "No products in this storage",
     "fields": {
       "nameEn": "Name (English)",
       "nameAr": "Name (Arabic)",
       "icon": "Icon",
-      "description": "Description"
+      "description": "Description",
+      "qty": "Qty",
+      "qtyInStorage": "Qty in storage"
     },
     "itemCount": "{{count}} item(s)",
     "noItems": "No items in this storage",
@@ -434,6 +448,9 @@
     "qty": "Qty",
     "date": "Date",
     "addItem": "Add Item",
+    "submit": "Submit Transfer",
+    "created": "Transfer created",
+    "moveItems": "Move Items",
     "searchProduct": "Search product…",
     "submitTransfer": "Submit Transfer",
     "confirmTransfer": "Confirm Transfer",
@@ -444,6 +461,14 @@
     "noItemsError": "Add at least one item to transfer.",
     "insufficientQty": "Insufficient qty for \"{{name}}\" in source storage.",
     "successCreated": "Transfer {{number}} created",
-    "pdfTitle": "Storage Transfer Report"
+    "pdfTitle": "Storage Transfer Report",
+    "fields": {
+      "from": "From",
+      "to": "To",
+      "notes": "Notes",
+      "product": "Product",
+      "qty": "Qty",
+      "selectProduct": "Select product…"
+    }
   }
 }
