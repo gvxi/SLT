@@ -113,6 +113,7 @@ export default function ProductCategories() {
           ))}
         </Box>
       ) : (
+        <Box sx={{ overflowX: "auto" }}>
         <Table size="small" sx={{ maxWidth: 480 }}>
           <TableHead>
             <TableRow sx={{ "& th": { fontWeight: 600, fontSize: 13 } }}>
@@ -182,6 +183,7 @@ export default function ProductCategories() {
             )}
           </TableBody>
         </Table>
+        </Box>
       )}
 
       {/* Delete confirmation dialog */}

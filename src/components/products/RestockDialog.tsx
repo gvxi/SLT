@@ -453,8 +453,9 @@ export default function RestockDialog({ open, onClose }: Props) {
           {/* Items table */}
           {rows.length > 0 && (
             <Paper variant="outlined" sx={{ mb: 2, overflow: "hidden" }}>
-              <Table size="small">
-                <TableHead>
+              <Box sx={{ overflowX: "auto" }}>
+                <Table size="small">
+                  <TableHead>
                   <TableRow sx={{ bgcolor: "action.hover" }}>
                     <TableCell sx={{ fontWeight: 600 }}>{t("products.sku")}</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{t("products.name")}</TableCell>
@@ -543,6 +544,7 @@ export default function RestockDialog({ open, onClose }: Props) {
                   ))}
                 </TableBody>
               </Table>
+              </Box>
             </Paper>
           )}
 

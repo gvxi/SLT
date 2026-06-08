@@ -53,8 +53,9 @@ export default function RestockReportsSection({ onViewPdf }: Props) {
 
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
-      <Table size="small">
-        <TableHead>
+      <Box sx={{ overflowX: "auto" }}>
+        <Table size="small">
+          <TableHead>
           <TableRow sx={{ bgcolor: "action.hover" }}>
             <TableCell sx={{ fontWeight: 600, fontSize: 13 }}>{t("restock.reportNumber")}</TableCell>
             <TableCell sx={{ fontWeight: 600, fontSize: 13 }}>{t("common.date")}</TableCell>
@@ -85,6 +86,7 @@ export default function RestockReportsSection({ onViewPdf }: Props) {
           ))}
         </TableBody>
       </Table>
+      </Box>
     </Paper>
   );
 }

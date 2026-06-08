@@ -346,11 +346,12 @@ export default function StorageDetailPage({ params }: Props) {
             <Alert severity="info">{t("common.noData")}</Alert>
           ) : (
         <Paper variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
-                  <TableSortLabel
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    <TableSortLabel
                     active={sortField === "sku"}
                     direction={sortField === "sku" ? sortDir : "asc"}
                     onClick={() => handleSort("sku")}
@@ -427,6 +428,7 @@ export default function StorageDetailPage({ params }: Props) {
               })}
             </TableBody>
           </Table>
+          </Box>
         </Paper>
           )}
         </>
@@ -443,9 +445,10 @@ export default function StorageDetailPage({ params }: Props) {
             <Alert severity="info">{t("storages.noTransfers")}</Alert>
           ) : (
             <Paper variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
+              <Box sx={{ overflowX: "auto" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.transferNumber")}</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.date")}</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.from")}</TableCell>
@@ -489,6 +492,7 @@ export default function StorageDetailPage({ params }: Props) {
                   ))}
                 </TableBody>
               </Table>
+              </Box>
             </Paper>
           )}
         </Box>

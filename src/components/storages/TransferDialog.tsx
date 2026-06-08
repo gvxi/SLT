@@ -273,9 +273,10 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
           />
         </Box>
 
-        <Table size="small" sx={{ mb: 2 }}>
-          <TableHead>
-            <TableRow>
+        <Box sx={{ overflowX: "auto" }}>
+          <Table size="small" sx={{ mb: 2 }}>
+            <TableHead>
+              <TableRow>
               <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{t("transfers.fields.product")}</TableCell>
               <TableCell sx={{ fontWeight: 600, fontSize: 12, width: 100 }} align="right">
                 {t("transfers.fields.qty")}
@@ -322,6 +323,7 @@ export default function TransferDialog({ open, defaultFromStorageId, onClose }: 
             ))}
           </TableBody>
         </Table>
+        </Box>
 
         <Button
           size="small"
