@@ -38,6 +38,7 @@ import { toast } from "@/store/toastStore";
 import BatchBarcodeScanner from "@/components/products/BatchBarcodeScanner";
 import ProductPickerDialog from "@/components/documents/ProductPickerDialog";
 import type { LineItemDraft } from "@/types";
+import PriceInputButton from "@/components/shared/PriceInputButton";
 
 interface Props {
   items: LineItemDraft[];
@@ -188,14 +189,10 @@ export default function LineItemsTable({ items, onChange }: Props) {
 
                   {/* Unit price */}
                   <TableCell>
-                    <TextField
-                      type="number"
+                    <PriceInputButton
                       value={item.unit_price}
-                      onChange={(e) => update(i, { unit_price: Math.max(0, Number(e.target.value)) })}
-                      size="small"
-                      variant="standard"
-                      slotProps={{ input: { disableUnderline: true, sx: { fontSize: 13 } } }}
-                      sx={{ width: 80, "& input": { textAlign: "right" } }}
+                      onChange={(val) => update(i, { unit_price: val })}
+                      sx={{ width: 80 }}
                     />
                   </TableCell>
 

@@ -24,11 +24,12 @@ const ADD_NEW_ID = "__add_new__";
 interface Props {
   value: string | null;
   onChange: (clientId: string | null) => void;
+  onCustomName?: (name: string) => void;
   error?: boolean;
   helperText?: string;
 }
 
-export default function ClientSelect({ value, onChange, error, helperText }: Props) {
+export default function ClientSelect({ value, onChange, onCustomName, error, helperText }: Props) {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === "ar";
   const { data: clients = [], isLoading } = useClients();
@@ -69,6 +70,7 @@ export default function ClientSelect({ value, onChange, error, helperText }: Pro
   const handleChange = (_: unknown, val: (typeof options)[number] | null) => {
     if (!val) { onChange(null); return; }
     if (val.id === ADD_NEW_ID) { setDialogOpen(true); return; }
+    onCustomName?.(""); // clear custom name when existing client selected
     onChange(val.id);
   };
 
@@ -94,6 +96,8 @@ export default function ClientSelect({ value, onChange, error, helperText }: Pro
           // Let the user type freely; on "reset" (value change), our useEffect handles it
           if (reason !== "reset") {
             setInputValue(newVal);
+            // Notify parent of free-text name when no client is selected
+            if (!value) onCustomName?.(newVal);
           }
         }}
         getOptionLabel={(o) => {

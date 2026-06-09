@@ -23,8 +23,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import ClientSelect from "./ClientSelect";
+import PriceInputButton from "@/components/shared/PriceInputButton";
 import LineItemsTable from "./LineItemsTable";
 import { toast } from "@/store/toastStore";
+import { useCreateClient } from "@/hooks/useClients";
 import type { Invoice, Quotation, InvoiceStatus, QuotationStatus, LineItemDraft, InvoiceItem, QuotationItem } from "@/types";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -107,9 +109,12 @@ interface Props {
 
 export default function DocumentForm({ type, mode, initialData, onSubmit, onCancel, formId, hideActions, onTotalsChange, onDirty }: Props) {
   const { t } = useTranslation();
+  const createClient = useCreateClient();
 
   const inv = type === "invoice" ? (initialData as Invoice | undefined) : undefined;
   const quo = type === "quotation" ? (initialData as Quotation | undefined) : undefined;
+
+  const [customClientName, setCustomClientName] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
   const defaultEndDate = type === "invoice"
@@ -170,8 +175,20 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
 
   const handleFormSubmit = async (values: FormValues) => {
     try {
+      let clientId = values.client_id ?? null;
+
+      // Auto-create client from free-text name + phone/location when none selected
+      if (!clientId && customClientName.trim()) {
+        const created = await createClient.mutateAsync({
+          name_en: customClientName.trim(),
+          phone: values.phone_number?.trim() ?? "",
+          address: values.location?.trim() ?? "",
+        });
+        clientId = created.id;
+      }
+
       await onSubmit({
-        client_id: values.client_id ?? null,
+        client_id: clientId,
         issue_date: values.issue_date,
         ...(type === "invoice" ? { due_date: values.end_date } : { expiry_date: values.end_date }),
         tax_pct: values.tax_pct,
@@ -207,6 +224,7 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
                 <ClientSelect
                   value={field.value ?? null}
                   onChange={field.onChange}
+                  onCustomName={setCustomClientName}
                   error={!!errors.client_id}
                   helperText={errors.client_id?.message}
                 />
@@ -350,17 +368,16 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
               name="tax_pct"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                  label={t("invoices.taxPct")}
-                  type="number"
-                  size="small"
-                  fullWidth
-                  error={!!errors.tax_pct}
-                  helperText={errors.tax_pct?.message}
-                  slotProps={{ input: { inputProps: { min: 0, max: 100, step: 0.5 } } }}
-                />
+                <Box>
+                  <PriceInputButton
+                    value={field.value ?? 0}
+                    onChange={field.onChange}
+                    label={t("invoices.taxPct")}
+                    max={100}
+                    sx={{ width: "100%" }}
+                  />
+                  {errors.tax_pct && <FormHelperText error sx={{ mt: 0.5 }}>{errors.tax_pct.message}</FormHelperText>}
+                </Box>
               )}
             />
           </Grid>
@@ -369,17 +386,15 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
               name="discount"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                  label={t("invoices.discount")}
-                  type="number"
-                  size="small"
-                  fullWidth
-                  error={!!errors.discount}
-                  helperText={errors.discount?.message}
-                  slotProps={{ input: { inputProps: { min: 0, step: 0.01 } } }}
-                />
+                <Box>
+                  <PriceInputButton
+                    value={field.value ?? 0}
+                    onChange={field.onChange}
+                    label={t("invoices.discount")}
+                    sx={{ width: "100%" }}
+                  />
+                  {errors.discount && <FormHelperText error sx={{ mt: 0.5 }}>{errors.discount.message}</FormHelperText>}
+                </Box>
               )}
             />
           </Grid>
@@ -388,17 +403,15 @@ export default function DocumentForm({ type, mode, initialData, onSubmit, onCanc
               name="upfront_payment"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                  label={t("invoices.upfrontPayment")}
-                  type="number"
-                  size="small"
-                  fullWidth
-                  error={!!errors.upfront_payment}
-                  helperText={errors.upfront_payment?.message}
-                  slotProps={{ input: { inputProps: { min: 0, step: 0.01 } } }}
-                />
+                <Box>
+                  <PriceInputButton
+                    value={field.value ?? 0}
+                    onChange={field.onChange}
+                    label={t("invoices.upfrontPayment")}
+                    sx={{ width: "100%" }}
+                  />
+                  {errors.upfront_payment && <FormHelperText error sx={{ mt: 0.5 }}>{errors.upfront_payment.message}</FormHelperText>}
+                </Box>
               )}
             />
           </Grid>

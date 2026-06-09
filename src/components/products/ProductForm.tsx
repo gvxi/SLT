@@ -12,6 +12,7 @@ import {
   Grid,
   MenuItem,
   FormControlLabel,
+  FormHelperText,
   Switch,
   Alert,
   Typography,
@@ -28,6 +29,7 @@ import CasinoIcon from "@mui/icons-material/Casino";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import BarcodeScanner from "./BarcodeScanner";
+import PriceInputButton from "@/components/shared/PriceInputButton";
 import { useTranslation } from "react-i18next";
 import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useProductCategories } from "@/hooks/useProductCategories";
@@ -401,15 +403,20 @@ export default function ProductForm({ open, product, onClose, allProducts = [], 
 
           {/* Unit price */}
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label={t("products.unitPrice")}
-              fullWidth
-              size="small"
-              type="number"
-              slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
-              {...register("unit_price", { valueAsNumber: true })}
-              error={!!errors.unit_price}
-              helperText={errors.unit_price?.message}
+            <Controller
+              name="unit_price"
+              control={control}
+              render={({ field }) => (
+                <Box>
+                  <PriceInputButton
+                    value={field.value ?? 0}
+                    onChange={field.onChange}
+                    label={t("products.unitPrice")}
+                    sx={{ width: "100%" }}
+                  />
+                  {errors.unit_price && <FormHelperText error sx={{ mt: 0.5 }}>{errors.unit_price.message}</FormHelperText>}
+                </Box>
+              )}
             />
           </Grid>
 
